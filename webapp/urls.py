@@ -1,5 +1,7 @@
 from django.urls import path
+from webapp import views
 
 urlpatterns = [
-    # add url paths here
+    path('ventilators/', views.ventilator_list),
+    path('ventilators/<int:pk>/', views.ventilator_detail),
 ]
