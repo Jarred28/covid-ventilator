@@ -2,11 +2,11 @@
 This is an app.
 
 ## Directory Structure
-/env - virtualenv directory
-/covid/settings.py - contains setting info like directory structure, etc.
-/webapp/views - contains control for UI
-/webapp/models.py - database schema
-/webapp/urls.py - attach urls to views
+/env - virtualenv directory  
+/covid/settings.py - contains setting info like directory structure, etc.  
+/webapp/views - contains control for UI  
+/webapp/models.py - database schema  
+/webapp/urls.py - attach urls to views  
 
 ## Installation / Run instructions (on localhost)
 1) clone the repo
