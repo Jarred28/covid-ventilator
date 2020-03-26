@@ -12,4 +12,4 @@ class Supplier(models.Model):
 
 
 class Ventilator(models.Model):
-	model_num = models.CharField(max_length=128)
+    model_num = models.CharField(max_length=128)
