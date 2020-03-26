@@ -9,13 +9,9 @@ from rest_framework import status
 from webapp.models import Ventilator
 from webapp.serializers import VentilatorSerializer
 
-
 @api_view(['GET'])
-def api_root(request, format=None):
-    return Response({
-        'Ventilators': reverse('ventilator-list', request=request, format=format)
-    })
-
+def home(request, format=None):
+    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -55,7 +51,7 @@ class VentilatorDetail(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response(serializer.data)
-        
+
 
     def delete(self, request, pk, format=None):
         ventilator = self.get_object(pk)

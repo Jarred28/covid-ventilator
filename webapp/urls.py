@@ -1,9 +1,11 @@
 from django.urls import path
+from django.contrib.auth.views import LoginView
 from rest_framework.urlpatterns import format_suffix_patterns
-from webapp import views
+from . import views
 
 urlpatterns = [
-    path('', views.api_root),
+    path('', LoginView.as_view()),
+    path('home/', views.home, name='home'),
     path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
     path('ventilators/<int:pk>/', views.VentilatorDetail.as_view()),
 ]
