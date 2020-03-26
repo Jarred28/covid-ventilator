@@ -4,7 +4,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.utils.crypto import get_random_string
 
 from .forms import CovidUserCreationForm
-from .models import Hospital, Supplier, User
+from .models import Hospital, HospitalGroup, Supplier, User
 
 class HospitalInline(admin.StackedInline):
     model = Hospital
@@ -14,10 +14,14 @@ class SupplierInline(admin.StackedInline):
     model = Supplier
     verbose_name_plural = 'Supplier'
 
+class HospitalGroupInline(admin.StackedInline):
+    model = HospitalGroup
+    verbose_name_plural = 'HospitalGroup'
+
 
 class CovidUserAdmin(UserAdmin):
     add_form = CovidUserCreationForm
-    inlines = (HospitalInline, SupplierInline, )
+    inlines = (HospitalGroupInline, HospitalInline, SupplierInline, )
 
     add_fieldsets = (
         (None, {
@@ -29,13 +33,18 @@ class CovidUserAdmin(UserAdmin):
             'fields': ('password1', 'password2'),
             'classes': ('collapse', 'collapse-closed'),
         }),
+        ('Hospital Group', {
+            'description': 'Only fill out this section if the user represents a hospital group.',
+            'fields': ('hospitalgroup_name',),
+            'classes': ('collapse', 'collapse-closed'),
+        }),
         ('Hospital', {
-            'description': 'Only fill out this section if the user represents a Hospital.',
-            'fields': ('hospital_name', 'hospital_address'),
+            'description': 'Only fill out this section if the user represents a hospital.',
+            'fields': ('hospital_name', 'hospital_address', 'hospital_within_group_only', 'hospital_hospitalgroup'),
             'classes': ('collapse', 'collapse-closed'),
         }),
         ('Supplier', {
-            'description': 'Only fill out this section if the user represents a Supplier.',
+            'description': 'Only fill out this section if the user represents a supplier.',
             'fields': ('supplier_name', 'supplier_address'),
             'classes': ('collapse', 'collapse-closed'),
         }),
@@ -61,13 +70,25 @@ class CovidUserAdmin(UserAdmin):
         user_type = form.cleaned_data['user_type']
         hospital_name = form.cleaned_data.get('hospital_name', None)
         hospital_address = form.cleaned_data.get('hosptial_address', None)
+        hospital_within_group_only = form.cleaned_data.get('hospital_within_group_only', None)
+        hospital_hospitalgroup = form.cleaned_data.get('hospital_hospitalgroup')
         supplier_name = form.cleaned_data.get('supplier_name', None)
         supplier_address = form.cleaned_data.get('supplier_address', None)
+        hospitalgroup_name = form.cleaned_data.get('hospitalgroup_name', None)
 
         if user_type == User.UserType.Hospital.name:
-            Hospital(name=hospital_name, address=hospital_address, user=obj).save()
+            Hospital(
+                name=hospital_name,
+                address=hospital_address,
+                user=obj,
+                within_group_only=hospital_within_group_only,
+                hospital_group=HospitalGroup.objects.get(id=hospital_hospitalgroup)
+            ).save()
         if user_type == User.UserType.Supplier.name:
             Supplier(name=supplier_name, address=supplier_address, user=obj).save()
+        if user_type == User.UserType.HospitalGroup.name:
+            HospitalGroup(name=hospitalgroup_name, user=obj).save()
+
         if reset_password:
             reset_form = PasswordResetForm({'email': form.cleaned_data['email']})
             assert reset_form.is_valid()

@@ -4,18 +4,22 @@ from django.utils.crypto import get_random_string
 
 from django.forms.models import inlineformset_factory
 
-from .models import User
+from .models import HospitalGroup, User
 
 class CovidUserCreationForm(UserCreationForm):
-    hospital_name = forms.CharField(max_length=100, required=False)
-    hospital_address = forms.CharField(max_length=100, required=False)
-    supplier_name = forms.CharField(max_length=100, required=False)
-    supplier_address = forms.CharField(max_length=100, required=False)
+    hospital_name = forms.CharField(max_length=100, required=False, label='Name')
+    hospital_address = forms.CharField(max_length=100, required=False, label='Address')
+    hospital_within_group_only = forms.BooleanField(required=False, label='Allow ventialator transfers only within my hospital group?')
+    hospital_hospitalgroup = forms.ChoiceField(choices=[(hg.id, hg.name) for hg in HospitalGroup.objects.all()], required=False, label='Hospital Group')
+    supplier_name = forms.CharField(max_length=100, required=False, label='Name')
+    supplier_address = forms.CharField(max_length=100, required=False, label='Address')
+    hospitalgroup_name = forms.CharField(max_length=100, required=False, label='Name')
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'user_type', 'hospital_name',
-            'hospital_address', 'supplier_name', 'supplier_address',
+        fields = ('username', 'email', 'user_type', 'hospitalgroup_name',
+            'hospital_name', 'hospital_address', 'hospital_within_group_only',
+            'hospital_hospitalgroup', 'supplier_name', 'supplier_address',
             'password1', 'password2')
 
     def __init__(self, *args, **kwargs):

@@ -22,6 +22,9 @@ class HospitalGroup(models.Model):
     name = models.CharField(max_length=100, blank=False, null=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=False, null=False)
 
+    def __str__(self):
+        return self.name
+
 
 class Hospital(models.Model):
     name = models.CharField(max_length=100, blank=False, null=False)
@@ -29,7 +32,7 @@ class Hospital(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=False, null=False)
     reputation_score = models.FloatField(blank=True, null=True)
     hospital_group = models.ForeignKey(HospitalGroup, on_delete=models.CASCADE, blank=False, null=False)
-    only_within_group = models.BooleanField(blank=False, null=False, default=False)
+    within_group_only = models.BooleanField(blank=False, null=False, default=False)
 
 
 class Supplier(models.Model):
@@ -66,5 +69,5 @@ class Ventilator(models.Model):
     batch_id = models.CharField(max_length=128, blank=True, null=True)
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, blank=True, null=True)
 
-class ShipmetBatches(models.Model):
+class ShipmentBatches(models.Model):
     max_batch_id = models.IntegerField(blank=False, null=False)
