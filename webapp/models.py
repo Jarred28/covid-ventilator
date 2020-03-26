@@ -28,7 +28,7 @@ class Hospital(models.Model):
     address = models.CharField(max_length=100, blank=False, null=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, blank=False, null=False)
     reputation_score = models.FloatField(blank=True, null=True)
-    hospital_group = models.ForeignKey(HospitalGroup, on_delete=models.CASCADE, blank=True, null=True)
+    hospital_group = models.ForeignKey(HospitalGroup, on_delete=models.CASCADE, blank=False, null=False)
     only_within_group = models.BooleanField(blank=False, null=False, default=False)
 
 
@@ -43,7 +43,7 @@ class Order(models.Model):
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=False, blank=False)
     active = models.BooleanField(null=False, blank=False, default=True)
     time_submitted = models.DateTimeField(null=False, blank=False, auto_now_add=True)
-    submitter = models.BooleanField(blank=False, null=False)
+    auto_generated = models.BooleanField(blank=False, null=False, default=False)
 
 
 class Ventilator(models.Model):
@@ -65,3 +65,6 @@ class Ventilator(models.Model):
     current_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, blank=False, null=False, related_name='current_hospital')
     batch_id = models.CharField(max_length=128, blank=True, null=True)
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, blank=True, null=True)
+
+class ShipmetBatches(models.Model):
+    max_batch_id = models.IntegerField(blank=False, null=False)
