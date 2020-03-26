@@ -1,0 +1,25 @@
+<html>
+<head>
+	<script src="https://kit.fontawesome.com/99833fc0cf.js" crossorigin="anonymous"></script>
+</head>
+
+<body>
+<h1>Ventilators</h1>
+<table>
+	<thead>
+		<tr>
+			<th>Edit</th>
+			<th>Model Number</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for ventilator in ventilators %}
+		<tr>
+			<td><a href="{{ request.path }}{{ ventilator.id }}"><i class="fas fa-pencil-alt"></i></a></td>
+			<td align="right">{{ ventilator.model_num }}</td>
+		</tr>	
+		{% endfor %}
+	</tbody>    
+</table>
+</body>
+</html>

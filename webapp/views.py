@@ -1,49 +1,59 @@
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.parsers import JSONParser
+from django.http import Http404, HttpResponseRedirect
+from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.response import Response
+from rest_framework.reverse import reverse
+from rest_framework import status
+
 from webapp.models import Ventilator
 from webapp.serializers import VentilatorSerializer
 
+@api_view(['GET'])
+def home(request, format=None):
+    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
-@csrf_exempt
-def ventilator_list(request):
-    """
-    List all ventilators, or create a new ventilator.
-    """
-    if request.method == 'GET':
+class VentilatorList(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'hospital/dashboard.html'
+
+    def get(self, request, format=None):
         ventilators = Ventilator.objects.all()
-        serializer = VentilatorSerializer(ventilators, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response({'ventilators': ventilators})
 
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        serializer = VentilatorSerializer(data=data)
+    def post(self, request, format=None):
+        serializer = VentilatorSerializer(data=request.data)
         if not serializer.is_valid():
-            return JsonResponse(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return JsonResponse(serializer.data, status=201)
+        ventilators = Ventilator.objects.all()
+        return Response({'ventilators': ventilators})
 
 
-@csrf_exempt
-def ventilator_detail(request, pk):
-    """
-    Retrieve, update or delete a ventilator.
-    """
-    try:
-        ventilator = Ventilator.objects.get(pk=pk)
-    except Ventilator.DoesNotExist:
-        return HttpResponse(status=404)
+class VentilatorDetail(APIView):
+    serializer_class = VentilatorSerializer
 
-    if request.method == 'GET':
-        serializer = VentilatorSerializer(ventilator)
-        return JsonResponse(serializer.data)
-    elif request.method == 'PUT':
-        data = JSONParser().parse(request)
-        serializer = VentilatorSerializer(ventilator, data=data)
+    def get_object(self, pk):
+        try:
+            return Ventilator.objects.get(pk=pk)
+        except Ventilator.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        ventilator = self.get_object(pk)
+        serializer = self.serializer_class(ventilator)
+        return Response(serializer.data)
+
+    def put(self, request, pk, format=None):
+        ventilator = self.get_object(pk)
+        serializer = self.serializer_class(ventilator, data=request.data)
         if not serializer.is_valid():
-            return JsonResponse(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return JsonResponse(serializer.data)
-    elif request.method == 'DELETE':
+        return Response(serializer.data)
+
+
+    def delete(self, request, pk, format=None):
+        ventilator = self.get_object(pk)
         ventilator.delete()
-        return HttpResponse(status=204)
+        return Response(status=status.HTTP_204_NO_CONTENT)

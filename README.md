@@ -22,3 +22,11 @@ Use the command `python3 manage.py makemigrations` and `python3 manage.py migrat
 
 ## Requirements
 Run `pip3 freeze > requirements.txt` to add any packages you installed via pip. This should be done after installing the requirements.
+
+
+## Deployment
+For future deploys on release branch:
+
+1. Pull your changes over to the release branch.
+2. Generate migrations locally and push up to release.
+3. Deploy release branch on Heroku.
