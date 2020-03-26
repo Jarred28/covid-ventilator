@@ -60,7 +60,7 @@ class CovidUserAdmin(UserAdmin):
 
         user_type = form.cleaned_data['user_type']
         hospital_name = form.cleaned_data.get('hospital_name', None)
-        hospital_address = form.cleaned_data.get('hosptial_address', None)
+        hospital_address = form.cleaned_data.get('hospital_address', None)
         supplier_name = form.cleaned_data.get('supplier_name', None)
         supplier_address = form.cleaned_data.get('supplier_address', None)
 
