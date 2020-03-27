@@ -4,7 +4,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.utils.crypto import get_random_string
 
 from .forms import CovidUserCreationForm
-from .models import Hospital, HospitalGroup, Supplier, User
+from .models import Hospital, HospitalGroup, Supplier, SystemOperator, User
 
 class HospitalInline(admin.StackedInline):
     model = Hospital
@@ -16,12 +16,16 @@ class SupplierInline(admin.StackedInline):
 
 class HospitalGroupInline(admin.StackedInline):
     model = HospitalGroup
-    verbose_name_plural = 'HospitalGroup'
+    verbose_name_plural = 'Hospital Group'
+
+class SystemOperatorInline(admin.StackedInline):
+    model = SystemOperator
+    verbose_name_plural = 'System Operator'
 
 
 class CovidUserAdmin(UserAdmin):
     add_form = CovidUserCreationForm
-    inlines = (HospitalGroupInline, HospitalInline, SupplierInline, )
+    inlines = (HospitalGroupInline, HospitalInline, SupplierInline, SystemOperatorInline)
 
     add_fieldsets = (
         (None, {
@@ -46,6 +50,11 @@ class CovidUserAdmin(UserAdmin):
         ('Supplier', {
             'description': 'Only fill out this section if the user represents a supplier.',
             'fields': ('supplier_name', 'supplier_address'),
+            'classes': ('collapse', 'collapse-closed'),
+        }),
+        ('System Operator', {
+            'description': 'Only fill out this section if the user is a system operator.',
+            'fields': ('systemoperator_name',),
             'classes': ('collapse', 'collapse-closed'),
         }),
     )
@@ -75,6 +84,7 @@ class CovidUserAdmin(UserAdmin):
         supplier_name = form.cleaned_data.get('supplier_name', None)
         supplier_address = form.cleaned_data.get('supplier_address', None)
         hospitalgroup_name = form.cleaned_data.get('hospitalgroup_name', None)
+        systemoperator_name = form.cleaned_data.get('systemoperator_name', None)
 
         if user_type == User.UserType.Hospital.name:
             Hospital(
@@ -88,6 +98,8 @@ class CovidUserAdmin(UserAdmin):
             Supplier(name=supplier_name, address=supplier_address, user=obj).save()
         if user_type == User.UserType.HospitalGroup.name:
             HospitalGroup(name=hospitalgroup_name, user=obj).save()
+        if user_type == User.UserType.SystemOperator.name:
+            SystemOperator(name=systemoperator_name, user=obj).save()
 
         if reset_password:
             reset_form = PasswordResetForm({'email': form.cleaned_data['email']})

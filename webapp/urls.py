@@ -9,6 +9,7 @@ urlpatterns = [
     path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
     path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
     path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials'),
+    path('system/', views.SystemSettings.as_view(), name='sys-settings'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

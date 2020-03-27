@@ -9,6 +9,7 @@ class User(AbstractUser):
         Hospital = 'Hospital'
         Supplier = 'Supplier'
         HospitalGroup = 'HospitalGroup'
+        SystemOperator = 'SystemOperator'
 
     user_type = models.CharField(
         max_length=100,
@@ -16,6 +17,11 @@ class User(AbstractUser):
         blank=False,
         null=False,
     )
+
+
+class SystemOperator(models.Model):
+    name = models.CharField(max_length=100, blank=False, null=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=False, null=False)
 
 
 class HospitalGroup(models.Model):

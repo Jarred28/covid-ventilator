@@ -3,6 +3,7 @@ from rest_framework import serializers
 from webapp.models import Ventilator
 
 from .models import HospitalGroup, User
+from .validation import validate_signup
 
 
 class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
@@ -43,6 +44,13 @@ class SignupSerializer(serializers.Serializer):
                 self.fields[field].section = section
 
     def validate(self, data):
+        user_type = self.data.get('user_type', None)
+        required_fields = {}
+        required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address', 'hospital_hospitalgroup']
+        required_fields[User.UserType.Supplier.name] = ['supplier_name', 'supplier_address']
+        required_fields[User.UserType.HospitalGroup.name] = ['hospitalgroup_name']
+        required_fields[User.UserType.SystemOperator.name] = ['systemoperator_name']
+        validate_signup(data, user_type, required_fields, serializers.ValidationError)
         return data
 
     def save(self):
