@@ -8,10 +8,10 @@ def validate_signup(data, user_type, required_fields, ValidationError):
         lambda a, b: a + b,
         required_fields.values()
     )
-    other_fields = all_fields = required_fields[user_type]
+    other_fields = [field for field in all_fields if field not in required_fields[user_type]]
     missing_fields = functools.reduce(
         lambda a, b: a or b,
-        [data.get(element, '') == '' for element in l]
+        [data.get(element, '') == '' for element in required_fields[user_type]]
     )
     extra_fields = not functools.reduce(
         lambda a, b: a and b,

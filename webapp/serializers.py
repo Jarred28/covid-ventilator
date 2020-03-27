@@ -4,6 +4,7 @@ from webapp.models import Ventilator
 
 from .models import HospitalGroup, User
 from .validation import validate_signup
+from covid.settings import DEFAULT_EMAIL
 
 
 class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
@@ -44,7 +45,7 @@ class SignupSerializer(serializers.Serializer):
                 self.fields[field].section = section
 
     def validate(self, data):
-        user_type = self.data.get('user_type', None)
+        user_type = data.get('user_type', None)
         required_fields = {}
         required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address', 'hospital_hospitalgroup']
         required_fields[User.UserType.Supplier.name] = ['supplier_name', 'supplier_address']
@@ -84,4 +85,4 @@ class SignupSerializer(serializers.Serializer):
             body += 'name: {name}\n'.format(name=systemoperator_name)
 
         # send email to our email address with signup info
-        send_mail(subject, body, 'alex@hunsader.com', ['alex@hunsader.com'], fail_silently=False)
+        send_mail(subject, body, DEFAULT_EMAIL, [DEFAULT_EMAIL], fail_silently=False)

@@ -1,0 +1,28 @@
+[
+	{
+		"model": "webapp.user",
+		"pk": 1,
+		"fields": {
+		  "user_type": "HospitalGroup"
+		}
+	},
+	{
+		"model": "webapp.hospitalgroup",
+		"pk": 1,
+		"fields": {
+			"name": "VA Hospital Group",
+			"user": 1
+		}
+	},
+	{
+		"model": "webapp.hospital",
+		"pk": 1,
+		"fields": {
+			"name": "Hospital A",
+			"address": "123 Test Lane",
+			"user": 1,
+			"hospital_group": 1,
+			"within_group_only": "False"
+		}
+	}
+]

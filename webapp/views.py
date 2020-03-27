@@ -1,3 +1,4 @@
+from datetime import datetime
 import csv
 import io
 
@@ -10,9 +11,9 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework import status
 
-from webapp.models import Hospital, User, Ventilator
+from webapp.models import Hospital, Order, User, Ventilator
 from webapp.permissions import HospitalPermission, SystemOperatorPermission
-from webapp.serializers import VentilatorSerializer
+from webapp.serializers import SignupSerializer, VentilatorSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -22,8 +23,6 @@ def home(request, format=None):
     if request.user.user_type == User.UserType.SystemOperator.name:
         return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 
 class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -40,6 +39,26 @@ class RequestCredentials(APIView):
         serializer.save()
         return HttpResponseRedirect(reverse('login', request=request))
 
+class OrderInfo(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/order.html'
+
+    def get(self, request, hospital, format=None):
+        ventilator_orders = list(Order.objects.filter(hospital=hospital))
+        return Response({'orders': ventilator_orders})
+
+    def post(self, request, hospital, format=None):
+        order = Order(
+            num_requested=request.data['num_requested'],
+            time_submitted=datetime.now(),
+            active=True,
+            auto_generated=False,
+            hospital=Hospital.objects.get(pk=hospital)
+        )
+        order.save()
+        ventilator_orders = list(Order.objects.filter(hospital=hospital))
+        return Response({'orders': ventilator_orders})
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
