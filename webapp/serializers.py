@@ -31,9 +31,6 @@ class SignupSerializer(serializers.Serializer):
     hospitalgroup_name = serializers.CharField(max_length=100, required=False, label='Name')
     systemoperator_name = serializers.CharField(max_length=100, required=False, label='Name')
 
-    for h in HospitalGroup.objects.all():
-        print(h)
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         sections = {}
