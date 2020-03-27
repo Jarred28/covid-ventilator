@@ -7,8 +7,8 @@ urlpatterns = [
     path('', LoginView.as_view()),
     path('home/', views.home, name='home'),
     path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
-    path('ventilators/<int:pk>/', views.VentilatorDetail.as_view()),
-    path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials')
+    path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
+    path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

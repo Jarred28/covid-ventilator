@@ -1,7 +1,5 @@
-{% load rest_framework %}
-
-<html>
-<body>
+{% extends 'base.html' %}
+{% block content %}
   {% if form.errors %}
     <p>Your username and password didn't match. Please try again.</p>
   {% endif %}
@@ -22,4 +20,4 @@
   <a href="{% url 'password_reset' %}">Reset Password</a>
   <a href="{% url 'request-credentials' %}">Request Credentials</a>
 </body>
-</html>
+{% endblock %}
