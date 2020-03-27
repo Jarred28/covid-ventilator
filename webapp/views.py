@@ -10,14 +10,19 @@ from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework import status
 
-from webapp.models import Hospital, Ventilator
-from webapp.permissions import HospitalPermission
+from webapp.models import Hospital, User, Ventilator
+from webapp.permissions import HospitalPermission, SystemOperatorPermission
 from webapp.serializers import VentilatorSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def home(request, format=None):
-    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    if request.user.user_type == User.UserType.Hospital.name:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    if request.user.user_type == User.UserType.SystemOperator.name:
+        return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -86,3 +91,16 @@ class VentilatorDetail(APIView):
         ventilator = self.get_object(pk)
         ventilator.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SystemSettings(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemOperatorPermission]
+    template_name = 'sysoperator/dashboard.html'
+
+    def get(self, request, format=None):
+        return Response({})
+
+    def post(self, request, format=None):
+        ## This is the algorithm endpoint
+        pass

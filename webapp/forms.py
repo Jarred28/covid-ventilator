@@ -17,13 +17,14 @@ class CovidUserCreationForm(UserCreationForm):
     supplier_name = forms.CharField(max_length=100, required=False, label='Name')
     supplier_address = forms.CharField(max_length=100, required=False, label='Address')
     hospitalgroup_name = forms.CharField(max_length=100, required=False, label='Name')
+    systemoperator_name = forms.CharField(max_length=100, required=False, label='Name')
 
     class Meta:
         model = User
         fields = ('username', 'email', 'user_type', 'hospitalgroup_name',
             'hospital_name', 'hospital_address', 'hospital_within_group_only',
             'hospital_hospitalgroup', 'supplier_name', 'supplier_address',
-            'password1', 'password2')
+            'password1', 'password2', 'systemoperator_name')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -41,14 +42,17 @@ class CovidUserCreationForm(UserCreationForm):
         no_sname = self.cleaned_data.get('supplier_name', '') == ''
         no_saddr = self.cleaned_data.get('supplier_address', '') == ''
         no_hgname = self.cleaned_data.get('hospitalgroup_name', '') == ''
+        no_soname = self.cleaned_data.get('systemoperator_name', '') == ''
 
         h_required_fields = [no_hname, no_haddr]
         s_required_fields = [no_sname, no_saddr]
         hg_required_fields = [no_hgname]
+        so_required_fields = [no_soname]
 
-        h_other_fields = s_required_fields + hg_required_fields
-        s_other_fields = h_required_fields + hg_required_fields
-        hg_other_fields = h_required_fields + s_required_fields
+        h_other_fields = s_required_fields + hg_required_fields + so_required_fields
+        s_other_fields = h_required_fields + hg_required_fields + so_required_fields
+        hg_other_fields = h_required_fields + s_required_fields + so_required_fields
+        so_other_fields = s_required_fields + h_required_fields + hg_required_fields
 
         def missing_required(l):
             return functools.reduce(lambda a, b: a or b, l)
@@ -65,6 +69,8 @@ class CovidUserCreationForm(UserCreationForm):
             raise forms.ValidationError('Supplier information must be provided.')
         if user_type == User.UserType.HospitalGroup.name and missing_required(hg_required_fields):
             raise forms.ValidationError('Hospital group information must be provided.')
+        if user_type == User.UserType.SystemOperator.name and missing_required(so_required_fields):
+            raise forms.ValidationError('System operator information must be provided.')
 
         if user_type == User.UserType.Hospital.name and extra_fields(h_other_fields):
             raise forms.ValidationError('Only hospital information should be provided.')
@@ -72,3 +78,5 @@ class CovidUserCreationForm(UserCreationForm):
             raise forms.ValidationError('Only supplier information should be provided.')
         if user_type == User.UserType.HospitalGroup.name and (extra_fields(hg_other_fields) or hwithingrouponly):
             raise forms.ValidationError('Only hospital group information should be provided.')
+        if user_type == User.UserType.SystemOperator.name and (extra_fields(so_other_fields) or hwithingrouponly):
+            raise forms.ValidationError('Only system operator information should be provided.')
