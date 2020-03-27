@@ -9,12 +9,29 @@ from rest_framework import status
 
 from webapp.models import Ventilator
 from webapp.permissions import HospitalPermission
-from webapp.serializers import VentilatorSerializer
+from webapp.serializers import SignupSerializer, VentilatorSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def home(request, format=None):
     return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+
+
+class RequestCredentials(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'registration/request_credentials.html'
+
+    def get(self, request):
+        serializer = SignupSerializer()
+        return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+        serializer.save()
+        return redirect('login')
+
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
