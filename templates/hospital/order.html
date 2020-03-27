@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load rest_framework %}
+
+{% block content %}
+<html>
+<head>
+	<script src="https://kit.fontawesome.com/99833fc0cf.js" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+	<link rel="stylesheet" href='{% static "hospital/css/style.css" %}'>
+</head>
+
+<body>
+
+	<h1><b>Orders</b></h1>
+	<table>
+		<thead>
+			<tr>
+				<th>Order Status</th>
+				<th>Ventilators Requested</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for order in orders %}
+			<tr>
+				<td align="right">{{ order.active|yesno:"Active,Inactive,Unknown" }}</td>
+				<td align="right">{{ order.num_requested }}</td>
+			</tr>	
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h3> Submit a Ventilator Request </h3>
+	<form method="post">
+		{% csrf_token %}
+		<label for="num"> How many ventilators do you need? </label>
+		<input type="text" id="num_requested" name="num_requested">
+		<button type="submit">Submit</button>
+	</form>
+</body>
+</html>
+{% endblock %}
