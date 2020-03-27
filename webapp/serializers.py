@@ -31,6 +31,9 @@ class SignupSerializer(serializers.Serializer):
     hospitalgroup_name = serializers.CharField(max_length=100, required=False, label='Name')
     systemoperator_name = serializers.CharField(max_length=100, required=False, label='Name')
 
+    for h in HospitalGroup.objects.all():
+        print(h)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         sections = {}
@@ -47,7 +50,7 @@ class SignupSerializer(serializers.Serializer):
     def validate(self, data):
         user_type = data.get('user_type', None)
         required_fields = {}
-        required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address', 'hospital_hospitalgroup']
+        required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address']
         required_fields[User.UserType.Supplier.name] = ['supplier_name', 'supplier_address']
         required_fields[User.UserType.HospitalGroup.name] = ['hospitalgroup_name']
         required_fields[User.UserType.SystemOperator.name] = ['systemoperator_name']
@@ -65,23 +68,23 @@ class SignupSerializer(serializers.Serializer):
         supplier_name = self.validated_data.get('supplier_name', None)
         supplier_address = self.validated_data.get('supplier_address', None)
         hospitalgroup_name = self.validated_data.get('hospitalgroup_name', None)
-        system_operator_name = self.validated_data.get('systemoperator_name', None)
+        systemoperator_name = self.validated_data.get('systemoperator_name', None)
 
         subject = 'Credentials Requested'
         body = 'username: {username}\nemail: {email}\nuser type: {user_type}\n'.format(username=username, email=email, user_type=user_type)
 
         if user_type == User.UserType.Hospital.name:
-            body += 'name: {name}\naddress: {address}\nwithin group only: {within_group_only}\n hospital group: {hospital_group}\n'.format(
+            body += 'name: {name}\naddress: {address}\nwithin group only: {within_group_only}\nhospital group: {hospital_group}\n'.format(
                 name=hospital_name,
                 address=hospital_address,
                 within_group_only=hospital_within_group_only,
-                hospital_group=hospital_hospitalgroup,
+                hospital_group=HospitalGroup.objects.get(id=hospital_hospitalgroup),
             )
         elif user_type == User.UserType.Supplier.name:
             body += 'name: {name}\naddress: {address}\n'.format(name=supplier_name, address=supplier_address)
         elif user_type == User.UserType.HospitalGroup.name:
             body += 'name: {name}\n'.format(name=hospitalgroup_name)
-        elif user_type == User.UserType.SystemOperator:
+        elif user_type == User.UserType.SystemOperator.name:
             body += 'name: {name}\n'.format(name=systemoperator_name)
 
         # send email to our email address with signup info

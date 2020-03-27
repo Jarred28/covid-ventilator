@@ -37,7 +37,7 @@ class CovidUserCreationForm(UserCreationForm):
         data = self.cleaned_data
         user_type = self.cleaned_data.get('user_type', None)
         required_fields = {}
-        required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address', 'hospital_hospitalgroup']
+        required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address']
         required_fields[User.UserType.Supplier.name] = ['supplier_name', 'supplier_address']
         required_fields[User.UserType.HospitalGroup.name] = ['hospitalgroup_name']
         required_fields[User.UserType.SystemOperator.name] = ['systemoperator_name']
