@@ -5,4 +5,4 @@ from webapp.models import Ventilator
 class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Ventilator
-        fields = ['id', 'model_num']
+        fields = ['id', 'model_num', 'state']

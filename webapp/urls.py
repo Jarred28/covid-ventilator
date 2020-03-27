@@ -7,7 +7,7 @@ urlpatterns = [
     path('', LoginView.as_view()),
     path('home/', views.home, name='home'),
     path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
-    path('ventilators/<int:pk>/', views.VentilatorDetail.as_view()),
+    path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

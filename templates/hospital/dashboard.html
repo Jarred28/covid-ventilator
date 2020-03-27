@@ -1,25 +1,58 @@
-<html>
+{% extends 'base.html' %}
+{% load static %}
+{% load rest_framework %}
+
+{% block content %}
 <head>
-	<script src="https://kit.fontawesome.com/99833fc0cf.js" crossorigin="anonymous"></script>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+  <link rel="stylesheet" href='{% static "hospital/css/style.css" %}'>
 </head>
 
-<body>
-<h1>Ventilators</h1>
-<table>
-	<thead>
-		<tr>
-			<th>Edit</th>
-			<th>Model Number</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for ventilator in ventilators %}
-		<tr>
-			<td><a href="{{ request.path }}{{ ventilator.id }}"><i class="fas fa-pencil-alt"></i></a></td>
-			<td align="right">{{ ventilator.model_num }}</td>
-		</tr>	
-		{% endfor %}
-	</tbody>    
-</table>
-</body>
-</html>
+<h1><b>Dashboard</b></h1>
+
+<h2><b>Ventilators</b></h2>
+<main>
+  <table>
+    <thead>
+      <tr>
+        <th>Model Number</th>
+        <th>Status</th>
+        <th>Original Hospital</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ventilator in ventilators %}
+      <tr>
+        <td data-title='Model Number'>{{ ventilator.model_num }}</td>
+        <td data-title='State'>{{ ventilator.state }}</td>
+        <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
+        <td class='select'><a class='button' href="{% url 'ventilator-detail' ventilator.id %}">Edit</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</main>
+
+<div class="form" >
+  <h2><b>Add Single Ventilator</b></h2>
+  <form action="{% url 'ventilator-list' %}" method="POST">
+      {% csrf_token %}
+      {% render_form serializer %}
+      <input class='button' type="submit" value="Save">
+  </form>
+
+  <h2><b>Add Batch Ventilators</b></h2>
+  <form action="{% url 'ventilator-list' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="file1"> Upload a file</label><br>
+        <input type="file" id="file1" name="file">
+        <small>Only accepts CSV files</small>
+        <button type="submit">Upload</button>
+    </form>
+</div>
+
+  <script src='http://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
+
+{% endblock %}
