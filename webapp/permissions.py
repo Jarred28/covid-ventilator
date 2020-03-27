@@ -18,8 +18,8 @@ class HospitalPermission(BasePermission):
 
 class HospitalGroupPermission(BasePermission):
     def has_permission(self, request, view):
-        usertype_permissions(request, User.UserType.Supplier)
+        usertype_permissions(request, User.UserType.HospitalGroup)
 
 class SupplierPermission(BasePermission):
     def has_permission(self, request, view):
-        usertype_permissions(request, User.UserType.HospitalGroup)
+        usertype_permissions(request, User.UserType.Supplier)
