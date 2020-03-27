@@ -1,20 +1,24 @@
 from django.http import Http404, HttpResponseRedirect
-from rest_framework.decorators import api_view
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework.views import APIView
 from rest_framework import status
 
 from webapp.models import Ventilator
+from webapp.permissions import HospitalPermission
 from webapp.serializers import VentilatorSerializer
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def home(request, format=None):
     return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
     template_name = 'hospital/dashboard.html'
 
     def get(self, request, format=None):
@@ -32,6 +36,7 @@ class VentilatorList(APIView):
 
 class VentilatorDetail(APIView):
     serializer_class = VentilatorSerializer
+    permission_classes = [IsAuthenticated&HospitalPermission]
 
     def get_object(self, pk):
         try:
