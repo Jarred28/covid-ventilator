@@ -45,17 +45,19 @@ class OrderInfo(APIView):
     permission_classes = [IsAuthenticated&HospitalPermission]
     template_name = 'hospital/order.html'
 
-    def get(self, request, hospital, format=None):
+    def get(self, request, format=None):
+        hospital = Hospital.objects.get(user=request.user)
         ventilator_orders = list(Order.objects.filter(hospital=hospital))
         return Response({'orders': ventilator_orders})
 
-    def post(self, request, hospital, format=None):
+    def post(self, request, format=None):
+        hospital = Hospital.objects.get(user=request.user)
         order = Order(
             num_requested=request.data['num_requested'],
             time_submitted=datetime.now(),
             active=True,
             auto_generated=False,
-            hospital=Hospital.objects.get(pk=hospital)
+            hospital=hospital,
         )
         order.save()
         ventilator_orders = list(Order.objects.filter(hospital=hospital))
@@ -160,5 +162,5 @@ class SystemSettings(APIView):
             notifications.send_ventilator_notification(sender, receiver, amount)
         shipment_batch = ShipmentBatches.first()
         shipment_batch.max_batch_id = batch_id
-        shipment_batch.save() 
+        shipment_batch.save()
         return Response({})

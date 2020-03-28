@@ -2,9 +2,16 @@
 
 <html>
 <body style='text-align:center; background-color: #5BB9B8;'>
-  <nav style='padding:20px; text-align:right; width=100%;'>
+  <nav style='padding:20px; text-align:right; width=100%; background-color:blue; '>
     {% if user.is_authenticated %}
-    <a href="{% url 'logout' %}" style='padding:20px;'>Log out</a>
+      {% if user.user_type == 'Hospital' %}
+        <a href="{% url 'order' %}" style='color:white; margin:10px;'>Orders</a>
+        <a href="{% url 'ventilator-list' %}" style='color:white; margin:10px;'>Ventilators</a>
+      {% endif %}
+      {% if user.user_type == 'SystemOperator' %}
+        <a href="{% url 'sys-settings' %}" style='color:white; margin:10px;'>Dashboard</a>
+      {% endif %}
+    <a href="{% url 'logout' %}" style='color:white; margin:10px; '>Log out</a>
     {% endif %}
   </nav>
   {% block content %}{% endblock %}

@@ -75,6 +75,8 @@ class CovidUserAdmin(UserAdmin):
             reset_password = False
 
         super().save_model(request, obj, form, change)
+        if change:
+            return
 
         user_type = form.cleaned_data['user_type']
         hospital_name = form.cleaned_data.get('hospital_name', None)
@@ -108,5 +110,16 @@ class CovidUserAdmin(UserAdmin):
                 request=request,
                 use_https=request.is_secure(),
             )
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = list(super().get_fieldsets(request, obj))
+        new_fieldsets = []
+        # replace personal info with email and user_type
+        for fieldset in fieldsets:
+            if fieldset[0] == 'Personal info':
+                new_fieldsets.append(('Personal info', {'fields': ('email', 'user_type',)}))
+            else:
+                new_fieldsets.append(fieldset)
+        return new_fieldsets
 
 admin.site.register(User, CovidUserAdmin)
