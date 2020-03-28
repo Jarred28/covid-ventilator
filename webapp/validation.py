@@ -2,6 +2,7 @@ import functools
 
 from .models import User
 
+
 def validate_signup(data, user_type, ValidationError):
     required_fields = {}
     required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address']

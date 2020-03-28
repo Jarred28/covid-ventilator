@@ -2,6 +2,7 @@ from datetime import datetime
 import csv
 import io
 
+from . import notifications
 from django.http import Http404, HttpResponseRedirect
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -13,7 +14,7 @@ from rest_framework import status
 
 from webapp.models import Hospital, Order, User, Ventilator
 from webapp.permissions import HospitalPermission, SystemOperatorPermission
-from webapp.serializers import VentilatorSerializer
+from webapp.serializers import SignupSerializer, VentilatorSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -56,7 +57,7 @@ class OrderInfo(APIView):
             time_submitted=datetime.now(),
             active=True,
             auto_generated=False,
-            hospital=hospital
+            hospital=hospital,
         )
         order.save()
         ventilator_orders = list(Order.objects.filter(hospital=hospital))
@@ -141,4 +142,25 @@ class SystemSettings(APIView):
 
     def post(self, request, format=None):
         ## This is the algorithm endpoint
-        pass
+        ## Replace RHS with the algorithm call once linked in. Format is sender, amount, receiver.
+
+        allocation_list = [[Hospital.objects.first(), 1, Hospital.objects.last()]]
+        batch_id = ShipmentBatches.first().max_batch_id
+        for allocation in allocation_list:
+            sender = allocation[0]
+            amount = allocation[1]
+            receiver = allocation[2]
+            requested_ventilators = Ventilator.objects.filter(current_hospital=sender).filter(state=Ventilator.State.Available.name)[:amount]
+            # Extract latest order. This assumes that a hospital only has 1 active order at a time.
+            order = Order.objects.filter(hospital=receiver).filter(active=True).last()
+            batch_id = batch_id + 1
+            for ventilator in requested_ventilators:
+                ventilator.state = Ventilator.State.Requested.name
+                ventilator.order = order
+                ventilator.batch_id = batch_id
+                ventilator.save()
+            notifications.send_ventilator_notification(sender, receiver, amount)
+        shipment_batch = ShipmentBatches.first()
+        shipment_batch.max_batch_id = batch_id
+        shipment_batch.save()
+        return Response({})

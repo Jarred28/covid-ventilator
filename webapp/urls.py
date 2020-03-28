@@ -9,6 +9,7 @@ urlpatterns = [
     path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
     path('order/', views.OrderInfo.as_view(), name='order'),
     path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
+    path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials'),
     path('system/', views.SystemSettings.as_view(), name='sys-settings'),
 ]
 
