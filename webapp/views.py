@@ -14,7 +14,7 @@ from rest_framework import status
 
 from webapp.models import Hospital, Order, User, Ventilator
 from webapp.permissions import HospitalPermission, SystemOperatorPermission
-from webapp.serializers import VentilatorSerializer
+from webapp.serializers import SignupSerializer, VentilatorSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -25,6 +25,20 @@ def home(request, format=None):
         return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
 
+class RequestCredentials(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'registration/request_credentials.html'
+
+    def get(self, request):
+        serializer = SignupSerializer()
+        return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+        serializer.save()
+        return HttpResponseRedirect(reverse('login', request=request))
 
 class OrderInfo(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -37,10 +51,10 @@ class OrderInfo(APIView):
 
     def post(self, request, hospital, format=None):
         order = Order(
-            num_requested=request.data['num_requested'], 
-            time_submitted=datetime.now(), 
-            active=True, 
-            auto_generated=False, 
+            num_requested=request.data['num_requested'],
+            time_submitted=datetime.now(),
+            active=True,
+            auto_generated=False,
             hospital=Hospital.objects.get(pk=hospital)
         )
         order.save()
