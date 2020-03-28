@@ -39,6 +39,8 @@ class Hospital(models.Model):
     reputation_score = models.FloatField(blank=True, null=True)
     hospital_group = models.ForeignKey(HospitalGroup, on_delete=models.CASCADE, blank=False, null=False)
     within_group_only = models.BooleanField(blank=False, null=False, default=False)
+    contribution = models.IntegerField(blank=False, null=False, default=0)
+    projected_load = models.IntegerField(blank=False, null=False, default=0)
 
 
 class Supplier(models.Model):
@@ -77,3 +79,10 @@ class Ventilator(models.Model):
 
 class ShipmentBatches(models.Model):
     max_batch_id = models.IntegerField(blank=False, null=False)
+
+class SystemParameters(models.Model):
+    destination_reserve = models.FloatField(blank=False, null=False, default=0.0)
+    strategic_reserve = models.FloatField(blank=False, null=False, default=0.0)
+    reputation_score_weight = models.FloatField(blank=False, null=False, default=34.0)
+    contribution_weight = models.FloatField(blank=False, null=False, default=33.0)
+    projected_load_weight = models.FloatField(blank=False, null=False, default=33.0)
