@@ -27,20 +27,24 @@ def allocate(orders, htov, htog):
         requesting_hospital = order['hospital']
         requesting_hospital_group = htog[requesting_hospital]
         for sender in htov:
-            #if potential sender in the same group as customer or if sender can send anywhere
-            if requesting_hospital_group == sender['group'] or (not sender['only_within_group']):
-                # more demand than supply
-                #create allocation with entire supply, set supply to 0
-                if order['num_requested'] > sender['num_ventilators'] and sender['num_ventilators'] > 0:
-                    allocs.append((sender['hospital'], sender['num_ventilators'], requesting_hospital))
-                    order['num_requested'] -= sender['num_ventilators']
-                    sender['num_ventilators'] = 0
-                else:
-                    #more supply than num_requested
-                    #create allocation with amount demanded, adjust supply
-                    allocs.append((sender['hospital'], order['num_requested'], requesting_hospital))
-                    sender['num_ventilators'] -= order['num_requested']
-                    break #exit inner loop since order has been fulfilled
+            if sender["num_ventilators"] <= 0:
+                continue
+
+            if sender["only_within_group"] and not requesting_hospital_group == sender['group']:
+                continue
+
+            # more demand than supply
+            # create allocation with entire supply, set supply to 0
+            if order['num_requested'] > sender['num_ventilators']:
+                allocs.append((sender['hospital'], sender['num_ventilators'], requesting_hospital))
+                order['num_requested'] -= sender['num_ventilators']
+                sender['num_ventilators'] = 0
+            #more supply than num_requested
+            #create allocation with amount demanded, adjust supply
+            else:
+                allocs.append((sender['hospital'], order['num_requested'], requesting_hospital))
+                sender['num_ventilators'] -= order['num_requested']
+                break #exit inner loop since order has been fulfilled
 
     return allocs
 
