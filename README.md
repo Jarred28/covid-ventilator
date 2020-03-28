@@ -7,7 +7,7 @@ This is an app.
 /webapp/views.py - contains control for UI  
 /webapp/models.py - database schema  
 /webapp/urls.py - attach urls to views  
-/webapp/admin.py - code to produce admin site 
+/webapp/admin.py - code to produce admin site   
 /webapp/permissions.py - user type permissions  
 /webapp/validation.py - code to validate forms  
 /templates - html templates  
