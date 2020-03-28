@@ -4,9 +4,13 @@ This is an app.
 ## Directory Structure
 /env - virtualenv directory  
 /covid/settings.py - contains setting info like directory structure, etc.  
-/webapp/views - contains control for UI  
+/webapp/views.py - contains control for UI  
 /webapp/models.py - database schema  
 /webapp/urls.py - attach urls to views  
+/webapp/admin.py - code to produce admin site 
+/webapp/permissions.py - user type permissions  
+/webapp/validation.py - code to validate forms  
+/templates - html templates  
 
 ## Installation / Run instructions (on localhost)
 1) clone the repo
