@@ -24,23 +24,39 @@ def home(request, format=None):
         return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
 
+class RequestCredentials(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'registration/request_credentials.html'
+
+    def get(self, request):
+        serializer = SignupSerializer()
+        return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+        serializer.save()
+        return HttpResponseRedirect(reverse('login', request=request))
 
 class OrderInfo(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
     template_name = 'hospital/order.html'
 
-    def get(self, request, hospital, format=None):
+    def get(self, request, format=None):
+        hospital = Hospital.objects.get(user=request.user)
         ventilator_orders = list(Order.objects.filter(hospital=hospital))
         return Response({'orders': ventilator_orders})
 
-    def post(self, request, hospital, format=None):
+    def post(self, request, format=None):
+        hospital = Hospital.objects.get(user=request.user)
         order = Order(
-            num_requested=request.data['num_requested'], 
-            time_submitted=datetime.now(), 
-            active=True, 
-            auto_generated=False, 
-            hospital=Hospital.objects.get(pk=hospital)
+            num_requested=request.data['num_requested'],
+            time_submitted=datetime.now(),
+            active=True,
+            auto_generated=False,
+            hospital=hospital
         )
         order.save()
         ventilator_orders = list(Order.objects.filter(hospital=hospital))
