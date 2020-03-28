@@ -1,6 +1,12 @@
 import functools
 
-def validate_signup(data, user_type, required_fields, ValidationError):
+def validate_signup(data, user_type, ValidationError):
+    required_fields = {}
+    required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address']
+    required_fields[User.UserType.Supplier.name] = ['supplier_name', 'supplier_address']
+    required_fields[User.UserType.HospitalGroup.name] = ['hospitalgroup_name']
+    required_fields[User.UserType.SystemOperator.name] = ['systemoperator_name']
+
     if not user_type:
         return
 
