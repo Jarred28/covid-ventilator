@@ -3,7 +3,17 @@
 		"model": "webapp.user",
 		"pk": 1,
 		"fields": {
-		  "user_type": "HospitalGroup"
+		  "user_type": "HospitalGroup",
+		  "email": "covid19ventilators@gmail.com"
+		}
+	},
+	{
+		"model": "webapp.user",
+		"pk": 2,
+		"fields": {
+		  "user_type": "Hospital",
+		  "email": "rahulssheth1@gmail.com",
+		  "username": "test_user"
 		}
 	},
 	{
@@ -23,6 +33,27 @@
 			"user": 1,
 			"hospital_group": 1,
 			"within_group_only": "False"
+		}
+	},
+	{
+		"model": "webapp.hospital",
+		"pk": 2,
+		"fields": {
+			"name": "Hospital B",
+			"address": "124 Test Lane",
+			"user": 2,
+			"hospital_group": 1,
+			"within_group_only": "False"
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 1,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
 		}
 	}
 ]
