@@ -1,8 +1,9 @@
+import functools
+
 from django.core.mail import send_mail
 from rest_framework import serializers
-from webapp.models import Ventilator
 
-from .models import HospitalGroup, User
+from .models import HospitalGroup, SystemParameters, Ventilator, User
 from .validation import validate_signup
 from covid.settings import DEFAULT_EMAIL
 
@@ -11,6 +12,38 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Ventilator
         fields = ['id', 'model_num', 'state']
+
+
+class SystemParametersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SystemParameters
+        fields = ['destination_reserve', 'strategic_reserve',
+            'reputation_score_weight', 'contribution_weight',
+            'projected_load_weight']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.weight_params = ['reputation_score_weight', 'contribution_weight',
+            'projected_load_weight']
+        for field in self.fields:
+            if field in self.weight_params:
+                self.fields[field].section = 'weight'
+            else:
+                self.fields[field].section = ''
+
+    def validate(self, data):
+        sum = functools.reduce(
+            lambda a, b: a + data[b],
+            self.weight_params,
+            0
+        )
+        if sum != 100.0:
+            raise serializers.ValidationError('Weights must add up to 100%.')
+        for value in data.values():
+            if value < 0.0 or value > 100.0 :
+                raise serializers.ValidationError('Parameter values must be in the range [0.0, 100.0]')
+        return data
+
 
 class SignupSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=100, required=True)

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 
 
@@ -86,3 +86,12 @@ class SystemParameters(models.Model):
     reputation_score_weight = models.FloatField(blank=False, null=False, default=34.0)
     contribution_weight = models.FloatField(blank=False, null=False, default=33.0)
     projected_load_weight = models.FloatField(blank=False, null=False, default=33.0)
+
+    @staticmethod
+    @transaction.atomic
+    def getInstance():
+        params = SystemParameters.objects.first()
+        if not params:
+            params = SystemParameters()
+            params.save()
+        return params

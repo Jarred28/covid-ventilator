@@ -11,8 +11,8 @@ urlpatterns = [
     path('ventilators/approve/<int:batchid>/', views.approve_ventilators, name='ventilator-approve'),
     path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
     path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials'),
-    path('system/', views.SystemSettings.as_view(), name='sys-settings'),
-
+    path('system/dashboard/', views.Dashboard.as_view(), name='sys-dashboard'),
+    path('system/settings/', views.SystemSettings.as_view(), name='sys-settings'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
   <link rel="stylesheet" href='{% static "hospital/css/style.css" %}'>
 </head>
-<body style='text-align:center; background-color: #5BB9B8;'>
+<body style='text-align:center; background-color:#5BB9B8;'>
   <nav style='padding:20px; text-align:right; width=100%; background-color:blue; '>
     {% if user.is_authenticated %}
       {% if user.user_type == 'Hospital' %}
@@ -15,7 +15,8 @@
         <a href="{% url 'ventilator-list' %}" style='color:white; margin:10px;'>Ventilators</a>
       {% endif %}
       {% if user.user_type == 'SystemOperator' %}
-        <a href="{% url 'sys-settings' %}" style='color:white; margin:10px;'>Dashboard</a>
+        <a href="{% url 'sys-dashboard' %}" style='color:white; margin:10px;'>Dashboard</a>
+        <a href="{% url 'sys-settings' %}" style='color:white; margin:10px;'>Settings</a>
       {% endif %}
     <a href="{% url 'logout' %}" style='color:white; margin:10px; '>Log out</a>
     {% endif %}

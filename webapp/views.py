@@ -16,9 +16,9 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, Order, User, Ventilator, ShipmentBatches
+from webapp.models import Hospital, Order, User, Ventilator, ShipmentBatches, SystemParameters
 from webapp.permissions import HospitalPermission, SystemOperatorPermission
-from webapp.serializers import SignupSerializer, VentilatorSerializer
+from webapp.serializers import SignupSerializer, SystemParametersSerializer, VentilatorSerializer
 
 
 @api_view(['GET'])
@@ -27,7 +27,7 @@ def home(request, format=None):
     if request.user.user_type == User.UserType.Hospital.name:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
     if request.user.user_type == User.UserType.SystemOperator.name:
-        return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
+        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RequestCredentials(APIView):
@@ -36,12 +36,12 @@ class RequestCredentials(APIView):
 
     def get(self, request):
         serializer = SignupSerializer()
-        return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'serializer': serializer, "style": {"template_pack": "rest_framework/inline/"}})
+            return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
         serializer.save()
         return HttpResponseRedirect(reverse('login', request=request))
 
@@ -109,7 +109,7 @@ class VentilatorList(APIView):
             for column in csv.reader(io_string, delimiter=',', quotechar="|"):
                 ventilator = Ventilator(
                     model_num=column[0], state=column[1],
-                    owning_hospital=Hospital.objects.get(user=request.user), 
+                    owning_hospital=Hospital.objects.get(user=request.user),
                     current_hospital=Hospital.objects.get(user=request.user)
                 )
                 ventilator.save()
@@ -119,7 +119,7 @@ class VentilatorList(APIView):
 
             ventilator = Ventilator(
                 model_num=request.data["model_num"], state=request.data["state"],
-                owning_hospital=Hospital.objects.get(user=request.user), 
+                owning_hospital=Hospital.objects.get(user=request.user),
                 current_hospital=Hospital.objects.get(user=request.user)
             )
             ventilator.save()
@@ -173,7 +173,7 @@ class VentilatorDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SystemSettings(APIView):
+class Dashboard(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&SystemOperatorPermission]
     template_name = 'sysoperator/dashboard.html'
@@ -225,3 +225,18 @@ class SystemSettings(APIView):
         shipment_batch.save()
 
         return Response()
+
+class SystemSettings(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemOperatorPermission]
+    template_name = 'sysoperator/settings.html'
+
+    def get(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance())
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
+    def post(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance(), data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
