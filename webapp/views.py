@@ -16,8 +16,8 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, Order, User, Ventilator, ShipmentBatches, SystemParameters
-from webapp.permissions import HospitalPermission, SystemOperatorPermission
+from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, ShipmentBatches, SystemParameters
+from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemOperatorPermission
 from webapp.serializers import SignupSerializer, SystemParametersSerializer, VentilatorSerializer
 
 
@@ -28,7 +28,10 @@ def home(request, format=None):
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
     if request.user.user_type == User.UserType.SystemOperator.name:
         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+    if request.user.user_type == User.UserType.HospitalGroup.name:
+        return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -44,6 +47,7 @@ class RequestCredentials(APIView):
             return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
         serializer.save()
         return HttpResponseRedirect(reverse('login', request=request))
+
 
 class OrderInfo(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -68,6 +72,7 @@ class OrderInfo(APIView):
         ventilator_orders = list(Order.objects.filter(hospital=hospital))
         return Response({'orders': ventilator_orders})
 
+
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
@@ -75,16 +80,6 @@ class VentilatorList(APIView):
 
     def get(self, request, format=None):
         ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user))
-
-        # If any ventilators are requested, let the user know
-        requested_ventilators = ventilators.filter(state=Ventilator.State.Requested.name)
-        if requested_ventilators:
-            # Present notifications by batch as opposed to by individual ventilators
-            batchid_to_ventilators = defaultdict(list)
-            for ventilator in requested_ventilators:
-                batchid_to_ventilators[ventilator.batch_id].append(ventilator)
-            for batchid, vents in batchid_to_ventilators.items():
-                messages.add_message(request, messages.INFO, "%d ventilator(s) are requested" % len(vents), str(batchid))
 
         # If any ventilators are InTransit, let the user know
         in_transit_ventilators = ventilators.filter(state=Ventilator.State.InTransit.name)
@@ -130,9 +125,10 @@ class VentilatorList(APIView):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated&HospitalPermission])
+@permission_classes([IsAuthenticated])
+@permission_classes([HospitalPermission|HospitalGroupPermission])
 def approve_ventilators(request, batchid, format=None):
-    ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(batch_id=batchid)
+    ventilators = Ventilator.objects.filter(batch_id=batchid)
     for vent in ventilators:
         if vent.state == Ventilator.State.Requested.name:
             vent.state = Ventilator.State.InTransit.name
@@ -140,7 +136,7 @@ def approve_ventilators(request, batchid, format=None):
         elif vent.state == Ventilator.State.InTransit.name:
             vent.state = Ventilator.State.Available.name
         vent.save()
-    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    return HttpResponseRedirect(reverse('home', request=request, format=format))
 
 
 class VentilatorDetail(APIView):
@@ -226,6 +222,7 @@ class Dashboard(APIView):
 
         return Response()
 
+
 class SystemSettings(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&SystemOperatorPermission]
@@ -240,3 +237,35 @@ class SystemSettings(APIView):
         if serializer.is_valid():
             serializer.save()
         return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
+
+class HospitalCEO(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalGroupPermission]
+    template_name = 'hospital_group/dashboard.html'
+
+    def get(self, request, format=None):
+        hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(user=request.user)).all()
+        requested_ventilators = Ventilator.objects.filter(
+            state=Ventilator.State.Requested.name
+        ).filter(
+            current_hospital__in=[hospital.id for hospital in hospitals]
+        )
+        
+        # If any ventilators are requested, let the user know
+        if requested_ventilators:
+            # Present notifications by batch as opposed to by individual ventilators
+            batchid_to_ventilators = defaultdict(list)
+            for ventilator in requested_ventilators:
+                batchid_to_ventilators[ventilator.batch_id].append(ventilator)
+            for batchid, vents in batchid_to_ventilators.items():
+                requesting_hospital = vents[0].order.hospital.name
+                sending_hospital = vents[0].owning_hospital.name
+                messages.add_message(
+                    request,
+                    messages.INFO,
+                    "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
+                    str(batchid)
+                )
+
+        return Response()

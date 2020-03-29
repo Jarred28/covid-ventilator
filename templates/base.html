@@ -18,6 +18,9 @@
         <a href="{% url 'sys-dashboard' %}" style='color:white; margin:10px;'>Dashboard</a>
         <a href="{% url 'sys-settings' %}" style='color:white; margin:10px;'>Settings</a>
       {% endif %}
+      {% if user.user_type == 'HospitalGroup' %}
+        <a href="{% url 'ceo-dashboard' %}" style='color:white; margin:10px;'>Dashboard</a>
+      {% endif %}
     <a href="{% url 'logout' %}" style='color:white; margin:10px; '>Log out</a>
     {% endif %}
   </nav>

@@ -13,6 +13,7 @@ urlpatterns = [
     path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials'),
     path('system/dashboard/', views.Dashboard.as_view(), name='sys-dashboard'),
     path('system/settings/', views.SystemSettings.as_view(), name='sys-settings'),
+    path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

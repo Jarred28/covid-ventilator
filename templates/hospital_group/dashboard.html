@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load rest_framework %}
+
+{% block content %}
+
+<h1><b>Dashboard</b></h1>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li>{{ message }}</li>
+    <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST">
+      {% csrf_token %}
+      <button type='submit'>Approve</button>
+    </form>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% endblock %}
