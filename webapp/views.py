@@ -191,7 +191,7 @@ def request_reserve(request, order_id, format=None):
         ventilator.batch_id = batch_id
         ventilator.save()
         # Need to send notification to receiving hospital.
-    notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, allowed_ventilators.count())
+    notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, requisitioned_ventilators.count())
     ShipmentBatches.update(batch_id)
 
 @api_view(['POST'])
