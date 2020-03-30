@@ -3,14 +3,16 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils.crypto import get_random_string
 
 from .models import HospitalGroup, User
+from .utilities import get_hospital_group_choices
 from .validation import validate_signup
+
 
 class CovidUserCreationForm(UserCreationForm):
     hospital_name = forms.CharField(max_length=100, required=False, label='Name')
     hospital_address = forms.CharField(max_length=100, required=False, label='Address')
     hospital_within_group_only = forms.BooleanField(required=False, label='Allow ventialator transfers only within my hospital group?')
     hospital_hospitalgroup = forms.ChoiceField(
-        choices=[(hg.id, hg.name) for hg in HospitalGroup.objects.all()],
+        choices=get_hospital_group_choices(),
         required=False,
         label='Hospital Group')
     supplier_name = forms.CharField(max_length=100, required=False, label='Name')
@@ -32,6 +34,8 @@ class CovidUserCreationForm(UserCreationForm):
         self.fields['password1'].widget.attrs['autocomplete'] = 'off'
         self.fields['password2'].widget.attrs['autocomplete'] = 'off'
         self.fields['user_type'].required = True
+        # need to refresh the choices so don't have stale results
+        self.fields['hospital_hospitalgroup'].choices = get_hospital_group_choices()
 
     def clean(self):
         data = self.cleaned_data

@@ -67,7 +67,6 @@ class OrderInfo(APIView):
         for sent_order in all_sent_ventilator_orders:
             # Replacing num_requested with actual amt shipped for copy of object for purposes of frontend.
             ventilators = sent_order.ventilator_set.all()
-            print(ventilators)
             if ventilators.count() == 0:
                 continue
             sent_order.num_requested = ventilators.count()
@@ -82,10 +81,9 @@ class OrderInfo(APIView):
                     arrived_reserve_orders.append(sent_order)
                 else:
                     arrived_non_reserve_orders.append(sent_order)
-        print(arrived_reserve_orders)
         return Response({
-                'demand_orders': demand_ventilator_orders, 
-                'transit_orders': transit_orders, 
+                'demand_orders': demand_ventilator_orders,
+                'transit_orders': transit_orders,
                 'arrived_reserve_orders': arrived_reserve_orders,
                 'arrived_non_reserve_orders': arrived_non_reserve_orders
         })
@@ -123,8 +121,8 @@ class OrderInfo(APIView):
                 else:
                     arrived_non_reserve_orders.append(sent_order)
         return Response({
-                'demand_orders': demand_ventilator_orders, 
-                'transit_orders': transit_orders, 
+                'demand_orders': demand_ventilator_orders,
+                'transit_orders': transit_orders,
                 'arrived_reserve_orders': arrived_reserve_orders,
                 'arrived_non_reserve_orders': arrived_non_reserve_orders
         })

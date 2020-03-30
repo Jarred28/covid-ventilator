@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from rest_framework import serializers
 
 from .models import HospitalGroup, SystemParameters, Ventilator, User
+from .utilities import get_hospital_group_choices
 from .validation import validate_signup
 from covid.settings import DEFAULT_EMAIL
 
@@ -56,7 +57,7 @@ class SignupSerializer(serializers.Serializer):
     hospital_address = serializers.CharField(max_length=100, required=False, label='Address')
     hospital_within_group_only = serializers.BooleanField(required=False, label='Allow ventilator transfers only within my hospital group?')
     hospital_hospitalgroup = serializers.ChoiceField(
-        choices=[(hg.id, hg.name) for hg in HospitalGroup.objects.all()],
+        choices=get_hospital_group_choices(),
         required=False,
         label='Hospital Group')
     supplier_name = serializers.CharField(max_length=100, required=False, label='Name')
@@ -66,6 +67,8 @@ class SignupSerializer(serializers.Serializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # refresh results of query so don't serve stale results
+        self.fields['hospital_hospitalgroup'].choices = get_hospital_group_choices()
         sections = {}
         sections[''] = ['username', 'email', 'user_type']
         sections['Hospital'] = ['hospital_name', 'hospital_address', 'hospital_within_group_only', 'hospital_hospitalgroup']
