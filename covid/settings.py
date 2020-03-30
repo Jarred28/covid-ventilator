@@ -29,6 +29,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'covid-ventilator-app.herokuapp.com',
     'localhost',
+    'covid-ex.com',
+    '127.0.0.1',
 ]
 
 
