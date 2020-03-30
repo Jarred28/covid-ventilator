@@ -4,7 +4,8 @@
 		"pk": 1,
 		"fields": {
 		  "user_type": "HospitalGroup",
-		  "email": "covid19ventilators@gmail.com"
+		  "email": "covid@gmail.com",
+		  "username": "test_user_3"
 		}
 	},
 	{
@@ -14,6 +15,24 @@
 		  "user_type": "Hospital",
 		  "email": "rahulssheth1@gmail.com",
 		  "username": "test_user"
+		}
+	},
+	{
+		"model": "webapp.user",
+		"pk": 3,
+		"fields": {
+		  "user_type": "Hospital",
+		  "email": "covid19ventilators@gmail.com",
+		  "username": "test_user_2"
+		}
+	},
+	{
+		"model": "webapp.user",
+		"pk": 4,
+		"fields": {
+			"user_type": "SystemOperator",
+			"email": "replace_email@gmail.com",
+			"username": "sysAdmin"
 		}
 	},
 	{
@@ -30,7 +49,9 @@
 		"fields": {
 			"name": "Hospital A",
 			"address": "123 Test Lane",
-			"user": 1,
+			"user": 2,
+			"contribution": 0,
+			"projected_load": 0,
 			"hospital_group": 1,
 			"within_group_only": "False"
 		}
@@ -41,7 +62,9 @@
 		"fields": {
 			"name": "Hospital B",
 			"address": "124 Test Lane",
-			"user": 2,
+			"user": 3,
+			"contribution": 0,
+			"projected_load": 0,
 			"hospital_group": 1,
 			"within_group_only": "False"
 		}
@@ -54,6 +77,111 @@
 			"model_num": "test_model",
 			"owning_hospital": 1,
 			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 2,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 3,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 4,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 5,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 6,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 7,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 8,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 9,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.ventilator",
+		"pk": 10,
+		"fields": {
+			"state": "Available",
+			"model_num": "test_model",
+			"owning_hospital": 1,
+			"current_hospital": 1
+		}
+	},
+	{
+		"model": "webapp.systemparameters",
+		"pk": 1,
+		"fields": {
+			"destination_reserve": 10
+		}
+	},
+	{
+		"model": "webapp.systemoperator",
+		"pk": 1,
+		"fields": {
+			"name": "admin",
+			"user": 4
 		}
 	}
 ]

@@ -51,7 +51,8 @@ class Supplier(models.Model):
 
 class Order(models.Model):
     num_requested = models.IntegerField(null=False, blank=False)
-    hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=False, blank=False)
+    requesting_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=False, blank=False, related_name='requesting_hospital')
+    sending_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=True, blank=True, related_name='sending_hospital')
     active = models.BooleanField(null=False, blank=False, default=True)
     time_submitted = models.DateTimeField(null=False, blank=False, auto_now_add=True)
     auto_generated = models.BooleanField(blank=False, null=False, default=False)
@@ -63,6 +64,7 @@ class Ventilator(models.Model):
         Requested = 'Requested'
         InTransit = 'InTransit'
         InUse = 'InUse'
+        Reserve = 'Reserve'
 
     model_num = models.CharField(max_length=128)
     state = models.CharField(

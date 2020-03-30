@@ -17,3 +17,13 @@ def send_received_notification(sender, recipient, amount):
 	subject = "Covid-19 Ventilators Notification - Received"
 	body = "Hello {0}, {1} has received your {2} ventilators.".format(sender.name, recipient.name, amount)
 	send_mail(subject, body, DEFAULT_EMAIL, [recipient.user.email])
+
+def send_requisitioned_email(sender, recipient, amount):
+	subject = "Covid-19 Ventilators Notification - Requisitioned"
+	body = "Hello {0}, unfortunately {1} has had a recent surge in cases and needs the {2} ventilators it had on reserve at your location. Please ship it back to them as soon as possible.".format(recipient.name, sender.name, amount)
+	send_mail(subject, body, DEFAULT_EMAIL, [recipient.user.email])
+
+def send_deployable_email(sender, recipient, amount):
+	subject = "Covid-19 Ventilators Notification - Deployable"
+	body = "Hello {0}, {1} has determined that it will not see a spike in cases in the near future and is allowing you to deploy the {2} ventilators you had on reserve.".format(recipient.name, sender.name, amount)
+	send_mail(subject, body, DEFAULT_EMAIL, [recipient.user.email])
