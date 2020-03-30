@@ -78,7 +78,27 @@ class Ventilator(models.Model):
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, blank=True, null=True)
 
 class ShipmentBatches(models.Model):
-    max_batch_id = models.IntegerField(blank=False, null=False)
+    max_batch_id = models.IntegerField(blank=False, null=False, default=0)
+
+    @staticmethod
+    @transaction.atomic
+    def getInstance():
+        batch = ShipmentBatches.objects.first()
+        if not batch:
+            batch = ShipmentBatches()
+            batch.save()
+        return batch
+
+
+    @staticmethod
+    @transaction.atomic
+    def update(new_id):
+        batch = ShipmentBatches.getInstance()
+        if batch.max_batch_id > new_id:
+            raise Exception("New batch_id is lower than current batch_id")
+        batch.max_batch_id = new_id
+        batch.save()
+
 
 class SystemParameters(models.Model):
     destination_reserve = models.FloatField(blank=False, null=False, default=0.0)

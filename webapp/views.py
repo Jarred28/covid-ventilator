@@ -16,6 +16,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
+
 from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, ShipmentBatches, SystemParameters
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemOperatorPermission
 from webapp.serializers import SignupSerializer, SystemParametersSerializer, VentilatorSerializer
@@ -182,25 +183,20 @@ class Dashboard(APIView):
         active_orders = Order.objects.filter(active=True)
         hospitals = Hospital.objects.all()
 
-        orders = [{
-            "hospital": order.hospital.id,
-            "num_requested": order.num_requested,
-        } for order in active_orders]
-        htov = [{
-            "hospital": hospital.id,
-            "group": hospital.hospital_group.id,
-            "reputation": hospital.reputation_score,  # TODO: Reputation score may sometimes be None
-            "only_within_group": hospital.within_group_only,
-            "num_ventilators": Ventilator.objects.filter(current_hospital=hospital.id).filter(state=Ventilator.State.Available.name).count()
-            } for hospital in hospitals]
-        htog = {hospital.id: hospital.hospital_group.id for hospital in hospitals}
-        allocations = algorithm.allocate(orders, htov, htog)  # type: list[tuple[int, int, int]]
+        hospitals_of_orders = [Hospital.objects.filter(id = order.hospital.id)[0] for order in active_orders]
+        orders = list(zip(active_orders, hospitals_of_orders))
 
-        if ShipmentBatches.objects.count() == 0:
-            shipment_batch = ShipmentBatches(max_batch_id=0)
-            shipment_batch.save()
+        num_ventilators = [Ventilator.objects.filter(current_hospital=hospital.id).filter(state=Ventilator.State.Available.name).count() for hospital in hospitals]
+        htov = list(zip(hospitals, num_ventilators))
 
-        batch_id = ShipmentBatches.objects.first().max_batch_id
+        sys_params = SystemParameters.getInstance()
+
+
+        allocations = algorithm.allocate(orders, htov, sys_params)  # type: list[tuple[int, int, int]]
+
+
+
+        batch_id = ShipmentBatches.getInstance().max_batch_id
         for allocation in allocations:
             sender, amount, receiver = allocation[0], allocation[1], allocation[2]
             order = Order.objects.filter(hospital=receiver).filter(active=True).last()
@@ -214,11 +210,10 @@ class Dashboard(APIView):
 
             order.active = False
             order.save()
-            # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
+            notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
 
-        shipment_batch = ShipmentBatches.objects.first()
-        shipment_batch.max_batch_id = batch_id
-        shipment_batch.save()
+
+        ShipmentBatches.update(batch_id)
 
         return Response()
 
@@ -251,7 +246,7 @@ class HospitalCEO(APIView):
         ).filter(
             current_hospital__in=[hospital.id for hospital in hospitals]
         )
-        
+
         # If any ventilators are requested, let the user know
         if requested_ventilators:
             # Present notifications by batch as opposed to by individual ventilators
