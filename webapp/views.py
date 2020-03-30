@@ -203,7 +203,7 @@ def deploy_reserve(request, order_id, format=None):
         ventilator.state = Ventilator.State.Available.name
         ventilator.save()
     # Need to send emails to receiving hospital.
-    notifications.send_deployable_email(order.sending_hospital, order.receiving_hospital, allowed_ventilators.count())
+    notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, allowed_ventilators.count())
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
