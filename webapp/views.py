@@ -193,7 +193,7 @@ def request_reserve(request, order_id, format=None):
         # Need to send notification to receiving hospital.
     notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, requisitioned_ventilators.count())
     ShipmentBatches.update(batch_id)
-    return Response()
+    return HttpResponseRedirect(reverse('order', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
@@ -205,7 +205,8 @@ def deploy_reserve(request, order_id, format=None):
         ventilator.save()
     # Need to send emails to receiving hospital.
     notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, allowed_ventilators.count())
-    return Response()
+    return HttpResponseRedirect(reverse('order', request=request))
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @permission_classes([HospitalPermission|HospitalGroupPermission])
