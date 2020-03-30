@@ -210,23 +210,29 @@ def deploy_reserve(request, order_id, format=None):
 @permission_classes([HospitalPermission|HospitalGroupPermission])
 def approve_ventilators(request, batchid, format=None):
     ventilators = Ventilator.objects.filter(batch_id=batchid)
-    reserve_amt = 0
-    # This means it wasn't a requisition
-    if not ventilators.first().order.sending_hospital == Hospital.objects.get(user=request.user):
-        reserve_amt = SystemParameters.getInstance().destination_reserve / 100  * len(ventilators)
-    reserve_ventilator_count = 0
-    for vent in ventilators:
-        if vent.state == Ventilator.State.Requested.name:
-            vent.state = Ventilator.State.InTransit.name
-            vent.current_hospital = vent.order.requesting_hospital
-        elif vent.state == Ventilator.State.InTransit.name:
-            if reserve_ventilator_count < reserve_amt:
-                vent.state = Ventilator.State.Reserve.name
-                reserve_ventilator_count += 1
-            else:
-                vent.state = Ventilator.State.Available.name
-        vent.save()
-    return HttpResponseRedirect(reverse('home', request=request, format=format))
+    # TODO(hacky): HospitalGroup and Hospital should not be using the same endpoint
+    # when they're using it for different functionalities
+    if request.user.user_type == User.UserType.Hospital.name:
+        reserve_amt = 0
+        # This means it wasn't a requisition
+        if not ventilators.first().order.sending_hospital == Hospital.objects.get(user=request.user):
+            reserve_amt = SystemParameters.getInstance().destination_reserve / 100  * len(ventilators)
+        reserve_ventilator_count = 0
+        for vent in ventilators:
+            if vent.state == Ventilator.State.InTransit.name:
+                if reserve_ventilator_count < reserve_amt:
+                    vent.state = Ventilator.State.Reserve.name
+                    reserve_ventilator_count += 1
+                else:
+                    vent.state = Ventilator.State.Available.name
+            vent.save()
+    elif request.user.user_type == User.UserType.HospitalGroup.name:
+        for vent in ventilators:
+            if vent.state == Ventilator.State.Requested.name:
+                vent.state = Ventilator.State.InTransit.name
+                vent.current_hospital = vent.order.requesting_hospital
+            vent.save()
+    return HttpResponseRedirect(reverse('home', request=request, format=format))    
 
 
 class VentilatorDetail(APIView):
