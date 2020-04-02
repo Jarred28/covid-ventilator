@@ -7,14 +7,17 @@
 {% endblock %}
 
 {% block content %}
-
-<h1>Dashboard</h1>
-<div class="form">
-  <h2>Run Algorithm</h2>
-  <form action="{% url 'sys-dashboard' %}" method="POST">
-      {% csrf_token %}
-      <input class='button' type="submit" value="Execute">
-  </form>
+<div class="card">
+  <div class="card-body">
+    <h1 class="card-title">Dashboard</h1>
+    <div class="form">
+      <h2>Run Algorithm</h2>
+      <form action="{% url 'sys-dashboard' %}" method="POST">
+        {% csrf_token %}
+        <button class='btn btn-primary' type="submit">Execute</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 {% endblock %}

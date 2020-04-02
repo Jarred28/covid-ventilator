@@ -33,6 +33,16 @@ body {
   border-right: 1px solid #F4F5F7;
   top: 64px;
   bottom: 0;
+  padding: 32px 16px;
+}
+
+.covid-sidebar a {
+  font-size: 16px;
+  height: 60px;
+  line-height: 60px;
+  padding: 0 0 0 20px;
+  color: #172B4D;
+  border-bottom: 1px solid #F4F5F7;
 }
 
 .main-content {
@@ -40,6 +50,10 @@ body {
   margin-left: 256px;
   height: 100%;
   background-color: #FAFBFC;
+}
+
+.main-content > div {
+  margin: 32px;
 }
 
 p {
