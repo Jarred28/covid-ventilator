@@ -1,15 +1,20 @@
 {% if user.is_authenticated %}
 <nav class="nav bg-white flex-column covid-sidebar">
   {% if user.user_type == 'Hospital' %}
-  <a class="nav-link" href="{% url 'order' %}">Orders</a>
-  <a class="nav-link" href="{% url 'ventilator-list' %}">Ventilators</a>
+  {% url 'order' as order_url %}
+  <a class="nav-link {% if request.get_full_path == order_url %}active{% endif %}" href="{{ order_url }}">Orders</a>
+  {% url 'ventilator-list' as ventilator_list_url %}
+  <a class="nav-link {% if request.get_full_path == ventilator_list_url %}active{% endif %}" href="{{ ventilator_list_url }}">Ventilators</a>
   {% endif %}
   {% if user.user_type == 'SystemOperator' %}
-  <a class="nav-link" href="{% url 'sys-dashboard' %}">Dashboard</a>
-  <a class="nav-link" href="{% url 'sys-settings' %}">Settings</a>
+  {% url 'sys-dashboard' as sys_dashboard_url %}
+  <a class="nav-link {% if request.get_full_path == sys_dashboard_url %}active{% endif %}" href="{{ sys_dashboard_url }}">Dashboard</a>
+  {% url 'sys-settings' as sys_settings_url %}
+  <a class="nav-link {% if request.get_full_path == sys_settings_url %}active{% endif %}" href="{{ sys_settings_url }}">Settings</a>
   {% endif %}
   {% if user.user_type == 'HospitalGroup' %}
-  <a class="nav-link" href="{% url 'ceo-dashboard' %}">Dashboard</a>
+  {% url 'ceo-dashboard' as ceo_dashboard_url %}
+  <a class="nav-link {% if request.get_full_path == ceo_dashboard_url %}active{% endif %}" href="{{ ceo_dashboard_url }}">Dashboard</a>
   {% endif %}
 </nav>
 {% endif %}

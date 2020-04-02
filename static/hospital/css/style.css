@@ -45,6 +45,10 @@ body {
   border-bottom: 1px solid #F4F5F7;
 }
 
+.covid-sidebar a.active {
+  font-weight: 600;
+}
+
 .main-content {
   padding-top: 64px;
   margin-left: 256px;
