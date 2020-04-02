@@ -42,7 +42,11 @@ body {
   flex-direction: column;
 }
 
-.main-content > div {
+.main-content > .card {
   margin: 32px;
+}
+
+.main-content > .card.fill {
   flex: 1;
 }
+
