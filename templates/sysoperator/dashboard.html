@@ -4,20 +4,25 @@
 
 {% block head %}
 <title>Dashboard</title>
+<link rel="stylesheet" href="/static/hospital/css/operator-dashboard.css">
 {% endblock %}
 
 {% block content %}
 <div class="card">
+  <h1 class="card-header">Dashboard</h1>
   <div class="card-body">
-    <h1 class="card-title">Dashboard</h1>
-    <div class="form">
-      <h2>Run Algorithm</h2>
-      <form action="{% url 'sys-dashboard' %}" method="POST">
-        {% csrf_token %}
-        <button class='btn btn-primary' type="submit">Execute</button>
-      </form>
-    </div>
+    <div id="map"></div>
+  </div>
+  <div class="card-footer text-right">
+    <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
+      {% csrf_token %}
+      <button class='btn btn-dark' type="submit">Run Allocation</button>
+    </form>
   </div>
 </div>
+{% endblock %}
 
+{% block script %}
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsGd9jQnFq8aW--0l2unCbzidogUPQyc8&callback=initMap" async defer></script>
+<script src="/static/hospital/js/operator-dashboard.js"></script>
 {% endblock %}

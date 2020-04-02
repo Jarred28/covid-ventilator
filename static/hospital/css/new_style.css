@@ -38,8 +38,11 @@ body {
   margin-left: 256px;
   height: 100%;
   background-color: #FAFBFC;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content > div {
   margin: 32px;
+  flex: 1;
 }
