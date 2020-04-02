@@ -1,7 +1,7 @@
 {% extends 'new_base.html' %}
 {% load rest_framework %}
 {% block content %}
-<h1>Settings</h1>
+<h1>Allocation</h1>
 <form action="{% url 'sys-settings' %}" method="POST">
   {% csrf_token %}
   {% if serializer.errors and serializer.errors.non_field_errors %}
