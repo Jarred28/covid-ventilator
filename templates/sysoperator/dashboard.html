@@ -9,11 +9,11 @@
 
 {% block content %}
 <div class="card">
-  <h1 class="card-header">Dashboard</h1>
+  <h1 class="card-header bg-white">Dashboard</h1>
   <div class="card-body">
     <div id="map"></div>
   </div>
-  <div class="card-footer text-right">
+  <div class="card-footer text-right bg-white">
     <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
       {% csrf_token %}
       <button class='btn btn-dark' type="submit">Run Allocation</button>
