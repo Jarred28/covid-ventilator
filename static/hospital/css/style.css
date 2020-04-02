@@ -8,18 +8,38 @@ html.open, body.open {
 }
 
 html {
-  padding: 40px;
   font-size: 62.5%;
 }
 
 body {
-  padding: 20px;
-  background-color: #5BB9B8;
+  margin: 0;
+  /*background-color: #5BB9B8;*/
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  color: #fff;
+  /*color: #fff;*/
+  color: #172B4D;
   font-size: 1.6rem;
   font-family: 'Lato', sans-serif;
+}
+
+.covid-navbar {
+  height: 64px;
+  border-bottom: 1px solid #EDEDED;
+}
+
+.covid-sidebar {
+  position: fixed;
+  width: 256px;
+  border-right: 1px solid #F4F5F7;
+  top: 64px;
+  bottom: 0;
+}
+
+.main-content {
+  padding-top: 64px;
+  margin-left: 256px;
+  height: 100%;
+  background-color: #FAFBFC;
 }
 
 p {
@@ -28,7 +48,7 @@ p {
 }
 
 main {
-  background-color: #2C3845;
+  /*background-color: #2C3845;*/
 }
 
 h1 {

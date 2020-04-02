@@ -1,0 +1,27 @@
+{% if user.is_authenticated %}
+<nav class="bg-white covid-sidebar">
+  <ul class="navbar-nav flex-column">
+    {% if user.user_type == 'Hospital' %}
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'order' %}">Orders</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'ventilator-list' %}">Ventilators</a>
+    </li>
+    {% endif %}
+    {% if user.user_type == 'SystemOperator' %}
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'sys-dashboard' %}">Dashboard</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'sys-settings' %}">Settings</a>
+    </li>
+    {% endif %}
+    {% if user.user_type == 'HospitalGroup' %}
+    <li class="nav-item">
+      <a class="nav-link" href="{% url 'ceo-dashboard' %}">Dashboard</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
