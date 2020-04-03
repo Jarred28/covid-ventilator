@@ -51,6 +51,7 @@ class Supplier(models.Model):
 
 class Order(models.Model):
     num_requested = models.IntegerField(null=False, blank=False)
+    num_needed = models.IntegerField(null=False, blank=False)
     requesting_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=False, blank=False, related_name='requesting_hospital')
     sending_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, null=True, blank=True, related_name='sending_hospital')
     active = models.BooleanField(null=False, blank=False, default=True)
@@ -74,6 +75,7 @@ class Ventilator(models.Model):
         null=False,
         default=State.Available,
     )
+    monetary_value = models.IntegerField(null=False, blank=False, default=10000)
     owning_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, blank=False, null=False, related_name='owning_hospital')
     current_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, blank=False, null=False, related_name='current_hospital')
     batch_id = models.CharField(max_length=128, blank=True, null=True)
