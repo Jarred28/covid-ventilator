@@ -368,7 +368,7 @@ class SystemDestinationReserve(APIView):
 
     def get(self, request):
         ventilators = Ventilator.objects.filter(state=Ventilator.State.Reserve.name)
-        return Response({'venatilators': ventilator, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        return Response({'venatilators': ventilators, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class HospitalCEO(APIView):
     renderer_classes = [TemplateHTMLRenderer]
