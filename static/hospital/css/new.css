@@ -30,7 +30,7 @@ body {
 }
 
 .covid-sidebar a.active {
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .main-content {
@@ -44,6 +44,10 @@ body {
 
 .main-content > .card {
   margin: 32px;
+}
+
+.main-content > .card .card-header {
+  text-align: center;
 }
 
 .main-content > .card.fill {

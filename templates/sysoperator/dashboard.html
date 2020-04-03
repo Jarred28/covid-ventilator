@@ -3,13 +3,16 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Dashboard</title>
+<title>National Dashboard - Demand, Supply and In-Transit</title>
 <link rel="stylesheet" href="/static/hospital/css/operator-dashboard.css">
+<script>
+  var data = '{{ allocations }}';
+</script>
 {% endblock %}
 
 {% block content %}
 <div class="card fill">
-  <h1 class="card-header bg-white">Dashboard</h1>
+  <h1 class="card-header bg-white">National Dashboard: Demand, Supply and In-Transit</h1>
   <div class="card-body">
     <div id="map"></div>
   </div>

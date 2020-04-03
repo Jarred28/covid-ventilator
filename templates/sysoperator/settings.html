@@ -2,12 +2,12 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Allocation</title>
+<title>Allocation of Supply - Demand with Reserve</title>
 {% endblock %}
 
 {% block content %}
 <form action="{% url 'sys-settings' %}" method="POST" class="card">
-  <h1 class="card-header bg-white">Allocation</h1>
+  <h1 class="card-header bg-white">Allocation of Supply → Demand with Reserve</h1>
   <div class="card-body">
     {% csrf_token %}
     {% if serializer.errors and serializer.errors.non_field_errors %}
