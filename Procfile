@@ -1,2 +1,2 @@
 web: gunicorn covid.wsgi --log-file -
-release: python3 manage.py migrate
+release: ./release-phase.sh
