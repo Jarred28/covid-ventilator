@@ -7,5 +7,29 @@
 
 {% block content %}
 <h1>Show Supply</h1>
-
+<div class="card">
+  <h1 class="card-header bg-white">Current Supply of Ventilators</h1>
+  <div class="card-body">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">Model Number</th>
+          <th scope="col">Owning Hospital</th>
+          <th scope="col">Current Hospital</th>
+          <th scope="col">Monetary Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ventilator in ventilators %}
+        <tr>
+          <th scope="row">{% ventilator.model_num %}</th>
+          <td>{% ventilator.owning_hospital.name %}</td>
+          <td>{% ventilator.current_hospital.name %}</td>
+          <td>{% ventilator.monetary_value %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

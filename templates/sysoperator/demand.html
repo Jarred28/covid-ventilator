@@ -18,11 +18,13 @@
         </tr>
       </thead>
       <tbody>
+        {% for order in orders %}
         <tr>
           <th scope="row">{% order.requesting_hospital.name %}</th>
           <td>{% order.num_requested %}</td>
           <td>{% order.num_needed %}</td>
         </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
@@ -46,6 +48,6 @@
         </li>
       </ul>
     </nav>
-  </div>
-</div> -->
+  </div> -->
+</div>
 {% endblock %}

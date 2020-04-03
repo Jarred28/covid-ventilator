@@ -273,7 +273,9 @@ class Dashboard(APIView):
     template_name = 'sysoperator/dashboard.html'
 
     def get(self, request, format=None):
-        return Response()
+        orders = Order.objects.all()
+
+        return Response({'orders': orders})
 
     @transaction.atomic
     def post(self, request, format=None):
@@ -335,8 +337,8 @@ class SystemDemand(APIView):
     template_name = 'sysoperator/demand.html'
 
     def get(self, request):
-        serializer = SystemParametersSerializer(SystemParameters.getInstance())
-        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        orders = Order.objects.filter(active=True)
+        return Response({'orders': orders, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemSupply(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -344,8 +346,8 @@ class SystemSupply(APIView):
     template_name = 'sysoperator/supply.html'
 
     def get(self, request):
-        serializer = SystemParametersSerializer(SystemParameters.getInstance())
-        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        ventilators = Ventilator.objects.filter(state=Ventilator.State.Available.name)
+        return Response({'ventilators': ventilators, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemStrategicReserve(APIView):
     renderer_classes = [TemplateHTMLRenderer]
