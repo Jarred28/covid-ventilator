@@ -18,71 +18,13 @@
         </tr>
       </thead>
       <tbody>
+        {% for order in orders %}
         <tr>
-          <th scope="row">hospital #1</th>
-          <td>50</td>
+          <th scope="row">{% order.requesting_hospital.name %}</th>
+          <td>{% order.num_requested %}</td>
           <td>10</td>
         </tr>
-        <tr>
-          <th scope="row">hospital #2</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #3</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #4</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #5</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #6</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #7</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #8</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #9</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #10</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #11</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #12</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #13</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
