@@ -364,8 +364,8 @@ class SystemDestinationReserve(APIView):
     template_name = 'sysoperator/destination_reserve.html'
 
     def get(self, request):
-        serializer = SystemParametersSerializer(SystemParameters.getInstance())
-        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        ventilators = Ventilator.objects.filter(state=Ventilator.State.Reserve.name)
+        return Response({'venatilators': ventilator, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class HospitalCEO(APIView):
     renderer_classes = [TemplateHTMLRenderer]

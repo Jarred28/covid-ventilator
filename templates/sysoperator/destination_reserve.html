@@ -12,81 +12,25 @@
     <table class="table table-bordered">
       <thead>
         <tr>
-          <th scope="col">Hospital</th>
-          <th scope="col">Received</th>
-          <th scope="col">Held in Reserve</th>
+          <th scope="col">Model Number</th>
+          <th scope="col">Owning Hospital</th>
+          <th scope="col">Current Hospital</th>
+          <th scope="col">Monetary Value</th>
         </tr>
       </thead>
       <tbody>
+      {% for ventilator in ventilators %}
         <tr>
-          <th scope="row">hospital #1</th>
-          <td>50</td>
-          <td>10</td>
+          <th scope="row">{{ ventilator.model_num }}</th>
+          <td>{{ ventilator.owning_hospital.name }}</td>
+          <td>{{ ventilator.current_hospital.name }}</td>
+          <td>{{ ventilator.monetary_value }}</td>
         </tr>
-        <tr>
-          <th scope="row">hospital #2</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #3</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #4</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #5</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #6</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #7</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #8</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #9</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #10</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #11</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #12</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
-        <tr>
-          <th scope="row">hospital #13</th>
-          <td>50</td>
-          <td>10</td>
-        </tr>
+      {% endfor %}
       </tbody>
     </table>
   </div>
-  <div class="card-footer bg-white">
+  <!-- <div class="card-footer bg-white">
     <nav aria-label="Page navigation">
       <ul class="pagination mb-0 float-right">
         <li class="page-item">
@@ -106,6 +50,6 @@
         </li>
       </ul>
     </nav>
-  </div>
+  </div> -->
 </div>
 {% endblock %}
