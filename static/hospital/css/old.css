@@ -9,15 +9,16 @@ html.open, body.open {
 
 html {
   font-size: 62.5%;
+  padding: 40px;
 }
 
 body {
+  padding: 20px;
   margin: 0;
-  /*background-color: #5BB9B8;*/
+  background-color: #5BB9B8;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  /*color: #fff;*/
-  color: #172B4D;
+  color: #fff;
   font-size: 1.6rem;
   font-family: 'Lato', sans-serif;
 }
@@ -28,7 +29,7 @@ p {
 }
 
 main {
-  /*background-color: #2C3845;*/
+  background-color: #2C3845;
 }
 
 h1 {

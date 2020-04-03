@@ -1,9 +1,9 @@
-html {
-  font-size: unset;
+body {
+  color: #172B4D;
 }
 
-body {
-  font-size: 1rem;
+* {
+  outline: 0;
 }
 
 .covid-navbar {
@@ -49,4 +49,3 @@ body {
 .main-content > .card.fill {
   flex: 1;
 }
-
