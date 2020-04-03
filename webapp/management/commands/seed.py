@@ -65,8 +65,10 @@ class Command(BaseCommand):
             )
             vent.save()
         for order_count in range(6):
+            num_req = random.randint(20, 400)
             order = Order(
-                num_requested=random.randint(20, 400),
+                num_requested=num_req,
+                num_needed=num_req / 2,
                 time_submitted=datetime.now(),
                 active=True,
                 auto_generated=False,
