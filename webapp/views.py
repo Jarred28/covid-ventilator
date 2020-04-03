@@ -329,6 +329,41 @@ class SystemSettings(APIView):
             serializer.save()
         return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
+class SystemDemand(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemOperatorPermission]
+    template_name = 'sysoperator/demand.html'
+
+    def get(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance())
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
+class SystemSupply(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemOperatorPermission]
+    template_name = 'sysoperator/supply.html'
+
+    def get(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance())
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
+class SystemStrategicReserve(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemOperatorPermission]
+    template_name = 'sysoperator/strategic_reserve.html'
+
+    def get(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance())
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
+class SystemDestinationReserve(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemOperatorPermission]
+    template_name = 'sysoperator/destination_reserve.html'
+
+    def get(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance())
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class HospitalCEO(APIView):
     renderer_classes = [TemplateHTMLRenderer]

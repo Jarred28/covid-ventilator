@@ -1,20 +1,42 @@
 {% if user.is_authenticated %}
 <nav class="nav bg-white flex-column covid-sidebar">
   {% if user.user_type == 'Hospital' %}
+
   {% url 'order' as order_url %}
   <a class="nav-link {% if request.get_full_path == order_url %}active{% endif %}" href="{{ order_url }}">Orders</a>
+
   {% url 'ventilator-list' as ventilator_list_url %}
   <a class="nav-link {% if request.get_full_path == ventilator_list_url %}active{% endif %}" href="{{ ventilator_list_url }}">Ventilators</a>
+
   {% endif %}
+
   {% if user.user_type == 'SystemOperator' %}
+
   {% url 'sys-dashboard' as sys_dashboard_url %}
   <a class="nav-link {% if request.get_full_path == sys_dashboard_url %}active{% endif %}" href="{{ sys_dashboard_url }}">Dashboard</a>
+
   {% url 'sys-settings' as sys_settings_url %}
   <a class="nav-link {% if request.get_full_path == sys_settings_url %}active{% endif %}" href="{{ sys_settings_url }}">Allocation</a>
+
+  {% url 'sys-demand' as sys_demand_url %}
+  <a class="nav-link {% if request.get_full_path == sys_demand_url %}active{% endif %}" href="{{ sys_demand_url }}">Show Demand</a>
+
+  {% url 'sys-supply' as sys_supply_url %}
+  <a class="nav-link {% if request.get_full_path == sys_supply_url %}active{% endif %}" href="{{ sys_supply_url }}">Show Supply</a>
+
+  {% url 'sys-strategic-reserve' as sys_strategic_reserve_url %}
+  <a class="nav-link {% if request.get_full_path == sys_strategic_reserve_url %}active{% endif %}" href="{{ sys_strategic_reserve_url }}">Strategic Reserve</a>
+
+  {% url 'sys-destination-reserve' as sys_destination_reserve_url %}
+  <a class="nav-link {% if request.get_full_path == sys_destination_reserve_url %}active{% endif %}" href="{{ sys_destination_reserve_url }}">Destination Reserve</a>
+
   {% endif %}
+
   {% if user.user_type == 'HospitalGroup' %}
+
   {% url 'ceo-dashboard' as ceo_dashboard_url %}
   <a class="nav-link {% if request.get_full_path == ceo_dashboard_url %}active{% endif %}" href="{{ ceo_dashboard_url }}">Dashboard</a>
+
   {% endif %}
 </nav>
 {% endif %}
