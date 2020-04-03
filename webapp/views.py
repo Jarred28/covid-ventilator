@@ -289,14 +289,12 @@ class Dashboard(APIView):
 
         sys_params = SystemParameters.getInstance()
 
-
         allocations = algorithm.allocate(orders, htov, sys_params)  # type: list[tuple[int, int, int]]
 
         batch_id = ShipmentBatches.getInstance().max_batch_id
         for allocation in allocations:
             sender, amount, receiver = allocation[0], allocation[1], allocation[2]
             order = Order.objects.filter(active=True).filter(requesting_hospital=receiver).last()
-            # order = Order.objects.filter(requesting_hospital=receiver).filter(active=True).last()
             batch_id += 1
 
             Ventilator.objects.filter(
@@ -305,10 +303,15 @@ class Dashboard(APIView):
                 state=Ventilator.State.Available.name
             ).update(state=Ventilator.State.Requested.name, batch_id=batch_id, order=order)
 
+            # We were only able to partially fulfil the request, so we add a new order
+            # with the remaining amount
+            if order.num_requested > amount:
+                new_order = Order(num_requested=order.num_requested - amount, requesting_hospital=Hospital.objects.get(id=receiver), auto_generated=True)
+                new_order.save()
             order.active = False
             order.sending_hospital = Hospital.objects.get(pk=sender)
             order.save()
-            notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
+            # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
 
 
         ShipmentBatches.update(batch_id)

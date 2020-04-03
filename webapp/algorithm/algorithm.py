@@ -62,7 +62,7 @@ def allocate(orders, htov, system_params):
 
         for sender in senders:
 
-            if sender.num_available == 0:
+            if sender.hospital.id == receiver.id or sender.num_available == 0:
                 continue
 
             elif sender.hospital.within_group_only and receiver.hospital_group != sender.hospital.hospital_group:
