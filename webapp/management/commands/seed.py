@@ -47,7 +47,7 @@ class Command(BaseCommand):
             h = Hospital(
                 name=name,
                 user=h_user,
-                address="123 Test Lane", 
+                address=hospital_addresses[hospital_count], 
                 contribution=0, 
                 projected_load=0, 
                 hospital_group=hg, 
