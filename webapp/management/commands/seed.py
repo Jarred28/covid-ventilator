@@ -4,6 +4,18 @@ from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, Syst
 import random
 class Command(BaseCommand):
     help = "Seed the Database"
+    hospital_addresses = [
+        "777 Brockton Avenue, Abington MA 2351",
+        "30 Memorial Drive, Avon MA 2322",
+        "3222 State Rt 11, Malone NY 12953",
+        "750 Academy Drive, Bessemer AL 35022",
+        "625 School Street, Putnam CT 6260",
+        "548 Market St, San Francisco, CA 94104-5401",
+        "1313 Disneyland Dr, Anaheim, CA 92802",
+        "214 S Wabash Ave, Chicago, IL 60604",
+        "4211 Spicewood Springs Rd, Austin, TX 78759",
+        "1375 Buena Vista Dr, Lake Buena Vista, FL 32830"
+    ]
 
     def add_arguments(self, parser):
         parser.add_argument("--reset_db", type=int)
@@ -47,7 +59,7 @@ class Command(BaseCommand):
             h = Hospital(
                 name=name,
                 user=h_user,
-                address="123 Test Lane", 
+                address=hospital_addresses[hospital_count], 
                 contribution=0, 
                 projected_load=0, 
                 hospital_group=hg, 
