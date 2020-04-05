@@ -24,7 +24,7 @@
 
 {% block script %}
 <script>
-  var data = '{{ hospitals }}';
+  var data = '{{ active_orders, hospital_pairs, transit_orders }}';
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsGd9jQnFq8aW--0l2unCbzidogUPQyc8&callback=initMap" async defer></script>
 <script src="/static/hospital/js/operator-dashboard.js"></script>
