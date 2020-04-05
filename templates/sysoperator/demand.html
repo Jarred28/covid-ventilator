@@ -12,19 +12,30 @@
     <table class="table table-bordered">
       <thead>
         <tr>
-          <th scope="col">Hospital</th>
+          <th scope="col">Hospital Parent</th>
           <th scope="col">Requested</th>
-          <th scope="col">Case Load</th>
+          <th scope="col">Current Case Load</th>
+          <th scope="col">Projected Case Load</th>
         </tr>
       </thead>
       <tbody>
         {% for order in orders %}
         <tr>
-          <th scope="row">{{ order.requesting_hospital.name }}</th>
+          <td>{{ order.requesting_hospital.name }}</td>
           <td>{{ order.num_requested }}</td>
           <td>{{ order.num_needed }}</td>
+          <td>{{ order.requesting_hospital.projected_load }}</td>
         </tr>
         {% endfor %}
+        {% if orders|length == 0 %}
+        <tr>
+          <td colspan="4">
+            <div class="alert alert-info mb-0 text-center">
+              There is no data to display
+            </div>
+          </td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
