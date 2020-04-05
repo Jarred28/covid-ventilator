@@ -3,6 +3,11 @@
 
 {% block head %}
 <title>Current Supply of Ventilators</title>
+<style>
+.model-number {
+  margin-bottom: 5px;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -24,7 +29,11 @@
         <tr>
           <td>{{ hospital_supply_list.name }}</td>
           <td>{{ hospital_supply_list.owning_hospital_group }}</td>
-          <td>{{ hospital_supply_list.model_nums|join:", " }}</td>
+          <td>
+            {% for model_num in hospital_supply_list.model_nums %}
+            <span class="model-number badge badge-pill badge-dark">{{ model_num }}</span>
+            {% endfor %}
+          </td>
           <td>{{ hospital_supply_list.ventilator_supply }}</td>
           <td>{{ hospital_supply_list.monetary_value }}</td>
         </tr>
