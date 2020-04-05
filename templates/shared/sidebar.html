@@ -24,8 +24,8 @@
   {% url 'sys-supply' as sys_supply_url %}
   <a class="nav-link {% if request.get_full_path == sys_supply_url %}active{% endif %}" href="{{ sys_supply_url }}">Show Supply</a>
 
-  {% url 'sys-strategic-reserve' as sys_strategic_reserve_url %}
-  <a class="nav-link {% if request.get_full_path == sys_strategic_reserve_url %}active{% endif %}" href="{{ sys_strategic_reserve_url }}">Strategic Reserve</a>
+  {% url 'sys-source-reserve' as sys_source_reserve_url %}
+  <a class="nav-link {% if request.get_full_path == sys_source_reserve_url %}active{% endif %}" href="{{ sys_source_reserve_url }}">Source Reserve</a>
 
   {% url 'sys-destination-reserve' as sys_destination_reserve_url %}
   <a class="nav-link {% if request.get_full_path == sys_destination_reserve_url %}active{% endif %}" href="{{ sys_destination_reserve_url }}">Destination Reserve</a>

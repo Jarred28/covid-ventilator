@@ -1,4 +1,9 @@
 var map;
+var hospitals = [];
+
+if (data) {
+  hospitals = JSON.parse(data.replace(/&quot;/g, '"'));
+}
 
 var locations = {
   demand: [
@@ -25,9 +30,23 @@ var locations = {
 };
 
 function initMap() {
+  var newyorkBounds = {
+    north: 45.01,
+    south: 40.30,
+    west: -79.46,
+    east: -71.52
+  };
+
   map = new google.maps.Map(document.getElementById('map'), {
-    center: {lat: 39.971, lng: -99.668},
-    zoom: 5
+    center: {
+      lat: (newyorkBounds.north + newyorkBounds.south) / 2,
+      lng: (newyorkBounds.west + newyorkBounds.east) / 2
+    },
+    restriction: {
+      latLngBounds: newyorkBounds,
+      strictBounds: false,
+    },
+    zoom: 7
   });
 
   for (var type in locations) {

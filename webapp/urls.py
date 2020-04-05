@@ -17,7 +17,7 @@ urlpatterns = [
     path('system/settings/', views.SystemSettings.as_view(), name='sys-settings'),
     path('system/demand/', views.SystemDemand.as_view(), name='sys-demand'),
     path('system/supply/', views.SystemSupply.as_view(), name='sys-supply'),
-    path('system/strategic-reserve/', views.SystemStrategicReserve.as_view(), name='sys-strategic-reserve'),
+    path('system/source-reserve/', views.SystemSourceReserve.as_view(), name='sys-source-reserve'),
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
     path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard')
 ]

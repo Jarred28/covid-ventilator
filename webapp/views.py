@@ -7,6 +7,7 @@ import pdb
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
+from django.core import serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -20,7 +21,6 @@ from webapp.algorithm import algorithm
 from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, ShipmentBatches, SystemParameters
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemOperatorPermission
 from webapp.serializers import SignupSerializer, SystemParametersSerializer, VentilatorSerializer
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -273,9 +273,8 @@ class Dashboard(APIView):
     template_name = 'sysoperator/dashboard.html'
 
     def get(self, request, format=None):
-        orders = Order.objects.all()
-
-        return Response({'orders': orders})
+        hospitals = serializers.serialize('json', Hospital.objects.all())
+        return Response({'hospitals': hospitals})
 
     @transaction.atomic
     def post(self, request, format=None):
@@ -352,7 +351,7 @@ class SystemSupply(APIView):
         ventilators = Ventilator.objects.filter(state=Ventilator.State.Available.name)
         return Response({'ventilators': ventilators, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-class SystemStrategicReserve(APIView):
+class SystemSourceReserve(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&SystemOperatorPermission]
     template_name = 'sysoperator/strategic_reserve.html'

@@ -5,9 +5,6 @@
 {% block head %}
 <title>National Dashboard - Demand, Supply and In-Transit</title>
 <link rel="stylesheet" href="/static/hospital/css/operator-dashboard.css">
-<script>
-  var data = '{{ allocations }}';
-</script>
 {% endblock %}
 
 {% block content %}
@@ -26,6 +23,9 @@
 {% endblock %}
 
 {% block script %}
+<script>
+  var data = '{{ hospitals }}';
+</script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsGd9jQnFq8aW--0l2unCbzidogUPQyc8&callback=initMap" async defer></script>
 <script src="/static/hospital/js/operator-dashboard.js"></script>
 {% endblock %}
