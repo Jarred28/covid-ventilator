@@ -12,9 +12,9 @@
     <table class="table table-bordered">
       <thead>
         <tr>
-          <th scope="col">Hospital</th>
-          <th scope="col">Hospital Group</th>
-          <th scope="col">Model Numbers</th>
+          <th scope="col">Owner Hospital</th>
+          <th scope="col">Hospital Parent</th>
+          <th scope="col">Model Number</th>
           <th scope="col">Quantity</th>
           <th scope="col">Value</th>
         </tr>
@@ -24,7 +24,7 @@
         <tr>
           <td>{{ hospital_supply_list.name }}</td>
           <td>{{ hospital_supply_list.owning_hospital_group }}</td>
-          <td>Insert Model Numbers here</td>
+          <td>{{ hospital_supply_list.model_nums|join:", " }}</td>
           <td>{{ hospital_supply_list.ventilator_supply }}</td>
           <td>{{ hospital_supply_list.monetary_value }}</td>
         </tr>
