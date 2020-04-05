@@ -29,7 +29,7 @@
           <td>{{ hospital_supply_list.monetary_value }}</td>
         </tr>
         {% endfor %}
-        {% if ventilators|length == 0 %}
+        {% if supply_list|length == 0 %}
           <tr>
             <td colspan="5">
               <div class="alert alert-info mb-0 text-center">
