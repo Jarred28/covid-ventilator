@@ -348,8 +348,17 @@ class SystemSupply(APIView):
     template_name = 'sysoperator/supply.html'
 
     def get(self, request):
-        ventilators = Ventilator.objects.filter(state=Ventilator.State.Available.name)
-        return Response({'ventilators': ventilators, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        supply_list = []
+        for hospital in Hospital.objects.all():
+            hospital_supply_list = type('test', (object,), {})()
+            hospital_supply_list.name = hospital.name
+            hospital_supply_list.owning_hospital_group = hospital.hospital_group.name
+            available_ventilators = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.State.Available.name)
+            hospital_supply_list.ventilator_supply = available_ventilators.count()
+            hospital_supply_list.model_nums = {ventilator.model_num for ventilator in available_ventilators}
+            hospital_supply_list.monetary_value = sum(ventilator.monetary_value for ventilator in available_ventilators) 
+            supply_list.append(hospital_supply_list)
+        return Response({'supply_list': supply_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemSourceReserve(APIView):
     renderer_classes = [TemplateHTMLRenderer]

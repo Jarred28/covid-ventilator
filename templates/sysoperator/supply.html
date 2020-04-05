@@ -12,21 +12,21 @@
     <table class="table table-bordered">
       <thead>
         <tr>
-          <th scope="col">Owner Hospital</th>
-          <th scope="col">Hospital Parent</th>
-          <th scope="col">Model Number</th>
+          <th scope="col">Hospital</th>
+          <th scope="col">Hospital Group</th>
+          <th scope="col">Model Numbers</th>
           <th scope="col">Quantity</th>
           <th scope="col">Value</th>
         </tr>
       </thead>
       <tbody>
-        {% for ventilator in ventilators %}
+        {% for hospital_supply_list in supply_list %}
         <tr>
-          <td>{{ ventilator.owning_hospital.name }}</td>
-          <td>{{ ventilator.current_hospital.name }}</td>
-          <td>{{ ventilator.model_num }}</td>
-          <td>{% if ventilator.order %} {{ ventilator.order.num_requested }} {% else %} 0 {% endif %}</td>
-          <td>{{ ventilator.monetary_value }}</td>
+          <td>{{ hospital_supply_list.name }}</td>
+          <td>{{ hospital_supply_list.owning_hospital_group }}</td>
+          <td>Insert Model Numbers here</td>
+          <td>{{ hospital_supply_list.ventilator_supply }}</td>
+          <td>{{ hospital_supply_list.monetary_value }}</td>
         </tr>
         {% endfor %}
         {% if ventilators|length == 0 %}
