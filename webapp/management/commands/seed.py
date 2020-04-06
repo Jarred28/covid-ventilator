@@ -20,14 +20,6 @@ class Command(BaseCommand):
         self.delete_existing_records()
         hospital_addresses = [
             {
-                "name": "Brookdale Hospital Medical Center",
-                "address": "1 Brookdale Plaza, Brooklyn, NY 11212"
-            },
-            {
-                "name": "Calvary Hospital",
-                "address": "150 55th Street, Brooklyn, NY 11220"
-            },
-            {
                 "name": "Elmhurst Hospital Center",
                 "address": "79-01 Broadway, Elmhurst, NY 11373"
             },
@@ -40,16 +32,24 @@ class Command(BaseCommand):
                 "address": "89th Avenue & Van Wyck Expressway, Jamaica, NY 11418"
             },
             {
+                "name": "Memorial Hospital for Cancer and Allied Diseases",
+                "address": "1275 York Avenue, New York, NY 10065"
+            },
+            {
+                "name": "Brookdale Hospital Medical Center",
+                "address": "1 Brookdale Plaza, Brooklyn, NY 11212"
+            },
+            {
+                "name": "Calvary Hospital",
+                "address": "150 55th Street, Brooklyn, NY 11220"
+            },
+            {
                 "name": "Lenox Health Greenwich Village",
                 "address": "30 Seventh Avenue, New York, NY 10011"
             },
             {
                 "name": "Lincoln Medical & Mental Health Center",
                 "address": "234 East 149th Street, Bronx, NY 10451"
-            },
-            {
-                "name": "Memorial Hospital for Cancer and Allied Diseases",
-                "address": "1275 York Avenue, New York, NY 10065"
             },
             {
                 "name": "New York Eye and Ear Infirmary of Mount Sinai",
