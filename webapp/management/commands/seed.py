@@ -101,11 +101,17 @@ class Command(BaseCommand):
             h.save()
         for vent_count in range(100):
             hosp = Hospital.objects.all()[vent_count % 4]
+            monetary_value = 0
+            if ((vent_count) % len(model_nums)) % 2 == 0:
+                monetary_value = random.randint(5000, 20000)
+            else:
+                monetary_value = random.randint(15000, 30000)
             vent = Ventilator(
                 model_num=model_nums[(vent_count) % len(model_nums)],
                 state=Ventilator.State.Available.name,
                 owning_hospital=hosp,
-                current_hospital=hosp
+                current_hospital=hosp,
+                monetary_value=monetary_value
             )
             vent.save()
         for order_count in range(6):

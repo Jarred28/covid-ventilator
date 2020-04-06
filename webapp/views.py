@@ -339,7 +339,7 @@ class Dashboard(APIView):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&SystemOperatorPermission])
-def reset_db(self, request, format=None):
+def reset_db(request, format=None):
     Order.objects.all().delete()
     Hospital.objects.all().delete()
     Ventilator.objects.all().delete()
