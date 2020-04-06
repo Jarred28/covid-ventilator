@@ -274,7 +274,19 @@ class Dashboard(APIView):
 
     def get(self, request, format=None):
         hospitals = serializers.serialize('json', Hospital.objects.all())
-        return Response({'hospitals': hospitals})
+        active_orders = Order.objects.filter(active=True)
+        hospital_pairs = []
+        for hospital in Hospital.objects.all():
+            hosp = type('test', (object,), {})()
+            hosp.name = hospital.name
+            hosp.ventilator_count = Ventilator.objects.filter(state=Ventilator.State.Available.name).filter(owning_hospital=hospital)
+            hospital_pairs.append(hosp)
+        transit_orders = []
+        for order in Order.objects.all():
+            ventilators = order.ventilator_set.all()
+            if ventilators.count() > 0 ventilators.first().state == Ventilator.State.InTransit.name:
+                transit_orders.append(order)
+        return Response({'active_orders': active_orders, 'hospital_pairs': hospital_pairs, 'transit_orders': transit_orders})
 
     @transaction.atomic
     def post(self, request, format=None):
@@ -375,8 +387,18 @@ class SystemDestinationReserve(APIView):
     template_name = 'sysoperator/destination_reserve.html'
 
     def get(self, request):
-        ventilators = Ventilator.objects.filter(state=Ventilator.State.Reserve.name)
-        return Response({'venatilators': ventilators, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        dst_reserve_list = []
+        for order in Orders.objects.all():
+            count = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name).count()
+            if count == 0:
+                continue
+            dst_reserve_order = type('test', (object,), {})()
+            dst_reserve_order.dst_hospital = order.requesting_hospital.name
+            dst_reserve_order.src_hospital = order.sending_hospital.name
+            dst_reserve_order.parent_hospital = order.requesting_hospital.hospital_group.name
+            dst_reserve_order.quantity = count
+            dst_reserve_list.append(dst_reserve_order)
+        return Response({'dst_reserve_list': dst_reserve_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class HospitalCEO(APIView):
     renderer_classes = [TemplateHTMLRenderer]
