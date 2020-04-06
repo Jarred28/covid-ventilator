@@ -21,16 +21,46 @@ class Command(BaseCommand):
         self.delete_existing_records()
 
         hospital_addresses = [
-            "777 Brockton Avenue, Abington MA 2351",
-            "30 Memorial Drive, Avon MA 2322",
-            "3222 State Rt 11, Malone NY 12953",
-            "750 Academy Drive, Bessemer AL 35022",
-            "625 School Street, Putnam CT 6260",
-            "548 Market St, San Francisco, CA 94104-5401",
-            "1313 Disneyland Dr, Anaheim, CA 92802",
-            "214 S Wabash Ave, Chicago, IL 60604",
-            "4211 Spicewood Springs Rd, Austin, TX 78759",
-            "1375 Buena Vista Dr, Lake Buena Vista, FL 32830"
+            {
+                "name": "Brookdale Hospital Medical Center",
+                "address": "1 Brookdale Plaza, Brooklyn, NY 11212"
+            },
+            {
+                "name": "Calvary Hospital",
+                "address": "150 55th Street, Brooklyn, NY 11220"
+            },
+            {
+                "name": "Elmhurst Hospital Center",
+                "address": "79-01 Broadway, Elmhurst, NY 11373"
+            },
+            {
+                "name": "Flushing Hospital Medical Center",
+                "address": "45th Avenue & Parsons Blvd, Flushing, NY 11355"
+            },
+            {
+                "name": "Jamaica Hospital Medical Center",
+                "address": "89th Avenue & Van Wyck Expressway, Jamaica, NY 11418"
+            },
+            {
+                "name": "Lenox Health Greenwich Village",
+                "address": "30 Seventh Avenue, New York, NY 10011"
+            },
+            {
+                "name": "Lincoln Medical & Mental Health Center",
+                "address": "234 East 149th Street, Bronx, NY 10451"
+            },
+            {
+                "name": "Memorial Hospital for Cancer and Allied Diseases",
+                "address": "1275 York Avenue, New York, NY 10065"
+            },
+            {
+                "name": "New York Eye and Ear Infirmary of Mount Sinai",
+                "address": "310 East 14th Street, New York, NY 10003"
+            },
+            {
+                "name": "New York Community Hospital of Brooklyn, Inc",
+                "address": "2525 Kings Highway, Brooklyn, NY 11229"
+            }
         ]
 
         for group_count in range(6):
@@ -59,9 +89,9 @@ class Command(BaseCommand):
             pos = 5 if hospital_count > 5 else hospital_count
             hg = HospitalGroup.objects.all()[pos]
             h = Hospital(
-                name=name,
+                name=hospital_addresses[hospital_count]['name'],
                 user=h_user,
-                address=hospital_addresses[hospital_count], 
+                address=hospital_addresses[hospital_count]['address'], 
                 contribution=0, 
                 projected_load=0, 
                 hospital_group=hg, 
