@@ -419,12 +419,13 @@ def reset_db(request, format=None):
         h_user.save()
         name = "{0}{1}".format("Hospital", str(hospital_count))
         pos = 5 if hospital_count > 5 else hospital_count
+        case_load = random.randint(400, 700)
         h = Hospital(
             name=hospital_addresses[hospital_count]['name'],
             user=h_user,
             address=hospital_addresses[hospital_count]['address'], 
             contribution=0, 
-            projected_load=0, 
+            projected_load=case_load, 
             hospital_group=hg, 
             within_group_only=False
         )
