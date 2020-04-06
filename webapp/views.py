@@ -8,6 +8,7 @@ from datetime import datetime
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
+import random
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -15,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 from rest_framework import status
+
 
 from . import notifications
 from webapp.algorithm import algorithm
@@ -429,11 +431,17 @@ def reset_db(request, format=None):
         h.save()
     for vent_count in range(100):
         hosp = Hospital.objects.all()[vent_count % 4]
+        monetary_value = 0
+        if ((vent_count) % len(model_nums)) % 2 == 0:
+            monetary_value = random.randint(5000, 20000)
+        else:
+            monetary_value = random.randint(15000, 30000)
         vent = Ventilator(
             model_num=model_nums[(vent_count) % len(model_nums)],
             state=Ventilator.State.Available.name,
             owning_hospital=hosp,
-            current_hospital=hosp
+            current_hospital=hosp,
+            monetary_value=monetary_value
         )
         vent.save()
     for order_count in range(6):
