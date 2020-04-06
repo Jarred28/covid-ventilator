@@ -13,7 +13,7 @@
 <body>
   {% include 'shared/navbar.html' %}
   {% include 'shared/sidebar.html' %}
-  <main {% if user.is_authenticated %} class="main-content" {% endif %}>
+  <main {% if user.is_authenticated and request.get_full_path != '/' and request.get_full_path != '/accounts/login/' %} class="main-content" {% endif %}>
     {% block content %}{% endblock %}
   </main>
 

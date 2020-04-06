@@ -1,4 +1,4 @@
-{% if user.is_authenticated %}
+{% if user.is_authenticated and request.get_full_path != '/' and request.get_full_path != '/accounts/login/' %}
 <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top covid-navbar">
   <a class="navbar-brand" href="/">
     <img src="/static/imgs/logo.png" height="40" alt="logo">

@@ -1,0 +1,59 @@
+.login-container {
+}
+
+.login-container .left-panel {
+  width: 50%;
+  height: 100%;
+  float: left;
+  background-image: url(/static/imgs/cover.png);
+  background-position: 0 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.login-container .right-panel {
+  width: 50%;
+  height: 100%;
+  float: left;
+  padding: 20px;
+  background-color: #3b98ba;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: white;
+}
+
+.login-container .right-panel .img-logo {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.login-container .right-panel .title {
+  font-size: 56px;
+  font-family: "Times New Roman", Times, serif;
+  font-weight: 800;
+  margin-bottom: 100px;
+}
+
+.login-container .right-panel .login-view {
+  padding: 0 20px;
+}
+
+.login-container .right-panel .login-view input {
+  display: block;
+  width: 100%;
+  padding: .375rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+}
+
+.login-container .right-panel .login-view a {
+  color: inherit;
+}
