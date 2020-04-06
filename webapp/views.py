@@ -417,7 +417,6 @@ def reset_db(self, request, format=None):
         h_user.save()
         name = "{0}{1}".format("Hospital", str(hospital_count))
         pos = 5 if hospital_count > 5 else hospital_count
-        hg = HospitalGroup.objects.all()[pos]
         h = Hospital(
             name=hospital_addresses[hospital_count]['name'],
             user=h_user,
