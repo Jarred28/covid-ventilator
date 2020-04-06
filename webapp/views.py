@@ -395,7 +395,7 @@ class SystemDestinationReserve(APIView):
 
     def get(self, request):
         dst_reserve_list = []
-        for order in Orders.objects.all():
+        for order in Order.objects.all():
             count = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name).count()
             if count == 0:
                 continue
