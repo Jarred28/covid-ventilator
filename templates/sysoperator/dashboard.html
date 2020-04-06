@@ -13,17 +13,17 @@
   <div class="card-body">
     <div id="map"></div>
   </div>
-  <div class="card-footer text-right bg-white">
+  <div class="card-footer card-footer d-flex justify-content-between bg-white">
+    <form class="mb-0" action="{% url 'reset-db' %}" method="POST">
+      {% csrf_token %}
+      <button class="btn btn-dark" type="submit">Reset DB</button>
+    </form>
     <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
       {% csrf_token %}
       <button class='btn btn-dark' type="submit">Run Allocation</button>
     </form>
   </div>
 </div>
-<form action="{% url 'reset-db' %}" method="POST">
-  {% csrf_token %}
-  <input class="button" type="submit" value="Reset DB">
-</form>
 {% endblock %}
 
 {% block script %}

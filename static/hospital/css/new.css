@@ -38,7 +38,6 @@ body {
   padding-top: 64px;
   margin-left: 256px;
   height: 100%;
-  background-color: #FAFBFC;
   display: flex;
   flex-direction: column;
 }
@@ -53,4 +52,12 @@ body {
 
 .main-content > .card.fill {
   flex: 1;
+}
+
+.main-content > .card.fixed {
+  overflow: hidden;
+}
+
+.main-content > .card.fixed > .card-body {
+  overflow-y: auto;
 }

@@ -1,61 +1,146 @@
-{% extends 'base.html' %}
+{% extends 'new_base.html' %}
 {% load rest_framework %}
+
+{% block head %}
+<title>Ventilators - Hospital Administrator</title>
+<link rel="stylesheet" href="/static/css/admin-dashboard.css">
+{% endblock %}
 
 {% block content %}
 
-<h1><b>Dashboard</b></h1>
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li>{{ message }}</li>
-    <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST">
-      {% csrf_token %}
-      <button type='submit'>Approve</button>
-    </form>
-    {% endfor %}
-</ul>
-{% endif %}
+<div class="card fixed">
+  <h1 class="card-header bg-white">Ventilators</h1>
+  <div class="card-body">
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST">
+          {% csrf_token %}
+          <button class="btn btn-dark" type='submit'>Approve</button>
+        </form>
+        {% endfor %}
+    </ul>
+    {% endif %}
 
-<h2><b>Ventilators</b></h2>
-<main>
-  <table>
-    <thead>
-      <tr>
-        <th>Model Number</th>
-        <th>Status</th>
-        <th>Original Hospital</th>
-        <th>Edit</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for ventilator in ventilators %}
-      <tr>
-        <td data-title='Model Number'>{{ ventilator.model_num }}</td>
-        <td data-title='State'>{{ ventilator.state }}</td>
-        <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
-        <td class='select'><a class='button' href="{% url 'ventilator-detail' ventilator.id %}">Edit</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</main>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Model Number</th>
+          <th>Status</th>
+          <th>Original Hospital</th>
+          <th>Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ventilator in ventilators %}
+        <tr>
+          <td data-title='Model Number'>{{ ventilator.model_num }}</td>
+          <td data-title='State'>{{ ventilator.state }}</td>
+          <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
+          <td class='select'><a class='btn btn-dark' href="{% url 'ventilator-detail' ventilator.id %}">Edit</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
-<div class="form" >
-  <h2><b>Add Single Ventilator</b></h2>
-  <form action="{% url 'ventilator-list' %}" method="POST">
-    {% csrf_token %}
-    {% render_form serializer %}
-    <input class='button' type="submit" value="Save">
-  </form>
+    <!-- <div class="form">
+      <h2><b>Add Single Ventilator</b></h2>
+      <form action="{% url 'ventilator-list' %}" method="POST">
+        {% csrf_token %}
+        {% render_form serializer %}
+        <input class='button' type="submit" value="Save">
+      </form>
 
-  <h2><b>Add Batch Ventilators</b></h2>
-  <form action="{% url 'ventilator-list' %}" method="POST" enctype="multipart/form-data">
-    {% csrf_token %}
-    <label for="file1"> Upload a file</label><br>
-    <input type="file" id="file1" name="file">
-    <small>Only accepts CSV files</small>
-    <button type="submit">Upload</button>
-  </form>
+      <h2><b>Add Batch Ventilators</b></h2>
+      <form action="{% url 'ventilator-list' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="file1"> Upload a file</label><br>
+        <input type="file" id="file1" name="file">
+        <small>Only accepts CSV files</small>
+        <button type="submit">Upload</button>
+      </form>
+    </div> -->
+  </div>
+  <div class="card-footer card-footer d-flex justify-content-between bg-white">
+    <button class="btn btn-dark" data-toggle="modal" data-target="#singleVentilatorModal">Add Single Ventilator</button>
+    <button class="btn btn-dark" data-toggle="modal" data-target="#batchVentilatorModal">Add Batch Ventilators</button>
+  </div>
 </div>
+
+<div class="modal fade" id="singleVentilatorModal" tabindex="-1" role="dialog" aria-labelledby="singleVentilatorModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{% url 'ventilator-list' %}" method="POST" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add Single Ventilator</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% csrf_token %}
+        {% render_form serializer %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-dark">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="batchVentilatorModal" tabindex="-1" role="dialog" aria-labelledby="batchVentilatorModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{% url 'ventilator-list' %}" method="POST" enctype="multipart/form-data" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Add Batch Ventilator</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% csrf_token %}
+        <div class="alert alert-info">
+          Only accepts CSV files
+        </div>
+        <label for="file1">Upload a file or drag and drop here</label><br>
+        <div class="draggable-view">
+          <input type="file" id="file1" name="file">
+          <div class="dropzone"></div>
+          <div class="fallback-view">
+            <span class="fallback">No file selected</span>
+          </div>
+          <a id="closeBtn" class="btn btn-link d-none" href="javascript:void(0)">
+            <i class="fa fa-close"></i>
+          </a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-dark">Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+  $('#file1').on('change', function () {
+    var files = $(this)[0].files;
+    if (files.length > 0) {
+      $('.fallback').text(files[0].name);
+      // $('#closeBtn').removeClass('d-none');
+    } else {
+      $('.fallback').text('No file selected');
+      // $('#closeBtn').addClass('d-none');
+    }
+  });
+
+  $('body').on('click', '#closeBtn', function() {
+    $('#file1').reset();
+  });
+</script>
 
 {% endblock %}
