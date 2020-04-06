@@ -43,28 +43,10 @@
         {% endfor %}
       </tbody>
     </table>
-
-    <!-- <div class="form">
-      <h2><b>Add Single Ventilator</b></h2>
-      <form action="{% url 'ventilator-list' %}" method="POST">
-        {% csrf_token %}
-        {% render_form serializer %}
-        <input class='button' type="submit" value="Save">
-      </form>
-
-      <h2><b>Add Batch Ventilators</b></h2>
-      <form action="{% url 'ventilator-list' %}" method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        <label for="file1"> Upload a file</label><br>
-        <input type="file" id="file1" name="file">
-        <small>Only accepts CSV files</small>
-        <button type="submit">Upload</button>
-      </form>
-    </div> -->
   </div>
-  <div class="card-footer card-footer d-flex justify-content-between bg-white">
-    <button class="btn btn-dark" data-toggle="modal" data-target="#singleVentilatorModal">Add Single Ventilator</button>
-    <button class="btn btn-dark" data-toggle="modal" data-target="#batchVentilatorModal">Add Batch Ventilators</button>
+  <div class="card-footer d-flex justify-content-between bg-white">
+    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#singleVentilatorModal">Add Single Ventilator</button>
+    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#batchVentilatorModal">Add Batch Ventilators</button>
   </div>
 </div>
 

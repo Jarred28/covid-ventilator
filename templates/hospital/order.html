@@ -2,83 +2,104 @@
 {% load rest_framework %}
 
 {% block content %}
+<div class="card fixed">
+	<h1 class="card-header bg-white">Orders</h1>
+  <div class="card-body">
+  	<h2>Requested Orders</h2>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>Order Status</th>
+					<th>Ventilators Requested</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for order in demand_orders %}
+				<tr>
+					<td>{{ order.active|yesno:"Active,Inactive,Unknown" }}</td>
+					<td>{{ order.num_requested }}</td>
+				</tr>	
+				{% endfor %}
+			</tbody>
+		</table>
 
-<h1><b>Requested Orders</b></h1>
-<table>
-	<thead>
-		<tr>
-			<th>Order Status</th>
-			<th>Ventilators Requested</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for order in demand_orders %}
-		<tr>
-			<td align="right">{{ order.active|yesno:"Active,Inactive,Unknown" }}</td>
-			<td align="right">{{ order.num_requested }}</td>
-		</tr>	
-		{% endfor %}
-	</tbody>
-</table>
+		<h2>Sent Orders</h2>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>Order Status</th>
+					<th>Amount</th>
+					<th>Receiving Hospital</th>
+					<th>Request Back Reserve</th>
+					<th>Allow Receiver to Deploy Reserve</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for order in transit_orders %}
+				<tr>
+					<td>Transit</td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>Please wait till shipment arrives</td>
+					<td>Please wait till shipment arrives</td>
+				</tr>
+				{% endfor %}
+				{% for order in arrived_reserve_orders %}
+				<tr>
+					<td>Arrived</td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>		
+						<form action="{% url 'request-reserve' order.id %}"  method="post">
+							{% csrf_token %}
+				    		<input type="submit" value="submit" name="Request" />
+						</form>
+					</td>
+					<td>
+						<form action="{% url 'deploy-reserve' order.id %}" method="post">
+							{% csrf_token %}
+				    		<input type="submit" value="submit" name="Deploy" />
+						</form>
+					</td>
+				</tr>
+				{% endfor %}
+				{% for order in arrived_non_reserve_orders %}
+				<tr>
+					<td>Arrived</td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>Unable at this time</td>
+					<td>Unable at this time</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+  </div>
+  <div class="card-footer text-right bg-white">
+    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#ventilatorRequestModal">Submit a Ventilator Request</button>
+  </div>
+</div>
 
-<h1><b>Sent Orders</b></h1>
-<table>
-	<thead>
-		<tr>
-			<th>Order Status</th>
-			<th>Amount</th>
-			<th>Receiving Hospital</th>
-			<th>Request Back Reserve</th>
-			<th>Allow Receiver to Deploy Reserve</th>
-		</tr>
-	</thead>
-	<tbody>
-		{% for order in transit_orders %}
-		<tr>
-			<td align="right">Transit</td>
-			<td align="right">{{ order.num_requested }}</td>
-			<td align="right">{{ order.requesting_hospital.name }}</td>
-			<td align="right">Please wait till shipment arrives</td>
-			<td align="right">Please wait till shipment arrives</td>
-		</tr>
-		{% endfor %}
-		{% for order in arrived_reserve_orders %}
-		<tr>
-
-			<td align="right">Arrived</td>
-			<td align="right">{{ order.num_requested }}</td>
-			<td align="right">{{ order.requesting_hospital.name }}</td>
-			<td align="right">		
-				<form action="{% url 'request-reserve' order.id %}"  method="post">
-					{% csrf_token %}
-		    		<input type="submit" value="submit" name="Request" />
-				</form>
-			</td>
-			<td align="right">
-				<form action="{% url 'deploy-reserve' order.id %}" method="post">
-					{% csrf_token %}
-		    		<input type="submit" value="submit" name="Deploy" />
-				</form>
-			</td>
-		</tr>
-		{% endfor %}
-		{% for order in arrived_non_reserve_orders %}
-		<tr>
-			<td align="right">Arrived</td>
-			<td align="right">{{ order.num_requested }}</td>
-			<td align="right">{{ order.requesting_hospital.name }}</td>
-			<td align="right">Unable at this time</td>
-			<td align="right">Unable at this time</td>
-		</tr>
-		{% endfor %}
-	</tbody>
-</table>
-<h3> Submit a Ventilator Request </h3>
-<form method="post">
-	{% csrf_token %}
-	<label for="num"> How many ventilators do you need? </label>
-	<input type="text" id="num_requested" name="num_requested">
-	<button type="submit">Submit</button>
-</form>
+<div class="modal fade" id="ventilatorRequestModal" tabindex="-1" role="dialog" aria-labelledby="ventilatorRequestModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form method="POST" class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Submit a Ventilator Request</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% csrf_token %}
+				<label for="num"> How many ventilators do you need? </label>
+				<input type="text" id="num_requested" class="form-control" name="num_requested">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-dark">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 {% endblock %}
