@@ -20,7 +20,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, ShipmentBatches, SystemParameters
+from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, ShipmentBatches, SystemParameters, SystemOperator
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemOperatorPermission
 from webapp.serializers import SignupSerializer, SystemParametersSerializer, VentilatorSerializer
 
