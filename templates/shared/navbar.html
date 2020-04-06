@@ -6,6 +6,17 @@
 
   <ul class="navbar-nav ml-auto">
     <li class="nav-item">
+      {% if user.user_type == 'HospitalGroup' %}
+      <span class="nav-link">CEO</span>
+      {% elif user.user_type == 'SystemOperator' %}
+      <span class="nav-link">Operator</span>
+      {% elif user.user_type == 'Hospital' %}
+      <span class="nav-link">Administrator</span>
+      {% elif user.user_type == 'Supplier' %}
+      <span class="nav-link">Supplier</span>
+      {% endif %}
+    </li>
+    <li class="nav-item">
       <a class="nav-link" href="{% url 'logout' %}">Log out</a>
     </li>
   </ul>
