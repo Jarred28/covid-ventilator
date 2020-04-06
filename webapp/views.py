@@ -1,7 +1,7 @@
 import csv
 import io
 from collections import defaultdict
-from datetime import datetime
+from datetime import date
 import pdb
 
 from datetime import datetime

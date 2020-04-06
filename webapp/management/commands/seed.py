@@ -138,3 +138,4 @@ class Command(BaseCommand):
             name="admin",
             user=User.objects.get(pk=sys_oper_user.id)
         )
+        sys_oper.save()
