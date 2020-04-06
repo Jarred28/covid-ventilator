@@ -468,7 +468,7 @@ def reset_db(request, format=None):
         name="admin",
         user=User.objects.get(pk=sys_oper_user.id)
     )
-    return HttpResponseRedirect(reverse('', request=request, format=format))
+    return HttpResponseRedirect(reverse('login', request=request))
 
 class SystemSettings(APIView):
     renderer_classes = [TemplateHTMLRenderer]
