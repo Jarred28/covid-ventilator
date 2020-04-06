@@ -22,6 +22,7 @@
 </div>
 {% endblock %}
 
+<<<<<<< Updated upstream
 {% block script %}
 <script>
   var demands = {{ demands|safe }};
@@ -31,4 +32,11 @@
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsGd9jQnFq8aW--0l2unCbzidogUPQyc8&callback=initMap" async defer></script>
 <script src="/static/hospital/js/operator-dashboard.js"></script>
+=======
+<form action="{% url 'reset-db' %}" method="POST">
+	{% csrf_token %}
+	<input class="button" type="submit" value="Reset DB">
+</form>
+
+>>>>>>> Stashed changes
 {% endblock %}

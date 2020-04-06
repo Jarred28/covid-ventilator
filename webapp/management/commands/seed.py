@@ -1,10 +1,9 @@
-from datetime import datetime
+from datetime import date
 from django.core.management.base import BaseCommand, CommandError
 from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, SystemOperator, SystemParameters
 import random
 class Command(BaseCommand):
     help = "Seed the Database"
-
     def add_arguments(self, parser):
         parser.add_argument("--reset_db", type=int)
 
@@ -19,7 +18,6 @@ class Command(BaseCommand):
         if options["reset_db"] == 0:
             return
         self.delete_existing_records()
-
         hospital_addresses = [
             {
                 "name": "Brookdale Hospital Medical Center",
@@ -62,20 +60,24 @@ class Command(BaseCommand):
                 "address": "2525 Kings Highway, Brooklyn, NY 11229"
             }
         ]
-
-        for group_count in range(6):
-            email = "{0}{1}{2}".format("covid_test_group", str(group_count), "@gmail.com")
-            username = "{0}{1}".format("test_group", str(group_count))
-            hg_user = User(
-                user_type=User.UserType.HospitalGroup.name,
-                email=email,
-                username=username
-            )
-            hg_user.save()
-            name = "{0}{1}".format("HospitalGroup", str(group_count))
-            hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
-            hg.save()
-
+        model_nums = ["Medtronic Portable",
+            "Medtronic Non-Portable",
+            "Phillips Portable",
+            "Phillips Non-Portable",
+            "Hamilton Portable",
+            "Hamilton Non-Portable"
+        ]
+        email = "covid_test_group"
+        username = "ny_state"
+        hg_user = User(
+            user_type=User.UserType.HospitalGroup.name,
+            email=email,
+            username=username
+        )
+        hg_user.save()
+        name = "NY State"
+        hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
+        hg.save()
         for hospital_count in range(10):
             email = "{0}{1}{2}".format("covid_test_hospital", str(hospital_count), "@gmail.com")
             username = "{0}{1}".format("test_hospital", str(hospital_count))
@@ -100,9 +102,8 @@ class Command(BaseCommand):
             h.save()
         for vent_count in range(100):
             hosp = Hospital.objects.all()[vent_count % 4]
-            model = "{0}{1}".format("model", str(vent_count))
             vent = Ventilator(
-                model_num=model,
+                model_num=model_nums[len(model_nums) % vent_count],
                 state=Ventilator.State.Available.name,
                 owning_hospital=hosp,
                 current_hospital=hosp
@@ -111,9 +112,8 @@ class Command(BaseCommand):
         for order_count in range(6):
             num_req = random.randint(20, 400)
             order = Order(
-                num_requested=num_req,
-                num_needed=num_req / 2,
-                time_submitted=datetime.now(),
+                num_requested=random.randint(20, 400),
+                time_submitted=date(2020, 4, 9),
                 active=True,
                 auto_generated=False,
                 requesting_hospital=Hospital.objects.all()[order_count+4],

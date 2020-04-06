@@ -19,7 +19,8 @@ urlpatterns = [
     path('system/supply/', views.SystemSupply.as_view(), name='sys-supply'),
     path('system/source-reserve/', views.SystemSourceReserve.as_view(), name='sys-source-reserve'),
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
-    path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard')
+    path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
+    path('reset_db/', views.reset_db, name='reset-db')
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
