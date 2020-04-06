@@ -32,24 +32,24 @@ class Command(BaseCommand):
                 "address": "89th Avenue & Van Wyck Expressway, Jamaica, NY 11418"
             },
             {
-                "name": "Memorial Hospital for Cancer and Allied Diseases",
-                "address": "1275 York Avenue, New York, NY 10065"
+                "name": "Lewis County General Hospital",
+                "address": "3926 NY-12, Lyons Falls, NY 13368"
             },
             {
                 "name": "Brookdale Hospital Medical Center",
                 "address": "1 Brookdale Plaza, Brooklyn, NY 11212"
             },
             {
-                "name": "Calvary Hospital",
-                "address": "150 55th Street, Brooklyn, NY 11220"
+                "name": "General Hospital",
+                "address": "16 Bank St, Batavia, NY 14020"
             },
             {
-                "name": "Lenox Health Greenwich Village",
-                "address": "30 Seventh Avenue, New York, NY 10011"
+                "name": "Margaretville Hospital",
+                "address": "42084 NY-28, Margaretville, NY 12455"
             },
             {
-                "name": "Lincoln Medical & Mental Health Center",
-                "address": "234 East 149th Street, Bronx, NY 10451"
+                "name": "Central New York Psychiatric Center",
+                "address": "9005 Old River Rd, Marcy, NY 13403"
             },
             {
                 "name": "New York Eye and Ear Infirmary of Mount Sinai",
