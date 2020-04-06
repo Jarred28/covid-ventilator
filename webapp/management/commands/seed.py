@@ -102,7 +102,7 @@ class Command(BaseCommand):
         for vent_count in range(100):
             hosp = Hospital.objects.all()[vent_count % 4]
             vent = Ventilator(
-                model_num=model_nums[len(model_nums) % vent_count],
+                model_num=model_nums[len(model_nums) % (vent_count+1)],
                 state=Ventilator.State.Available.name,
                 owning_hospital=hosp,
                 current_hospital=hosp
