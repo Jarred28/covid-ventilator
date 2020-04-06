@@ -7,7 +7,6 @@ import pdb
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
-from django.core import serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -273,20 +272,28 @@ class Dashboard(APIView):
     template_name = 'sysoperator/dashboard.html'
 
     def get(self, request, format=None):
-        hospitals = serializers.serialize('json', Hospital.objects.all())
-        active_orders = Order.objects.filter(active=True)
-        hospital_pairs = []
+        demands = []
+        for order in Order.objects.filter(active=True):
+            if order.requesting_hospital:
+                demands.append(order.requesting_hospital.address)
+
+        supplies = []
         for hospital in Hospital.objects.all():
-            hosp = type('test', (object,), {})()
-            hosp.name = hospital.name
-            hosp.ventilator_count = Ventilator.objects.filter(state=Ventilator.State.Available.name).filter(owning_hospital=hospital)
-            hospital_pairs.append(hosp)
-        transit_orders = []
+            ventilatorCount = Ventilator.objects.filter(state=Ventilator.State.Available.name).filter(owning_hospital=hospital).count()
+            if (ventilatorCount > 0):
+                supplies.append(hospital.address)
+
+        transits = []
         for order in Order.objects.all():
             ventilators = order.ventilator_set.all()
-            if ventilators.count() > 0 ventilators.first().state == Ventilator.State.InTransit.name:
-                transit_orders.append(order)
-        return Response({'active_orders': active_orders, 'hospital_pairs': hospital_pairs, 'transit_orders': transit_orders})
+            if ventilators.count() > 0 and ventilators.first().state == Ventilator.State.InTransit.name:
+                transits.append(order.requesting_hospital.address)
+
+        return Response({
+            'demands': demands,
+            'supplies': supplies,
+            'transits': transits
+        })
 
     @transaction.atomic
     def post(self, request, format=None):
