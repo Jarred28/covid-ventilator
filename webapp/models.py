@@ -41,7 +41,7 @@ class Hospital(models.Model):
     within_group_only = models.BooleanField(blank=False, null=False, default=False)
     contribution = models.IntegerField(blank=False, null=False, default=0)
     projected_load = models.IntegerField(blank=False, null=False, default=0)
-
+    current_load = models.IntegerField(blank=False, null=False, default=0)
 
 class Supplier(models.Model):
     name = models.CharField(max_length=100, blank=False, null=False)
