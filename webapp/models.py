@@ -56,7 +56,8 @@ class Order(models.Model):
     active = models.BooleanField(null=False, blank=False, default=True)
     time_submitted = models.DateTimeField(null=False, blank=False, auto_now_add=True)
     auto_generated = models.BooleanField(blank=False, null=False, default=False)
-
+    date_allocated = models.DateTimeField(null=True, blank=True)
+    date_fulfilled = models.DateTimeField(null=True, blank=True)
 
 class Ventilator(models.Model):
     class State(Enum):
@@ -65,6 +66,7 @@ class Ventilator(models.Model):
         InTransit = 'InTransit'
         InUse = 'InUse'
         Reserve = 'Reserve'
+        RequestedReserve = 'RequestedReserve'
 
     model_num = models.CharField(max_length=128)
     state = models.CharField(

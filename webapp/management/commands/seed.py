@@ -59,7 +59,7 @@ class Command(BaseCommand):
             h = Hospital(
                 name=name,
                 user=h_user,
-                address=hospital_addresses[hospital_count], 
+                address=self.hospital_addresses[hospital_count], 
                 contribution=0, 
                 projected_load=0, 
                 hospital_group=hg, 
