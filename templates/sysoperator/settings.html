@@ -1,32 +1,40 @@
-{% extends 'base.html' %}
+{% extends 'new_base.html' %}
 {% load rest_framework %}
-{% block content %}
-<h1>Settings</h1>
-<form action="{% url 'sys-settings' %}" method="POST">
-  {% csrf_token %}
-  {% if serializer.errors and serializer.errors.non_field_errors %}
-    {% for error in serializer.errors.non_field_errors %}
-      <p style='color:#8B0000;'>ERROR: {{ error }}</p>
-    {% endfor %}
-  {% endif %}
 
-  {% regroup serializer|dictsort:"section" by section as sections %}
-  {% for section in sections %}
-    {% for field in section.list %}
-      {% render_field field style=style %}
-      {% if field.errors %}
-        {% for error in field.errors %}
-          <p style='color:#8B0000;'>ERROR: {{ error }}</p>
-        {% endfor %}
+{% block head %}
+<title>Allocation of Supply - Demand with Reserve</title>
+{% endblock %}
+
+{% block content %}
+<form action="{% url 'sys-settings' %}" method="POST" class="card">
+  <h1 class="card-header bg-white">Allocation of Supply → Demand with Reserve</h1>
+  <div class="card-body">
+    {% csrf_token %}
+    {% if serializer.errors and serializer.errors.non_field_errors %}
+      {% for error in serializer.errors.non_field_errors %}
+        <p style='color:#8B0000;'>ERROR: {{ error }}</p>
+      {% endfor %}
+    {% endif %}
+
+    {% regroup serializer|dictsort:"section" by section as sections %}
+    {% for section in sections %}
+      {% for field in section.list %}
+        {% render_field field style=style %}
+        {% if field.errors %}
+          {% for error in field.errors %}
+            <p style='color:#8B0000;'>ERROR: {{ error }}</p>
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+      {% if section.grouper == '' %}
+      <div class="alert alert-info" role="alert">
+        The following settings must add to 100%:
+      </div>
       {% endif %}
     {% endfor %}
-    {% if section.grouper == '' %}
-    <div style='margin:50px;'>
-      <p>The following settings must add to 100%:</p>
-    </div>
-    {% endif %}
-  {% endfor %}
-
-  <input type="submit" value="Change Settings" style='margin-top:20px;'>
+  </div>
+  <div class="card-footer text-right bg-white">
+    <button class="btn btn-dark mb-0" type="submit">Change Settings</button>
+  </div>
 </form>
 {% endblock %}

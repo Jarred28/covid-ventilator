@@ -1,21 +1,39 @@
-{% extends 'base.html' %}
+{% extends 'new_base.html' %}
 {% load static %}
 {% load rest_framework %}
 
-{% block content %}
-<head>
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
-  <link rel="stylesheet" href='{% static "hospital/css/style.css" %}'>
-</head>
+{% block head %}
+<title>Dashboard - Demand, Supply and In-Transit</title>
+<link rel="stylesheet" href="/static/css/operator/dashboard.css">
+{% endblock %}
 
-<h1>Dashboard</h1>
-<div class="form">
-  <h2>Run Algorithm</h2>
-  <form action="{% url 'sys-dashboard' %}" method="POST">
+{% block content %}
+<div class="card fill">
+  <h1 class="card-header bg-white">Dashboard: Demand, Supply and In-Transit</h1>
+  <div class="card-body">
+    <div id="map"></div>
+  </div>
+  <div class="card-footer card-footer d-flex justify-content-between bg-white">
+    <form class="mb-0" action="{% url 'reset-db' %}" method="POST">
       {% csrf_token %}
-      <input class='button' type="submit" value="Execute">
-  </form>
+      <button class="btn btn-dark" type="submit">Reset DB</button>
+    </form>
+    <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
+      {% csrf_token %}
+      <button class='btn btn-dark' type="submit">Run Allocation</button>
+    </form>
+  </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+  var demands = {{ demands|safe }};
+  var supplies = {{ supplies|safe }};
+  var transits = {{ transits|safe }};
+  var apiKey = 'AIzaSyAsGd9jQnFq8aW--0l2unCbzidogUPQyc8';
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAsGd9jQnFq8aW--0l2unCbzidogUPQyc8&callback=initMap" async defer></script>
+<script src="/static/js/operator/dashboard.js"></script>
 
 {% endblock %}
