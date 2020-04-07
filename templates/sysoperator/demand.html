@@ -23,7 +23,7 @@
         <tr>
           <td>{{ order.requesting_hospital.name }}</td>
           <td>{{ order.num_requested }}</td>
-          <td>{{ order.num_needed }}</td>
+          <td>{{ order.requesting_hospital.current_load }}</td>
           <td>{{ order.requesting_hospital.projected_load }}</td>
         </tr>
         {% endfor %}
