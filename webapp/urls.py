@@ -20,7 +20,7 @@ urlpatterns = [
     path('system/source-reserve/', views.SystemSourceReserve.as_view(), name='sys-source-reserve'),
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
     path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
-    path('hospitals/<int:hospital_id>/approve', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
+    path('hospitals/approve/<batchid>', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
     path('reset_db/', views.reset_db, name='reset-db')
 ]
 

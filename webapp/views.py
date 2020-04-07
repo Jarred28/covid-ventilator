@@ -555,7 +555,7 @@ class HospitalCEO(APIView):
             current_hospital__in=[hospital.id for hospital in hospitals]
         )
 
-        requests = []
+        ventRequests = []
 
         # If any ventilators are requested, let the user know
         if requested_ventilators:
@@ -573,20 +573,27 @@ class HospitalCEO(APIView):
                     #     "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
                     #     str(batchid)
                     # )
-                    requests.append({
+                    ventRequests.append({
                         'requesting_hospital': requesting_hospital,
-                        'offer': "{} requests {} ventilator(s)".format(requesting_hospital.name, len(vents)),
+                        'offer': "{} requests {} ventilator(s)".format(requesting_hospital.name, vents[0].order.num_requested),
                         'batchid': str(batchid)
                     })
 
-        return Response({"requests": requests})
+        return Response({"ventRequests": ventRequests})
 
 class HospitalCEOApprove(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalGroupPermission]
     template_name = 'hospital_group/approve.html'
 
-    def get(self, request, hospital_id, format=None):
-        hospital = Hospital.objects.get(pk=hospital_id)
+    def get(self, request, batchid, format=None):
+        requested_ventilators = Ventilator.objects.filter(batch_id=batchid)
+        ventRequest = type('test', (object,), {})()
+        if (requested_ventilators.count() > 0):
+            ventilator = requested_ventilators.first()
+            if (ventilator.state == Ventilator.State.Requested.name and ventilator.order):
+                ventRequest.requesting_hospital = ventilator.order.requesting_hospital.name
+                ventRequest.offer = "{} requests {} ventilator(s)".format(ventRequest.requesting_hospital, ventilator.order.num_requested)
+                ventRequest.batchid = batchid
 
-        return Response({'hospital': hospital})
+        return Response({'ventRequest': ventRequest})
