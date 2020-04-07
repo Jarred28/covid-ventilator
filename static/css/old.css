@@ -8,12 +8,13 @@ html.open, body.open {
 }
 
 html {
-  padding: 40px;
   font-size: 62.5%;
+  padding: 40px;
 }
 
 body {
   padding: 20px;
+  margin: 0;
   background-color: #5BB9B8;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;

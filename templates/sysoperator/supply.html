@@ -1,0 +1,50 @@
+{% extends 'new_base.html' %}
+{% load rest_framework %}
+
+{% block head %}
+<title>Current Supply of Ventilators</title>
+<link rel="stylesheet" href="/static/css/operator/supply.css">
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h1 class="card-header bg-white">Current Supply of Ventilators</h1>
+  <div class="card-body">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th scope="col">Owner Hospital</th>
+          <th scope="col">Hospital Parent</th>
+          <th scope="col">Model Number</th>
+          <th scope="col">Quantity</th>
+          <th scope="col">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hospital_supply_list in supply_list %}
+        <tr>
+          <td>{{ hospital_supply_list.name }}</td>
+          <td>{{ hospital_supply_list.owning_hospital_group }}</td>
+          <td>
+            {% for model_num in hospital_supply_list.model_nums %}
+            <span class="model-number badge badge-pill badge-dark">{{ model_num }}</span>
+            {% endfor %}
+          </td>
+          <td>{{ hospital_supply_list.ventilator_supply }}</td>
+          <td>{{ hospital_supply_list.monetary_value }}</td>
+        </tr>
+        {% endfor %}
+        {% if supply_list|length == 0 %}
+          <tr>
+            <td colspan="5">
+              <div class="alert alert-info mb-0 text-center">
+                There is no data to display
+              </div>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
