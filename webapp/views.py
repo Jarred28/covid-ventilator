@@ -562,13 +562,14 @@ class HospitalCEO(APIView):
             for ventilator in requested_ventilators:
                 batchid_to_ventilators[ventilator.batch_id].append(ventilator)
             for batchid, vents in batchid_to_ventilators.items():
-                requesting_hospital = vents[0].order.requesting_hospital.name
-                sending_hospital = vents[0].order.sending_hospital.name
-                messages.add_message(
-                    request,
-                    messages.INFO,
-                    "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
-                    str(batchid)
-                )
+                if len(vents) > 0 and vents[0].order:
+                    requesting_hospital = vents[0].order.requesting_hospital.name
+                    sending_hospital = vents[0].order.sending_hospital.name
+                    messages.add_message(
+                        request,
+                        messages.INFO,
+                        "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
+                        str(batchid)
+                    )
 
         return Response()
