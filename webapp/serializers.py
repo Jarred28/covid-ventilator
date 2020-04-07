@@ -56,10 +56,10 @@ class SignupSerializer(serializers.Serializer):
     hospital_name = serializers.CharField(max_length=100, required=False, label='Name')
     hospital_address = serializers.CharField(max_length=100, required=False, label='Address')
     hospital_within_group_only = serializers.BooleanField(required=False, label='Allow ventilator transfers only within my hospital group?')
-    hospital_hospitalgroup = serializers.ChoiceField(
-        choices=get_hospital_group_choices(),
-        required=False,
-        label='Hospital Group')
+    # hospital_hospitalgroup = serializers.ChoiceField(
+    #     choices=get_hospital_group_choices(),
+    #     required=False,
+    #     label='Hospital Group')
     supplier_name = serializers.CharField(max_length=100, required=False, label='Name')
     supplier_address = serializers.CharField(max_length=100, required=False, label='Address')
     hospitalgroup_name = serializers.CharField(max_length=100, required=False, label='Name')
@@ -73,7 +73,7 @@ class SignupSerializer(serializers.Serializer):
         sections[''] = ['username', 'email', 'user_type']
         sections['Hospital'] = ['hospital_name', 'hospital_address', 'hospital_within_group_only', 'hospital_hospitalgroup']
         sections['Supplier'] = ['supplier_name', 'supplier_address']
-        sections['Hospital Group'] = ['hospitalgroup_name']
+        # sections['Hospital Group'] = ['hospitalgroup_name']
         sections['System Operator'] = ['systemoperator_name']
 
         for section, fields in sections.items():
@@ -92,7 +92,7 @@ class SignupSerializer(serializers.Serializer):
         hospital_name = self.validated_data.get('hospital_name')
         hospital_address = self.validated_data.get('hospital_address')
         hospital_within_group_only = self.validated_data.get('within_group_only', False)
-        hospital_hospitalgroup = self.validated_data.get('hospital_hospitalgroup')
+        # hospital_hospitalgroup = self.validated_data.get('hospital_hospitalgroup')
         supplier_name = self.validated_data.get('supplier_name')
         supplier_address = self.validated_data.get('supplier_address')
         hospitalgroup_name = self.validated_data.get('hospitalgroup_name')
@@ -106,7 +106,7 @@ class SignupSerializer(serializers.Serializer):
                 name=hospital_name,
                 address=hospital_address,
                 within_group_only=hospital_within_group_only,
-                hospital_group=HospitalGroup.objects.get(id=hospital_hospitalgroup),
+                # hospital_group=HospitalGroup.objects.get(id=hospital_hospitalgroup),
             )
         elif user_type == User.UserType.Supplier.name:
             body += 'name: {name}\naddress: {address}\n'.format(name=supplier_name, address=supplier_address)
