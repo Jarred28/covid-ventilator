@@ -89,7 +89,7 @@ class Command(BaseCommand):
             h_user.save()
             name = "{0}{1}".format("Hospital", str(hospital_count))
             pos = 5 if hospital_count > 5 else hospital_count
-            case_load = random.randint(400, 700)
+            case_load = random.randint(40, 100)
             h = Hospital(
                 name=hospital_addresses[hospital_count]['name'],
                 user=h_user,
@@ -100,7 +100,7 @@ class Command(BaseCommand):
                 within_group_only=False
             )
             h.save()
-        for vent_count in range(100):
+        for vent_count in range(20):
             hosp = Hospital.objects.all()[vent_count % 4]
             monetary_value = 0
             if ((vent_count) % len(model_nums)) % 2 == 0:
@@ -116,7 +116,7 @@ class Command(BaseCommand):
             )
             vent.save()
         for order_count in range(6):
-            num_req = random.randint(20, 400)
+            num_req = random.randint(10, 30)
             order = Order(
                 num_requested=random.randint(20, 400),
                 time_submitted=date(2020, 4, 9),
