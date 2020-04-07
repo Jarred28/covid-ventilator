@@ -35,7 +35,7 @@
   {% if user.user_type == 'HospitalGroup' %}
 
   {% url 'ceo-dashboard' as ceo_dashboard_url %}
-  <a class="nav-link {% if request.get_full_path == ceo_dashboard_url %}active{% endif %}" href="{{ ceo_dashboard_url }}">Dashboard</a>
+  <a class="nav-link {% if request.get_full_path == ceo_dashboard_url %}active{% endif %}" href="{{ ceo_dashboard_url }}">View</a>
 
   {% endif %}
 </nav>

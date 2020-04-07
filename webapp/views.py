@@ -555,6 +555,8 @@ class HospitalCEO(APIView):
             current_hospital__in=[hospital.id for hospital in hospitals]
         )
 
+        requests = []
+
         # If any ventilators are requested, let the user know
         if requested_ventilators:
             # Present notifications by batch as opposed to by individual ventilators
@@ -563,13 +565,28 @@ class HospitalCEO(APIView):
                 batchid_to_ventilators[ventilator.batch_id].append(ventilator)
             for batchid, vents in batchid_to_ventilators.items():
                 if len(vents) > 0 and vents[0].order:
-                    requesting_hospital = vents[0].order.requesting_hospital.name
-                    sending_hospital = vents[0].order.sending_hospital.name
-                    messages.add_message(
-                        request,
-                        messages.INFO,
-                        "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
-                        str(batchid)
-                    )
+                    requesting_hospital = vents[0].order.requesting_hospital
+                    # sending_hospital = vents[0].order.sending_hospital.name
+                    # messages.add_message(
+                    #     request,
+                    #     messages.INFO,
+                    #     "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
+                    #     str(batchid)
+                    # )
+                    requests.append({
+                        'requesting_hospital': requesting_hospital,
+                        'offer': "{} requests {} ventilator(s)".format(requesting_hospital.name, len(vents)),
+                        'batchid': str(batchid)
+                    })
 
-        return Response()
+        return Response({"requests": requests})
+
+class HospitalCEOApprove(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalGroupPermission]
+    template_name = 'hospital_group/approve.html'
+
+    def get(self, request, hospital_id, format=None):
+        hospital = Hospital.objects.get(pk=hospital_id)
+
+        return Response({'hospital': hospital})

@@ -1,19 +1,47 @@
-{% extends 'base.html' %}
+{% extends 'new_base.html' %}
 {% load rest_framework %}
 
-{% block content %}
+{% block head %}
+<title>View - HospitalGroup CEO</title>
+{% endblock %}
 
-<h1><b>Dashboard</b></h1>
-{% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-    <li>{{ message }}</li>
-    <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST">
-      {% csrf_token %}
-      <button type='submit'>Approve</button>
-    </form>
-    {% endfor %}
-</ul>
-{% endif %}
+{% block content %}
+<div class="card">
+  <h1 class="card-header bg-white">View</h1>
+  <div class="card-body">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Hospital</th>
+          <th>Share Offer</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for request in requests %}
+        <tr>
+          <td>{{ request.requesting_hospital.name }}</td>
+          <td>{{ request.offer }}</td>
+          <td>
+            <form action="{% url 'ventilator-approve' request.batchid %}" method="POST">
+              {% csrf_token %}
+              <button class="btn btn-dark" type="submit">Approve</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if requests|length == 0 %}
+        <tr>
+          <td colspan="3">
+            <div class="alert alert-info">
+              There is nothing to review.
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
 {% endblock %}
