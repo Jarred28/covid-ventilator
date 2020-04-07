@@ -74,6 +74,7 @@ class Command(BaseCommand):
             email=email,
             username=username
         )
+        hg_user.set_password("te$t1234")
         hg_user.save()
         name = "NY State"
         hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
@@ -86,6 +87,7 @@ class Command(BaseCommand):
                 email=email,
                 username=username
             )
+            h_user.set_password("te$t1234")
             h_user.save()
             name = "{0}{1}".format("Hospital", str(hospital_count))
             pos = 5 if hospital_count > 5 else hospital_count
@@ -134,6 +136,7 @@ class Command(BaseCommand):
                 email="sys_admin_covid@gmail.com",
                 username="sys_admin"
             )
+        sys_oper_user.set_password("te$t1234")
         sys_oper_user.save()
         sys_oper = SystemOperator(
             name="admin",
