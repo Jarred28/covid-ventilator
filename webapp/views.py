@@ -629,7 +629,7 @@ class HospitalCEO(APIView):
                     # )
                     ventRequests.append({
                         'requesting_hospital': requesting_hospital,
-                        'offer': "{} requests {} ventilator(s) from {}".format(requesting_hospital.name, vents[0].order.num_requested, sending_hospital.name),
+                        'offer': "{} requests {} ventilator(s) from {}".format(requesting_hospital.name, len(vents), sending_hospital.name),
                         'batchid': str(batchid)
                     })
 
@@ -652,7 +652,7 @@ class HospitalCEOApprove(APIView):
                 if not sending_hospital:
                     sending_hospital = ventilator.current_hospital
 
-                ventRequest.offer = "{} requests {} ventilator(s) from {}".format(ventRequest.requesting_hospital, ventilator.order.num_requested, sending_hospital.name)
+                ventRequest.offer = "{} requests {} ventilator(s) from {}".format(ventRequest.requesting_hospital, requested_ventilators.count(), sending_hospital.name)
                 ventRequest.batchid = batchid
 
         return Response({'ventRequest': ventRequest})
