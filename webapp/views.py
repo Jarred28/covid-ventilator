@@ -337,7 +337,7 @@ class Dashboard(APIView):
 
         ShipmentBatches.update(batch_id)
 
-        return Response()
+        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&SystemOperatorPermission])
@@ -566,7 +566,11 @@ class HospitalCEO(APIView):
             for batchid, vents in batchid_to_ventilators.items():
                 if len(vents) > 0 and vents[0].order:
                     requesting_hospital = vents[0].order.requesting_hospital
-                    # sending_hospital = vents[0].order.sending_hospital.name
+                    sending_hospital = vents[0].order.sending_hospital
+
+                    if not sending_hospital:
+                        sending_hospital = vents[0].current_hospital
+
                     # messages.add_message(
                     #     request,
                     #     messages.INFO,
@@ -575,7 +579,7 @@ class HospitalCEO(APIView):
                     # )
                     ventRequests.append({
                         'requesting_hospital': requesting_hospital,
-                        'offer': "{} requests {} ventilator(s)".format(requesting_hospital.name, vents[0].order.num_requested),
+                        'offer': "{} requests {} ventilator(s) from {}".format(requesting_hospital.name, vents[0].order.num_requested, sending_hospital.name),
                         'batchid': str(batchid)
                     })
 
@@ -591,9 +595,14 @@ class HospitalCEOApprove(APIView):
         ventRequest = type('test', (object,), {})()
         if (requested_ventilators.count() > 0):
             ventilator = requested_ventilators.first()
-            if (ventilator.state == Ventilator.State.Requested.name and ventilator.order):
+            if (ventilator.state == Ventilator.State.Requested.name and ventilator.order and ventilator.current_hospital.hospital_group == HospitalGroup.objects.get(user=request.user)):
                 ventRequest.requesting_hospital = ventilator.order.requesting_hospital.name
-                ventRequest.offer = "{} requests {} ventilator(s)".format(ventRequest.requesting_hospital, ventilator.order.num_requested)
+                sending_hospital = ventilator.order.sending_hospital
+
+                if not sending_hospital:
+                    sending_hospital = ventilator.current_hospital
+
+                ventRequest.offer = "{} requests {} ventilator(s) from {}".format(ventRequest.requesting_hospital, ventilator.order.num_requested, sending_hospital.name)
                 ventRequest.batchid = batchid
 
         return Response({'ventRequest': ventRequest})
