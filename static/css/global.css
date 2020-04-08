@@ -61,3 +61,7 @@ body {
 .main-content > .card.fixed > .card-body {
   overflow-y: auto;
 }
+
+.help-block {
+  color: #dc3545;
+}
