@@ -23,6 +23,7 @@ urlpatterns = [
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
     path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
     path('hospitals/approve/<batchid>', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
+    path('hospitals/offer/<batchid>', views.HospitalCEOSharedOffer.as_view(), name='ceo-sharedoffer'),
     path('reset_db/', views.reset_db, name='reset-db')
 ]
 
