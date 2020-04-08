@@ -1,10 +1,10 @@
 import csv
 import io
+import os
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 import pdb
 
-from datetime import datetime
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
@@ -451,7 +451,9 @@ def reset_db(request, format=None):
         email=email,
         username=username
     )
-    hg_user.set_password("te$t1234")
+
+    default_pw = os.environ.get('DEFAULT_PASSWORD')
+    hg_user.set_password(default_pw)
     hg_user.save()
     name = "NY State"
     hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
@@ -464,7 +466,7 @@ def reset_db(request, format=None):
             email=email,
             username=username
         )
-        h_user.set_password("te$t1234")
+        h_user.set_password(default_pw)
         h_user.save()
         name = "{0}{1}".format("Hospital", str(hospital_count))
         pos = 5 if hospital_count > 5 else hospital_count
@@ -514,7 +516,7 @@ def reset_db(request, format=None):
             email="sys_admin_covid@gmail.com",
             username="sys_admin"
         )
-    sys_oper_user.set_password("te$t1234")
+    sys_oper_user.set_password(default_pw)
     sys_oper_user.save()
     sys_oper = SystemOperator(
         name="admin",
