@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load rest_framework %}
 
 {% block head %}
@@ -31,7 +31,7 @@
         {% endfor %}
         {% if ventilators|length == 0 %}
         <tr>
-          <td colspan="3">
+          <td colspan="5">
             <div class="alert alert-info mb-0 text-center">
               There is nothing to display.
             </div>

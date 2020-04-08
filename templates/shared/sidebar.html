@@ -1,4 +1,4 @@
-{% if user.is_authenticated and request.get_full_path != '/' and request.get_full_path != '/accounts/login/' %}
+{% if user.is_authenticated %}
 <aside>
   <nav class="nav bg-white flex-column covid-sidebar">
     {% if user.user_type == 'Hospital' %}
