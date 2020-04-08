@@ -15,19 +15,40 @@
 				<tr>
 					<th>Order Status</th>
 					<th>Ventilators Requested</th>
+					<th>Request Reserve</th>
 				</tr>
 			</thead>
 			<tbody>
-				{% for order in demand_orders %}
+				{% for order in active_demand_orders %}
 				<tr>
-					<td>{{ order.active|yesno:"Active,Inactive,Unknown" }}</td>
-					<td>{{ order.num_requested }}</td>
-				</tr>	
+					<td align="right">Active</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">Request Not Fulfilled</td>
+				</tr>
+				{% endfor %}
+				{% for order in reserve_demand_orders %}
+				<tr>
+					<td align="right">Inactive</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">
+						<form action="{% url 'request-reserve' order.id %}" method="post">
+							{% csrf_token %}
+							<input type="submit" value="submit" name="Request">
+						</form>
+					</td>
+				</tr>
+				{% endfor %}
+				{% for order in requested_reserve_demand_orders %}
+				<tr>
+					<td align="right">Inactive</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">Pending Request</td>
+				</tr>
 				{% endfor %}
 			</tbody>
 		</table>
 
-		<h2>Sent Orders</h2>
+		<h2>Supplied Orders</h2>
 		<table class="table table-bordered">
 			<thead>
 				<tr>
@@ -36,44 +57,74 @@
 					<th>Receiving Hospital</th>
 					<th>Request Back Reserve</th>
 					<th>Allow Receiver to Deploy Reserve</th>
+					<th>Deny Request for Reserve</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for order in transit_orders %}
 				<tr>
-					<td>Transit</td>
-					<td>{{ order.num_requested }}</td>
-					<td>{{ order.requesting_hospital.name }}</td>
-					<td>Please wait till shipment arrives</td>
-					<td>Please wait till shipment arrives</td>
+					<td align="right">Transit</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">{{ order.requesting_hospital.name }}</td>
+					<td align="right">Please wait till shipment arrives</td>
+					<td align="right">Please wait till shipment arrives</td>
+					<td align="right">No Request Found</td>
 				</tr>
 				{% endfor %}
 				{% for order in arrived_reserve_orders %}
 				<tr>
-					<td>Arrived</td>
-					<td>{{ order.num_requested }}</td>
-					<td>{{ order.requesting_hospital.name }}</td>
-					<td>		
-						<form action="{% url 'request-reserve' order.id %}"  method="post">
+
+					<td align="right">Arrived</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">{{ order.requesting_hospital.name }}</td>
+					<td align="right">		
+						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
 				    		<input type="submit" value="submit" name="Request" />
 						</form>
 					</td>
-					<td>
+					<td align="right">
 						<form action="{% url 'deploy-reserve' order.id %}" method="post">
 							{% csrf_token %}
 				    		<input type="submit" value="submit" name="Deploy" />
 						</form>
 					</td>
+					<td align="right">No Request Found</td>
 				</tr>
 				{% endfor %}
 				{% for order in arrived_non_reserve_orders %}
 				<tr>
-					<td>Arrived</td>
-					<td>{{ order.num_requested }}</td>
-					<td>{{ order.requesting_hospital.name }}</td>
-					<td>Unable at this time</td>
-					<td>Unable at this time</td>
+					<td align="right">Arrived</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">{{ order.requesting_hospital.name }}</td>
+					<td align="right">Unable at this time</td>
+					<td align="right">Unable at this time</td>
+					<td align="right">No Request Found</td>
+				</tr>
+				{% endfor %}
+				{% for order in arrived_requested_reserve_orders %}
+				<tr>
+					<td align="right">Arrived</td>
+					<td align="right">{{ order.num_requested }}</td>
+					<td align="right">{{ order.requesting_hospital.name }}</td>
+					<td align="right">		
+						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
+							{% csrf_token %}
+				    		<input type="submit" value="submit" name="Request" />
+						</form>
+					</td>
+					<td align="right">
+						<form action="{% url 'deploy-reserve' order.id %}" method="post">
+							{% csrf_token %}
+				    		<input type="submit" value="submit" name="Deploy" />
+						</form>
+					</td>
+					<td align="right">
+						<form action="{% url 'deny-reserve' order.id %}" method="post">
+							{% csrf_token %}
+				    		<input type="submit" value="submit" name="Deny Request" />
+						</form>
+					</td>
 				</tr>
 				{% endfor %}
 			</tbody>

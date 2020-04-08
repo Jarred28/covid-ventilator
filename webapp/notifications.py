@@ -27,3 +27,13 @@ def send_deployable_email(sender, recipient, amount):
 	subject = "Covid-19 Ventilators Notification - Deployable"
 	body = "Hello {0}, {1} has determined that it will not see a spike in cases in the near future and is allowing you to deploy the {2} ventilators you had on reserve.".format(recipient.name, sender.name, amount)
 	send_mail(subject, body, DEFAULT_EMAIL, [recipient.user.email])
+
+def send_denied_reserve_email(sender, recipient, amount):
+	subject = "Covid-19 Ventilators Notification - Denied"
+	body = "Hello {0}, {1} has denied your request to allow you to deploy their {2} ventilators on reserve.".format(recipient.name, sender.name, amount)
+	send_mail(subject, body, DEFAULT_EMAIL, [recipient.user.email])
+
+def send_requested_reserve_email(sender, recipient, amount):
+	subject = "Covid-19 Ventilators Notification - Requested"
+	body = "Hello {0}, {1} has requested the {2} ventilators on reserve at your location. Please accept or deny in the Orders dashboard.".format(sender.name, recipient.name, amount)
+	send_mail(subject, body, DEFAULT_EMAIL, [recipient.user.email])

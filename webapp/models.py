@@ -41,7 +41,7 @@ class Hospital(models.Model):
     within_group_only = models.BooleanField(blank=False, null=False, default=False)
     contribution = models.IntegerField(blank=False, null=False, default=0)
     projected_load = models.IntegerField(blank=False, null=False, default=0)
-
+    current_load = models.IntegerField(blank=False, null=False, default=0)
 
 class Supplier(models.Model):
     name = models.CharField(max_length=100, blank=False, null=False)
@@ -57,6 +57,8 @@ class Order(models.Model):
     active = models.BooleanField(null=False, blank=False, default=True)
     time_submitted = models.DateTimeField(null=False, blank=False, auto_now_add=True)
     auto_generated = models.BooleanField(blank=False, null=False, default=False)
+    date_allocated = models.DateTimeField(null=True, blank=True)
+    date_fulfilled = models.DateTimeField(null=True, blank=True)
     tracking_num = models.CharField(max_length=100, blank=True, null=True)
     shipping_service = models.CharField(max_length=100, blank=True, null=True)
 
@@ -67,6 +69,8 @@ class Ventilator(models.Model):
         InTransit = 'InTransit'
         InUse = 'InUse'
         Reserve = 'Reserve'
+        RequestedReserve = 'RequestedReserve'
+
     model_num = models.CharField(max_length=128)
     state = models.CharField(
         max_length=100,

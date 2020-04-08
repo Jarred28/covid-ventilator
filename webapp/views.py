@@ -1,10 +1,10 @@
 import csv
 import io
+import os
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 import pdb
 
-from datetime import datetime
 from django.contrib import messages
 from django.db import transaction
 from django.http import Http404, HttpResponseRedirect
@@ -60,19 +60,30 @@ class OrderInfo(APIView):
     # Gives all of your requested ventilators + ventilator orders you have out.
     def get(self, request, format=None):
         hospital = Hospital.objects.get(user=request.user)
-        demand_ventilator_orders = list(Order.objects.filter(requesting_hospital=hospital))
+        # Demand ventilators should also be segmented? 
+        all_demand_ventilator_orders = list(Order.objects.filter(requesting_hospital=hospital))
+        active_demand_orders = []
+        reserve_demand_orders = []
+        requested_reserve_demand_orders = []
+        for order in all_demand_ventilator_orders:
+            if order.active == True:
+                active_demand_orders.append(order)
+            if Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name).count() > 0:
+                reserve_demand_orders.append(order)
+            if Ventilator.objects.filter(order=order).filter(state=Ventilator.State.RequestedReserve.name).count() > 0:
+                requested_reserve_demand_orders.append(order)
         all_sent_ventilator_orders = list(Order.objects.filter(sending_hospital=hospital))
         # ventilators = [[order.ventilator_set.all()] for order in all_sent_ventilator_orders]
         transit_orders = []
         arrived_reserve_orders = []
         arrived_non_reserve_orders = []
+        arrived_requested_reserve_orders = []
         for sent_order in all_sent_ventilator_orders:
             # Replacing num_requested with actual amt shipped for copy of object for purposes of frontend.
             ventilators = sent_order.ventilator_set.all()
             if ventilators.count() == 0:
                 continue
             sent_order.num_requested = ventilators.count()
-
             if (ventilators.first().state == Ventilator.State.InTransit.name):
                 # No Manipulation on in-transit orders
                 transit_orders.append(sent_order)
@@ -81,12 +92,17 @@ class OrderInfo(APIView):
                 if (ventilators.filter(state=Ventilator.State.Reserve.name)):
                     # There are reserve ventilators.
                     arrived_reserve_orders.append(sent_order)
+                elif (ventilators.filter(state=Ventilator.State.RequestedReserve.name)):
+                    arrived_requested_reserve_orders.append(sent_order)
                 else:
                     arrived_non_reserve_orders.append(sent_order)
         return Response({
-                'demand_orders': demand_ventilator_orders,
+                'active_demand_orders': active_demand_orders,
+                'reserve_demand_orders': reserve_demand_orders,
+                'requested_reserve_demand_orders': requested_reserve_demand_orders,
                 'transit_orders': transit_orders,
                 'arrived_reserve_orders': arrived_reserve_orders,
+                'arrived_requested_reserve_orders': arrived_requested_reserve_orders,
                 'arrived_non_reserve_orders': arrived_non_reserve_orders
         })
 
@@ -105,6 +121,7 @@ class OrderInfo(APIView):
         transit_orders = []
         arrived_reserve_orders = []
         arrived_non_reserve_orders = []
+        requested_reserve_orders = []
         for sent_order in all_sent_ventilator_orders:
             # Replacing num_requested with actual amt shipped for copy of object for purposes of frontend.
             ventilators = sent_order.ventilator_set.all()
@@ -120,13 +137,16 @@ class OrderInfo(APIView):
                 if (ventilators.filter(state=Ventilator.State.Reserve.name)):
                     # There are reserve ventilators.
                     arrived_reserve_orders.append(sent_order)
+                elif (ventilators.filter(state=Ventilator.State.RequestedReserve.name)):
+                    requested_reserve_orders.append(sent_order)
                 else:
                     arrived_non_reserve_orders.append(sent_order)
         return Response({
                 'demand_orders': demand_ventilator_orders,
                 'transit_orders': transit_orders,
                 'arrived_reserve_orders': arrived_reserve_orders,
-                'arrived_non_reserve_orders': arrived_non_reserve_orders
+                'arrived_non_reserve_orders': arrived_non_reserve_orders,
+                'requested_reserve_orders': requested_reserve_orders
         })
 
 
@@ -182,7 +202,7 @@ class VentilatorList(APIView):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
-def request_reserve(request, order_id, format=None):
+def call_back_reserve(request, order_id, format=None):
     order = Order.objects.get(pk=order_id)
     requisitioned_ventilators = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name)
     batch_id = ShipmentBatches.getInstance().max_batch_id
@@ -197,16 +217,39 @@ def request_reserve(request, order_id, format=None):
     ShipmentBatches.update(batch_id)
     return HttpResponseRedirect(reverse('order', request=request))
 
+def change_ventilator_state(order_id, old_state, new_state):
+    order = Order.objects.get(pk=order_id)
+    allowed_ventilators = Ventilator.objects.filter(order=order).filter(state=old_state)
+    for ventilator in allowed_ventilators:
+        ventilator.state = new_state
+        ventilator.save()
+    return allowed_ventilators.count()
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
 def deploy_reserve(request, order_id, format=None):
-    order = Order.objects.get(pk=order_id)
-    allowed_ventilators = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name)
-    for ventilator in allowed_ventilators:
-        ventilator.state = Ventilator.State.Available.name
-        ventilator.save()
+    count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.Available.name)
+    if count == 0:
+        count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Available.name)
     # Need to send emails to receiving hospital.
-    notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, allowed_ventilators.count())
+    order = Order.objects.get(pk=order_id)
+    notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, count)
+    return HttpResponseRedirect(reverse('order', request=request))
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def request_reserve(request, order_id, format=None):
+    count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.RequestedReserve.name)
+    order = Order.objects.get(pk=order_id)
+    notifications.send_requested_reserve_email(order.sending_hospital, order.requesting_hospital, count)
+    return HttpResponseRedirect(reverse('order', request=request))
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def deny_reserve(request, order_id, format=None):
+    count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Reserve.name)
+    order = Order.objects.get(pk=order_id)
+    notifications.send_denied_reserve_email(order.sending_hospital, order.requesting_hospital, count)
     return HttpResponseRedirect(reverse('order', request=request))
 
 @api_view(['POST'])
@@ -236,6 +279,9 @@ def approve_ventilators(request, batchid, format=None):
                 vent.state = Ventilator.State.InTransit.name
                 vent.current_hospital = vent.order.requesting_hospital
             vent.save()
+        order = ventilators[0].order
+        order.date_fulfilled = datetime.now()
+        order.save()
     return HttpResponseRedirect(reverse('home', request=request, format=format))    
 
 
@@ -331,6 +377,7 @@ class Dashboard(APIView):
                 new_order.save()
             order.active = False
             order.sending_hospital = Hospital.objects.get(pk=sender)
+            order.date_allocated = datetime.now()
             order.save()
             # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
 
@@ -404,6 +451,9 @@ def reset_db(request, format=None):
         email=email,
         username=username
     )
+
+    default_pw = os.environ.get('DEFAULT_PASSWORD')
+    hg_user.set_password(default_pw)
     hg_user.save()
     name = "NY State"
     hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
@@ -416,6 +466,7 @@ def reset_db(request, format=None):
             email=email,
             username=username
         )
+        h_user.set_password(default_pw)
         h_user.save()
         name = "{0}{1}".format("Hospital", str(hospital_count))
         pos = 5 if hospital_count > 5 else hospital_count
@@ -456,14 +507,16 @@ def reset_db(request, format=None):
         )
         order.save()
 
-    SystemParameters.getInstance().destination_reserve = 10.0
-    SystemParameters.getInstance().strategic_reserve = 10.0
-    SystemParameters.getInstance().save()
+    params = SystemParameters.getInstance()
+    params.destination_reserve = 10.0
+    params.strategic_reserve = 10.0
+    params.save()
     sys_oper_user = User(
             user_type=User.UserType.SystemOperator.name,
             email="sys_admin_covid@gmail.com",
             username="sys_admin"
         )
+    sys_oper_user.set_password(default_pw)
     sys_oper_user.save()
     sys_oper = SystemOperator(
         name="admin",
@@ -579,7 +632,7 @@ class HospitalCEO(APIView):
                     # )
                     ventRequests.append({
                         'requesting_hospital': requesting_hospital,
-                        'offer': "{} requests {} ventilator(s) from {}".format(requesting_hospital.name, vents[0].order.num_requested, sending_hospital.name),
+                        'offer': "{} requests {} ventilator(s) from {}".format(requesting_hospital.name, len(vents), sending_hospital.name),
                         'batchid': str(batchid)
                     })
 
@@ -602,7 +655,7 @@ class HospitalCEOApprove(APIView):
                 if not sending_hospital:
                     sending_hospital = ventilator.current_hospital
 
-                ventRequest.offer = "{} requests {} ventilator(s) from {}".format(ventRequest.requesting_hospital, ventilator.order.num_requested, sending_hospital.name)
+                ventRequest.offer = "{} requests {} ventilator(s) from {}".format(ventRequest.requesting_hospital, requested_ventilators.count(), sending_hospital.name)
                 ventRequest.batchid = batchid
 
         return Response({'ventRequest': ventRequest})

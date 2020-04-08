@@ -1,3 +1,5 @@
+import os
+
 from datetime import date
 from django.core.management.base import BaseCommand, CommandError
 from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, SystemOperator, SystemParameters
@@ -74,6 +76,8 @@ class Command(BaseCommand):
             email=email,
             username=username
         )
+        default_pw = os.environ.get('DEFAULT_PW')
+        hg_user.set_password(default_pw)
         hg_user.save()
         name = "NY State"
         hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
@@ -86,6 +90,7 @@ class Command(BaseCommand):
                 email=email,
                 username=username
             )
+            h_user.set_password(default_pw)
             h_user.save()
             name = "{0}{1}".format("Hospital", str(hospital_count))
             pos = 5 if hospital_count > 5 else hospital_count
@@ -126,14 +131,16 @@ class Command(BaseCommand):
             )
             order.save()
 
-        SystemParameters.getInstance().destination_reserve = 10.0
-        SystemParameters.getInstance().strategic_reserve = 10.0
-        SystemParameters.getInstance().save()
+        params = SystemParameters.getInstance()
+        params.destination_reserve = 10.0
+        params.strategic_reserve = 10.0
+        params.save()
         sys_oper_user = User(
                 user_type=User.UserType.SystemOperator.name,
                 email="sys_admin_covid@gmail.com",
                 username="sys_admin"
             )
+        sys_oper_user.set_password(default_pw)
         sys_oper_user.save()
         sys_oper = SystemOperator(
             name="admin",
