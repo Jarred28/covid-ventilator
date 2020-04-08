@@ -279,7 +279,7 @@ def approve_ventilators(request, batchid, format=None):
                 vent.state = Ventilator.State.InTransit.name
                 vent.current_hospital = vent.order.requesting_hospital
             vent.save()
-        order = vent.first().order
+        order = ventilators[0].order
         order.date_fulfilled = datetime.now()
         order.save()
     return HttpResponseRedirect(reverse('home', request=request, format=format))    
@@ -505,9 +505,10 @@ def reset_db(request, format=None):
         )
         order.save()
 
-    SystemParameters.getInstance().destination_reserve = 10.0
-    SystemParameters.getInstance().strategic_reserve = 10.0
-    SystemParameters.getInstance().save()
+    params = SystemParameters.getInstance()
+    params.destination_reserve = 10.0
+    params.strategic_reserve = 10.0
+    params.save()
     sys_oper_user = User(
             user_type=User.UserType.SystemOperator.name,
             email="sys_admin_covid@gmail.com",

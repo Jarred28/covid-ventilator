@@ -128,9 +128,10 @@ class Command(BaseCommand):
             )
             order.save()
 
-        SystemParameters.getInstance().destination_reserve = 10.0
-        SystemParameters.getInstance().strategic_reserve = 10.0
-        SystemParameters.getInstance().save()
+        params = SystemParameters.getInstance()
+        params.destination_reserve = 10.0
+        params.strategic_reserve = 10.0
+        params.save()
         sys_oper_user = User(
                 user_type=User.UserType.SystemOperator.name,
                 email="sys_admin_covid@gmail.com",
