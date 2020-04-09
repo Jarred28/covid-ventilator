@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load rest_framework %}
 
 {% block head %}
@@ -6,12 +6,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="card fixed">
+<div class="card fixed fill">
 	<h1 class="card-header bg-white">Orders</h1>
   <div class="card-body">
-  	<h2>Requested Orders</h2>
-		<table class="table table-bordered">
-			<thead>
+  	<h3>Requested Orders</h3>
+		<table class="table table-bordered table-striped mb-4">
+			<thead class="thead-dark">
 				<tr>
 					<th>Order Status</th>
 					<th>Ventilators Requested</th>
@@ -21,35 +21,44 @@
 			<tbody>
 				{% for order in active_demand_orders %}
 				<tr>
-					<td align="right">Active</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">Request Not Fulfilled</td>
+					<td><span class="badge badge-primary">Active</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>Request Not Fulfilled</td>
 				</tr>
 				{% endfor %}
 				{% for order in reserve_demand_orders %}
 				<tr>
-					<td align="right">Inactive</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">
-						<form action="{% url 'request-reserve' order.id %}" method="post">
+					<td><span class="badge badge-secondary">Inactive</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>
+						<form action="{% url 'request-reserve' order.id %}" method="post" novalidate>
 							{% csrf_token %}
-                			<button class="btn btn-dark" type="submit">Request</button>
+							<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
 						</form>
 					</td>
 				</tr>
 				{% endfor %}
 				{% for order in requested_reserve_demand_orders %}
 				<tr>
-					<td align="right">Inactive</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">Pending Request</td>
+					<td><span class="badge badge-secondary">Inactive</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>Pending Request</td>
 				</tr>
 				{% endfor %}
+				{% if active_demand_orders|length == 0 and reserve_demand_orders|length == 0 and requested_reserve_demand_orders|length == 0 %}
+				<tr>
+          <td colspan="4">
+            <div class="alert alert-info mb-0 text-center">
+              No requested order to display
+            </div>
+          </td>
+        </tr>
+				{% endif %}
 			</tbody>
 		</table>
-		<h2>Supplied Orders</h2>
-		<table class="table table-bordered">
-			<thead>
+		<h3>Supplied Orders</h3>
+		<table class="table table-bordered table-striped">
+			<thead class="thead-dark">
 				<tr>
 					<th>Order Status</th>
 					<th>Amount</th>
@@ -62,70 +71,78 @@
 			<tbody>
 				{% for order in transit_orders %}
 				<tr>
-					<td align="right">Transit</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">{{ order.requesting_hospital.name }}</td>
-					<td align="right">Please wait till shipment arrives</td>
-					<td align="right">Please wait till shipment arrives</td>
-					<td align="right">No Request Found</td>
+					<td><span class="badge badge-warning">Transit</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>Please wait till shipment arrives</td>
+					<td>Please wait till shipment arrives</td>
+					<td>No Request Found</td>
 				</tr>
 				{% endfor %}
 				{% for order in arrived_reserve_orders %}
 				<tr>
-
-					<td align="right">Arrived</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">{{ order.requesting_hospital.name }}</td>
-					<td align="right">		
+					<td><span class="badge badge-success">Arrived</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>		
 						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
-                			<button class="btn btn-dark" type="submit">Request</button>
+				    		<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
 						</form>
 					</td>
-					<td align="right">
+					<td>
 						<form action="{% url 'deploy-reserve' order.id %}" method="post">
 							{% csrf_token %}
-                			<button class="btn btn-dark" type="submit">Deploy</button>
+							<button type="submit" class="btn btn-dark btn-sm" name="Deploy">Submit</button>
 						</form>
 					</td>
-					<td align="right">No Request Found</td>
+					<td>No Request Found</td>
 				</tr>
 				{% endfor %}
 				{% for order in arrived_non_reserve_orders %}
 				<tr>
-					<td align="right">Arrived</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">{{ order.requesting_hospital.name }}</td>
-					<td align="right">Unable at this time</td>
-					<td align="right">Unable at this time</td>
-					<td align="right">No Request Found</td>
+					<td><span class="badge badge-success">Arrived</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>Unable at this time</td>
+					<td>Unable at this time</td>
+					<td>No Request Found</td>
 				</tr>
 				{% endfor %}
 				{% for order in arrived_requested_reserve_orders %}
 				<tr>
-					<td align="right">Arrived</td>
-					<td align="right">{{ order.num_requested }}</td>
-					<td align="right">{{ order.requesting_hospital.name }}</td>
-					<td align="right">		
+					<td><span class="badge badge-success">Arrived</span></td>
+					<td>{{ order.num_requested }}</td>
+					<td>{{ order.requesting_hospital.name }}</td>
+					<td>		
 						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
-                			<button class="btn btn-dark" type="submit">Request</button>
+				    		<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
 						</form>
 					</td>
-					<td align="right">
+					<td>
 						<form action="{% url 'deploy-reserve' order.id %}" method="post">
 							{% csrf_token %}
-                			<button class="btn btn-dark" type="submit">Request</button>
+				    		<button type="submit" class="btn btn-dark btn-sm" name="Deploy">Submit</button>
 						</form>
 					</td>
-					<td align="right">
+					<td>
 						<form action="{% url 'deny-reserve' order.id %}" method="post">
 							{% csrf_token %}
-                			<button class="btn btn-dark" type="submit">Deny Request</button>
+							<button type="submit" class="btn btn-dark btn-sm" name="Deny Request">Submit</button>
 						</form>
 					</td>
 				</tr>
 				{% endfor %}
+				{% if transit_orders|length == 0 and arrived_reserve_orders|length == 0 and arrived_non_reserve_orders|length == 0 and arrived_requested_reserve_orders|length == 0 %}
+				<tr>
+          <td colspan="4">
+            <div class="alert alert-info mb-0 text-center">
+              No supplied order to display
+            </div>
+          </td>
+        </tr>
+				{% endif %}
 			</tbody>
 		</table>
   </div>

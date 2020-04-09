@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load rest_framework %}
 
 {% block head %}
@@ -6,13 +6,13 @@
 {% endblock %}
 
 {% block content %}
-<form action="{% url 'sys-settings' %}" method="POST" class="card">
+<form action="{% url 'sys-settings' %}" method="POST" class="card fixed fill">
   <h1 class="card-header bg-white">Allocation of Supply → Demand with Reserve</h1>
   <div class="card-body">
     {% csrf_token %}
     {% if serializer.errors and serializer.errors.non_field_errors %}
       {% for error in serializer.errors.non_field_errors %}
-        <p style='color:#8B0000;'>ERROR: {{ error }}</p>
+        <div class="alert alert-danger">{{ error }}</div>
       {% endfor %}
     {% endif %}
 
@@ -20,11 +20,11 @@
     {% for section in sections %}
       {% for field in section.list %}
         {% render_field field style=style %}
-        {% if field.errors %}
+        <!-- {% if field.errors %}
           {% for error in field.errors %}
             <p style='color:#8B0000;'>ERROR: {{ error }}</p>
           {% endfor %}
-        {% endif %}
+        {% endif %} -->
       {% endfor %}
       {% if section.grouper == '' %}
       <div class="alert alert-info" role="alert">
@@ -34,7 +34,9 @@
     {% endfor %}
   </div>
   <div class="card-footer text-right bg-white">
-    <button class="btn btn-dark mb-0" type="submit">Change Settings</button>
+    <button class="btn btn-dark mb-0" type="submit">
+      Change Settings
+    </button>
   </div>
 </form>
 {% endblock %}

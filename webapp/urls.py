@@ -10,7 +10,7 @@ urlpatterns = [
     path('order/', views.OrderInfo.as_view(), name='order'),
     path('ventilators/approve/<batchid>/', views.approve_ventilators, name='ventilator-approve'),
     path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
-    path('accounts/request_credentials', views.RequestCredentials.as_view(), name='request-credentials'),
+    path('accounts/request_credentials/', views.RequestCredentials.as_view(), name='request-credentials'),
     path('call_back_reserve/<int:order_id>/', views.call_back_reserve, name='call-back-reserve'),
     path('order/request_reserve/<int:order_id>/', views.request_reserve, name='request-reserve'),
     path('deny_reserve/<int:order_id>/', views.deny_reserve, name='deny-reserve'),
@@ -22,7 +22,8 @@ urlpatterns = [
     path('system/source-reserve/', views.SystemSourceReserve.as_view(), name='sys-source-reserve'),
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
     path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
-    path('hospitals/approve/<batchid>', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
+    path('hospitals/approve/<batchid>/', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
+    path('hospitals/offer/<batchid>/', views.HospitalCEOSharedOffer.as_view(), name='ceo-sharedoffer'),
     path('reset_db/', views.reset_db, name='reset-db')
 ]
 

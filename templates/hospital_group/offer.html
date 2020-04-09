@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load rest_framework %}
+
+{% block head %}
+<title>Shared Offer - HospitalGroup CEO</title>
+{% endblock %}
+
+{% block content %}
+<div class="card fixed fill">
+  <h1 class="card-header bg-white">Shared Offer</h1>
+  <div class="card-body">
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th>Model Number</th>
+          <th>Requested</th>
+          <th>Requesting Hospital</th>
+          <th>Sending Hospital</th>
+          <th>Monetary Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ventilator in ventilators %}
+        <tr>
+          <td>{{ ventilator.model_num }}</td>
+          <td>{{ ventilator.order.num_requested }}</td>
+          <td>{{ ventilator.order.requesting_hospital.name }}</td>
+          <td>{{ ventilator.order.sending_hospital.name }}</td>
+          <td>{{ ventilator.monetary_value }}</td>
+        </tr>
+        {% endfor %}
+        {% if ventilators|length == 0 %}
+        <tr>
+          <td colspan="5">
+            <div class="alert alert-info mb-0 text-center">
+              There is nothing to display.
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

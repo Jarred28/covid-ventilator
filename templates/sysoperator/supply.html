@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load rest_framework %}
 
 {% block head %}
@@ -7,11 +7,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card fill fixed">
   <h1 class="card-header bg-white">Current Supply of Ventilators</h1>
   <div class="card-body">
-    <table class="table table-bordered">
-      <thead>
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
         <tr>
           <th scope="col">Owner Hospital</th>
           <th scope="col">Hospital Parent</th>

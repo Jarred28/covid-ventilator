@@ -54,3 +54,8 @@
 .login-container .right-panel .login-view a {
   color: inherit;
 }
+
+.login-container .errorlist {
+  color: #dc3545;
+  margin-top: 10px;
+}

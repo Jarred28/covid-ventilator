@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% load rest_framework %}
 
@@ -16,11 +16,17 @@
   <div class="card-footer card-footer d-flex justify-content-between bg-white">
     <form class="mb-0" action="{% url 'reset-db' %}" method="POST">
       {% csrf_token %}
-      <button class="btn btn-dark" type="submit">Reset DB</button>
+      <button class="btn btn-dark" type="submit">
+        <i class="fa fa-database mr-2" aria-hidden="true"></i>
+        Reset DB
+      </button>
     </form>
     <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
       {% csrf_token %}
-      <button class='btn btn-dark' type="submit">Run Allocation</button>
+      <button class='btn btn-dark' type="submit">
+        <i class="fa fa-gears mr-2" aria-hidden="true"></i>
+        Run Allocation
+      </button>
     </form>
   </div>
 </div>

@@ -637,10 +637,10 @@ class HospitalCEOApprove(APIView):
 
     def get(self, request, batchid, format=None):
         requested_ventilators = Ventilator.objects.filter(batch_id=batchid)
-        ventRequest = type('test', (object,), {})()
         if (requested_ventilators.count() > 0):
             ventilator = requested_ventilators.first()
             if (ventilator.state == Ventilator.State.Requested.name and ventilator.order and ventilator.current_hospital.hospital_group == HospitalGroup.objects.get(user=request.user)):
+                ventRequest = type('test', (object,), {})()
                 ventRequest.requesting_hospital = ventilator.order.requesting_hospital.name
                 sending_hospital = ventilator.order.sending_hospital
 
@@ -650,4 +650,24 @@ class HospitalCEOApprove(APIView):
                 ventRequest.offer = "{} requests {} ventilator(s) from {}".format(ventRequest.requesting_hospital, requested_ventilators.count(), sending_hospital.name)
                 ventRequest.batchid = batchid
 
-        return Response({'ventRequest': ventRequest})
+                return Response({'ventRequest': ventRequest})
+            else:
+                return HttpResponseRedirect(reverse('ceo-dashboard', request=request))
+        else:
+            return HttpResponseRedirect(reverse('ceo-dashboard', request=request))
+
+class HospitalCEOSharedOffer(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalGroupPermission]
+    template_name = 'hospital_group/offer.html'
+
+    def get(self, request, batchid, format=None):
+        requested_ventilators = Ventilator.objects.filter(batch_id=batchid)
+        if (requested_ventilators.count() > 0):
+            ventilator = requested_ventilators.first()
+            if (ventilator.state == Ventilator.State.Requested.name and ventilator.order and ventilator.current_hospital.hospital_group == HospitalGroup.objects.get(user=request.user)):
+                return Response({'ventilators': requested_ventilators})
+            else:
+                return HttpResponseRedirect(reverse('ceo-dashboard', request=request))
+        else:
+            return HttpResponseRedirect(reverse('ceo-dashboard', request=request))

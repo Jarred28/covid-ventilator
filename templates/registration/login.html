@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 
 {% block head %}
 <title>Log In</title>
@@ -6,34 +6,24 @@
 {% endblock %}
 
 {% block content %}
-<div class="login-container">
-  <div class="left-panel"></div>
-  <div class="right-panel">   
-    <img class="img-logo" width="200" src="/static/imgs/logo.png" alt="logo">
-    <div class="login-view">
-      <h1 class="title">
-        The Smart Way to Share Ventilators & Save Lives
-      </h1>
-      {% if form.errors %}
-        <div class="alert alert-danger">
-          Your username and password didn't match. Please try again.
-        </div>
-      {% endif %}
-      <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        {% for field in form.visible_fields %}
-        <div class="form-group">
-          {{field.label_tag}}
-          {{field}}
-        </div>
-        {% endfor %}
-        <button class="btn btn-lg btn-outline-light btn-block" type="submit">Log in</button>
-      </form>
-      <div class="d-flex justify-content-between">
-        <a href="{% url 'password_reset' %}">Reset Password</a>
-        <a href="{% url 'request-credentials' %}">Request Credentials</a>
-      </div>
+  {% include './shared.html' with title='The Smart Way to Share Ventilators & Save Lives' %}
+  {% if form.errors %}
+    <div class="alert alert-danger">
+      Your username and password didn't match. Please try again.
     </div>
+  {% endif %}
+  <form method="post" action="{% url 'login' %}" novalidate>
+    {% csrf_token %}
+    {% for field in form.visible_fields %}
+    <div class="form-group">
+      {{field.label_tag}}
+      {{field}}
+    </div>
+    {% endfor %}
+    <button class="btn btn-lg btn-outline-light btn-block" type="submit">Log in</button>
+  </form>
+  <div class="d-flex justify-content-between">
+    <a href="{% url 'password_reset' %}">Reset Password</a>
+    <a href="{% url 'request-credentials' %}">Request Credentials</a>
   </div>
-</div>
 {% endblock %}

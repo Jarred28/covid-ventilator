@@ -1,4 +1,4 @@
-{% extends 'new_base.html' %}
+{% extends 'base.html' %}
 {% load rest_framework %}
 
 {% block head %}
@@ -6,11 +6,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card fixed fill">
   <h1 class="card-header bg-white">View</h1>
   <div class="card-body">
-    <table class="table table-bordered">
-      <thead>
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
         <tr>
           <th>Hospital</th>
           <th>Share Offer</th>
@@ -24,10 +24,11 @@
           <td>{{ ventRequest.offer }}</td>
           <td>
             <div class="d-flex">
-              <a class="btn btn-dark" href="{% url 'ceo-approve' ventRequest.batchid  %}">Detail</a>
+              <a class="btn btn-sm btn-dark text-nowrap" href="{% url 'ceo-sharedoffer' ventRequest.batchid  %}">View Offer</a>
+              <a class="btn btn-sm btn-dark text-nowrap ml-1" href="{% url 'ceo-approve' ventRequest.batchid  %}">Detail</a>
               <form action="{% url 'ventilator-approve' ventRequest.batchid %}" method="POST" class="mb-0 ml-1">
                 {% csrf_token %}
-                <button class="btn btn-dark" type="submit">Approve</button>
+                <button class="btn btn-sm btn-dark text-nowrap" type="submit">Approve</button>
               </form>
             </div>
           </td>

@@ -61,3 +61,15 @@ body {
 .main-content > .card.fixed > .card-body {
   overflow-y: auto;
 }
+
+.help-block {
+  color: #dc3545;
+}
+
+table {
+  border-collapse: separate;
+}
+
+table.table-bordered thead th {
+  border-bottom-width: 1px; 
+}
