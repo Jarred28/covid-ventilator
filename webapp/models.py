@@ -59,8 +59,12 @@ class Order(models.Model):
     auto_generated = models.BooleanField(blank=False, null=False, default=False)
     date_allocated = models.DateTimeField(null=True, blank=True)
     date_fulfilled = models.DateTimeField(null=True, blank=True)
-    tracking_num = models.CharField(max_length=100, blank=True, null=True)
-    shipping_service = models.CharField(max_length=100, blank=True, null=True)
+
+class VentilatorBatch(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, blank=False, null=False, related_name='owning_order')
+    shipment_method = models.CharField(max_length=100, blank=False, null=False, default="Fedex")
+    shipment_date = models.CharField(max_length=100, blank=True, null=True)
+    tracking_number = models.CharField(max_length=100, blank=False, null=False, default="N/A")
 
 class Ventilator(models.Model):
     class State(Enum):
@@ -82,7 +86,7 @@ class Ventilator(models.Model):
     monetary_value = models.IntegerField(null=False, blank=False, default=10000)
     owning_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, blank=False, null=False, related_name='owning_hospital')
     current_hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE, blank=False, null=False, related_name='current_hospital')
-    batch_id = models.CharField(max_length=128, blank=True, null=True)
+    ventilator_batch = models.ForeignKey(VentilatorBatch, on_delete=models.CASCADE, blank=True, null=True, related_name='ventilator_batch')
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, blank=True, null=True)
 
 class ShipmentBatches(models.Model):

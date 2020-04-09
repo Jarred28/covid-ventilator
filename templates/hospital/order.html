@@ -56,7 +56,6 @@
 				{% endif %}
 			</tbody>
 		</table>
-
 		<h3>Supplied Orders</h3>
 		<table class="table table-bordered table-striped">
 			<thead class="thead-dark">
@@ -88,7 +87,7 @@
 					<td>		
 						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
-				    	<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
+				    		<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
 						</form>
 					</td>
 					<td>
@@ -118,13 +117,13 @@
 					<td>		
 						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
-				    	<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
+				    		<button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
 						</form>
 					</td>
 					<td>
 						<form action="{% url 'deploy-reserve' order.id %}" method="post">
 							{% csrf_token %}
-				    	<button type="submit" class="btn btn-dark btn-sm" name="Deploy">Submit</button>
+				    		<button type="submit" class="btn btn-dark btn-sm" name="Deploy">Submit</button>
 						</form>
 					</td>
 					<td>

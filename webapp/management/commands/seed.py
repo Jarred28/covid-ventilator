@@ -93,15 +93,16 @@ class Command(BaseCommand):
             h_user.set_password(default_pw)
             h_user.save()
             name = "{0}{1}".format("Hospital", str(hospital_count))
-            pos = 5 if hospital_count > 5 else hospital_count
+            current_load = random.randint(10, 30)
             case_load = random.randint(40, 100)
             h = Hospital(
                 name=hospital_addresses[hospital_count]['name'],
                 user=h_user,
+                contribution=0,
+                current_load=current_load,
+                hospital_group=hg,
                 address=hospital_addresses[hospital_count]['address'], 
-                contribution=0, 
                 projected_load=case_load, 
-                hospital_group=hg, 
                 within_group_only=False
             )
             h.save()
@@ -123,7 +124,7 @@ class Command(BaseCommand):
         for order_count in range(6):
             num_req = random.randint(10, 30)
             order = Order(
-                num_requested=random.randint(20, 400),
+                num_requested=num_req,
                 time_submitted=date(2020, 4, 9),
                 active=True,
                 auto_generated=False,
