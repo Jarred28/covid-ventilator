@@ -47,7 +47,7 @@
 				{% endfor %}
 				{% if active_demand_orders|length == 0 and reserve_demand_orders|length == 0 and requested_reserve_demand_orders|length == 0 %}
 				<tr>
-          <td colspan="4">
+          <td colspan="3">
             <div class="alert alert-info mb-0 text-center">
               No requested order to display
             </div>
@@ -136,7 +136,7 @@
 				{% endfor %}
 				{% if transit_orders|length == 0 and arrived_reserve_orders|length == 0 and arrived_non_reserve_orders|length == 0 and arrived_requested_reserve_orders|length == 0 %}
 				<tr>
-          <td colspan="4">
+          <td colspan="6">
             <div class="alert alert-info mb-0 text-center">
               No supplied order to display
             </div>
