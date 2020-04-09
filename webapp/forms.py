@@ -11,10 +11,10 @@ class CovidUserCreationForm(UserCreationForm):
     hospital_name = forms.CharField(max_length=100, required=False, label='Name')
     hospital_address = forms.CharField(max_length=100, required=False, label='Address')
     hospital_within_group_only = forms.BooleanField(required=False, label='Allow ventialator transfers only within my hospital group?')
-    # hospital_hospitalgroup = forms.ChoiceField(
-    #     choices=get_hospital_group_choices(),
-    #     required=False,
-    #     label='Hospital Group')
+    hospital_hospitalgroup = forms.ChoiceField(
+        choices=get_hospital_group_choices(),
+        required=False,
+        label='Hospital Group')
     supplier_name = forms.CharField(max_length=100, required=False, label='Name')
     supplier_address = forms.CharField(max_length=100, required=False, label='Address')
     hospitalgroup_name = forms.CharField(max_length=100, required=False, label='Name')
@@ -24,7 +24,7 @@ class CovidUserCreationForm(UserCreationForm):
         model = User
         fields = ('username', 'email', 'user_type', 'hospitalgroup_name',
             'hospital_name', 'hospital_address', 'hospital_within_group_only',
-            'supplier_name', 'supplier_address',
+            'hospital_hospitalgroup', 'supplier_name', 'supplier_address',
             'password1', 'password2', 'systemoperator_name')
 
     def __init__(self, *args, **kwargs):
