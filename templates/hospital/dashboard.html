@@ -8,45 +8,76 @@
 
 {% block content %}
 
-<div class="card fixed">
+<div class="card fixed fill">
   <h1 class="card-header bg-white">Ventilators</h1>
   <div class="card-body">
     {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li>{{ message }}</li>
-        <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST">
+    <ul class="messages list-group mb-4">
+      {% for message in messages %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ message }}
+        <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST" class="mb-0">
           {% csrf_token %}
-          <button class="btn btn-dark" type='submit'>Approve</button>
+          <button class="btn btn-dark btn-sm" type='submit'>Approve</button>
         </form>
-        {% endfor %}
+      </li>
+      {% endfor %}
     </ul>
     {% endif %}
 
-    <table class="table table-bordered">
-      <thead>
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
         <tr>
           <th>Model Number</th>
           <th>Status</th>
           <th>Original Hospital</th>
-          <th>Edit</th>
+          <th>Edit</th> 
         </tr>
       </thead>
       <tbody>
         {% for ventilator in ventilators %}
         <tr>
           <td data-title='Model Number'>{{ ventilator.model_num }}</td>
-          <td data-title='State'>{{ ventilator.state }}</td>
+          <td data-title='State'>
+            {% if ventilator.state == 'Requested' %}
+            <span class="badge badge-danger">{{ ventilator.state }}</span>
+            {% elif ventilator.state == 'Available' %}
+            <span class="badge badge-success">{{ ventilator.state }}</span>
+            {% elif ventilator.state == 'InTransit' %}
+            <span class="badge badge-warning">{{ ventilator.state }}</span>
+            {% elif ventilator.state == 'InUse' %}
+            <span class="badge badge-primary">{{ ventilator.state }}</span>
+            {% elif ventilator.state == 'Reserve' %}
+            <span class="badge badge-info">{{ ventilator.state }}</span>
+            {% else %}
+            <span class="badge badge-dark">{{ ventilator.state }}</span>
+            {% endif %}
+          </td>
           <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
-          <td class='select'><a class='btn btn-dark' href="{% url 'ventilator-detail' ventilator.id %}">Edit</a></td>
+          <td class='select'><a class='btn btn-dark btn-sm' href="{% url 'ventilator-detail' ventilator.id %}">Edit</a></td>
         </tr>
         {% endfor %}
+        {% if ventilators|length == 0 %}
+        <tr>
+          <td colspan="4">
+            <div class="alert alert-info mb-0 text-center">
+              No ventilators to display
+            </div>
+          </td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
   <div class="card-footer d-flex justify-content-between bg-white">
-    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#singleVentilatorModal">Add Single Ventilator</button>
-    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#batchVentilatorModal">Add Batch Ventilators</button>
+    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#singleVentilatorModal">
+      <i class="fa fa-plus mr-2" aria-hidden="true"></i>
+      Add Single Ventilator
+    </button>
+    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#batchVentilatorModal">
+      <i class="fa fa-upload mr-2" aria-hidden="true"></i>
+      Add Batch Ventilators
+    </button>
   </div>
 </div>
 

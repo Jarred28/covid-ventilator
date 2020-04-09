@@ -3,11 +3,11 @@
   <nav class="nav bg-white flex-column covid-sidebar">
     {% if user.user_type == 'Hospital' %}
 
-    {% url 'order' as order_url %}
-    <a class="nav-link {% if request.get_full_path == order_url %}active{% endif %}" href="{{ order_url }}">Orders</a>
-
     {% url 'ventilator-list' as ventilator_list_url %}
     <a class="nav-link {% if request.get_full_path == ventilator_list_url %}active{% endif %}" href="{{ ventilator_list_url }}">Ventilators</a>
+
+    {% url 'order' as order_url %}
+    <a class="nav-link {% if request.get_full_path == order_url %}active{% endif %}" href="{{ order_url }}">Orders</a>
 
     {% endif %}
 
