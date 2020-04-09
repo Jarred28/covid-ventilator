@@ -53,7 +53,8 @@ def allocate(orders, htov, system_params):
     class Sender:
         def __init__(self, Hospital, num_avail):
             self.hospital = Hospital
-            self.num_available = (1 - strategic_reserve) * num_avail
+            print(strategic_reserve)
+            self.num_available = (1 - (strategic_reserve / 100.0)) * num_avail
 
     senders = [Sender(h[0], h[1]) for h in htov]
     allocs = []
@@ -67,7 +68,8 @@ def allocate(orders, htov, system_params):
 
             elif sender.hospital.within_group_only and receiver.hospital_group != sender.hospital.hospital_group:
                 continue
-
+            print(order.num_requested)
+            print(sender.num_available)
             #eligible sender
             #more supply than demand
             if sender.num_available >= order.num_requested:

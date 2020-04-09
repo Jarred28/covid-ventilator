@@ -33,7 +33,7 @@
 					<td align="right">
 						<form action="{% url 'request-reserve' order.id %}" method="post">
 							{% csrf_token %}
-							<input type="submit" value="submit" name="Request">
+                			<button class="btn btn-dark" type="submit">Request</button>
 						</form>
 					</td>
 				</tr>
@@ -47,7 +47,6 @@
 				{% endfor %}
 			</tbody>
 		</table>
-
 		<h2>Supplied Orders</h2>
 		<table class="table table-bordered">
 			<thead>
@@ -80,13 +79,13 @@
 					<td align="right">		
 						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
-				    		<input type="submit" value="submit" name="Request" />
+                			<button class="btn btn-dark" type="submit">Request</button>
 						</form>
 					</td>
 					<td align="right">
 						<form action="{% url 'deploy-reserve' order.id %}" method="post">
 							{% csrf_token %}
-				    		<input type="submit" value="submit" name="Deploy" />
+                			<button class="btn btn-dark" type="submit">Deploy</button>
 						</form>
 					</td>
 					<td align="right">No Request Found</td>
@@ -110,19 +109,19 @@
 					<td align="right">		
 						<form action="{% url 'call-back-reserve' order.id %}"  method="post">
 							{% csrf_token %}
-				    		<input type="submit" value="submit" name="Request" />
+                			<button class="btn btn-dark" type="submit">Request</button>
 						</form>
 					</td>
 					<td align="right">
 						<form action="{% url 'deploy-reserve' order.id %}" method="post">
 							{% csrf_token %}
-				    		<input type="submit" value="submit" name="Deploy" />
+                			<button class="btn btn-dark" type="submit">Request</button>
 						</form>
 					</td>
 					<td align="right">
 						<form action="{% url 'deny-reserve' order.id %}" method="post">
 							{% csrf_token %}
-				    		<input type="submit" value="submit" name="Deny Request" />
+                			<button class="btn btn-dark" type="submit">Deny Request</button>
 						</form>
 					</td>
 				</tr>

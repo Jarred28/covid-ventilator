@@ -20,7 +20,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, ShipmentBatches, SystemParameters, SystemOperator
+from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, VentilatorBatch, ShipmentBatches, SystemParameters, SystemOperator
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemOperatorPermission
 from webapp.serializers import SignupSerializer, SystemParametersSerializer, VentilatorSerializer
 
@@ -163,7 +163,7 @@ class VentilatorList(APIView):
         if in_transit_ventilators:
             batchid_to_ventilators = defaultdict(list)
             for ventilator in in_transit_ventilators:
-                batchid_to_ventilators[ventilator.batch_id].append(ventilator)
+                batchid_to_ventilators[ventilator.ventilator_batch.id].append(ventilator)
             for batchid, vents in batchid_to_ventilators.items():
                 messages.add_message(request, messages.INFO, "%d ventilator(s) are in transit" % len(vents), str(batchid))
 
@@ -205,16 +205,12 @@ class VentilatorList(APIView):
 def call_back_reserve(request, order_id, format=None):
     order = Order.objects.get(pk=order_id)
     requisitioned_ventilators = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name)
-    batch_id = ShipmentBatches.getInstance().max_batch_id
-    batch_id += 1
     for ventilator in requisitioned_ventilators:
         ventilator.state = Ventilator.State.InTransit.name
         ventilator.current_hospital = order.sending_hospital
-        ventilator.batch_id = batch_id
         ventilator.save()
         # Need to send notification to receiving hospital.
     notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, requisitioned_ventilators.count())
-    ShipmentBatches.update(batch_id)
     return HttpResponseRedirect(reverse('order', request=request))
 
 def change_ventilator_state(order_id, old_state, new_state):
@@ -256,7 +252,7 @@ def deny_reserve(request, order_id, format=None):
 @permission_classes([IsAuthenticated])
 @permission_classes([HospitalPermission|HospitalGroupPermission])
 def approve_ventilators(request, batchid, format=None):
-    ventilators = Ventilator.objects.filter(batch_id=batchid)
+    ventilators = Ventilator.objects.filter(ventilator_batch=VentilatorBatch.objects.get(pk=batchid))
     # TODO(hacky): HospitalGroup and Hospital should not be using the same endpoint
     # when they're using it for different functionalities
     if request.user.user_type == User.UserType.Hospital.name:
@@ -358,18 +354,17 @@ class Dashboard(APIView):
 
         allocations = algorithm.allocate(orders, htov, sys_params)  # type: list[tuple[int, int, int]]
 
-        batch_id = ShipmentBatches.getInstance().max_batch_id
         for allocation in allocations:
             sender, amount, receiver = allocation[0], allocation[1], allocation[2]
             order = Order.objects.filter(active=True).filter(requesting_hospital=receiver).last()
-            batch_id += 1
-
-            Ventilator.objects.filter(
-                current_hospital=sender
-            ).filter(
-                state=Ventilator.State.Available.name
-            ).update(state=Ventilator.State.Requested.name, batch_id=batch_id, order=order)
-
+            batch = VentilatorBatch(order=order)
+            batch.save()
+            for vent in Ventilator.objects.filter(current_hospital=sender).filter(state=Ventilator.State.Available.name)[:amount]:
+                vent.state = Ventilator.State.Requested.name
+                vent.ventilator_batch = VentilatorBatch.objects.get(pk=batch.id)
+                vent.order = order
+                vent.save()
+            print(Ventilator.objects.filter(state=Ventilator.State.Requested.name).count())
             # We were only able to partially fulfil the request, so we add a new order
             # with the remaining amount
             if order.num_requested > amount:
@@ -379,10 +374,7 @@ class Dashboard(APIView):
             order.sending_hospital = Hospital.objects.get(pk=sender)
             order.date_allocated = datetime.now()
             order.save()
-            # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
-
-
-        ShipmentBatches.update(batch_id)
+        # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
 
         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
@@ -451,8 +443,7 @@ def reset_db(request, format=None):
         email=email,
         username=username
     )
-
-    default_pw = os.environ.get('DEFAULT_PASSWORD')
+    default_pw = os.environ.get('DEFAULT_PW')
     hg_user.set_password(default_pw)
     hg_user.save()
     name = "NY State"
@@ -469,15 +460,16 @@ def reset_db(request, format=None):
         h_user.set_password(default_pw)
         h_user.save()
         name = "{0}{1}".format("Hospital", str(hospital_count))
-        pos = 5 if hospital_count > 5 else hospital_count
+        current_load = random.randint(10, 30)
         case_load = random.randint(40, 100)
         h = Hospital(
             name=hospital_addresses[hospital_count]['name'],
             user=h_user,
+            contribution=0,
+            current_load=current_load,
+            hospital_group=hg,
             address=hospital_addresses[hospital_count]['address'], 
-            contribution=0, 
             projected_load=case_load, 
-            hospital_group=hg, 
             within_group_only=False
         )
         h.save()
@@ -499,7 +491,7 @@ def reset_db(request, format=None):
     for order_count in range(6):
         num_req = random.randint(10, 30)
         order = Order(
-            num_requested=random.randint(20, 400),
+            num_requested=num_req,
             time_submitted=date(2020, 4, 9),
             active=True,
             auto_generated=False,
@@ -615,7 +607,7 @@ class HospitalCEO(APIView):
             # Present notifications by batch as opposed to by individual ventilators
             batchid_to_ventilators = defaultdict(list)
             for ventilator in requested_ventilators:
-                batchid_to_ventilators[ventilator.batch_id].append(ventilator)
+                batchid_to_ventilators[ventilator.ventilator_batch.id].append(ventilator)
             for batchid, vents in batchid_to_ventilators.items():
                 if len(vents) > 0 and vents[0].order:
                     requesting_hospital = vents[0].order.requesting_hospital
