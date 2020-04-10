@@ -636,7 +636,7 @@ class HospitalCEOApprove(APIView):
     template_name = 'hospital_group/approve.html'
 
     def get(self, request, batchid, format=None):
-        requested_ventilators = Ventilator.objects.filter(batch_id=batchid)
+        requested_ventilators = Ventilator.objects.filter(ventilator_batch=VentilatorBatch.objects.get(pk=batchid))
         if (requested_ventilators.count() > 0):
             ventilator = requested_ventilators.first()
             if (ventilator.state == Ventilator.State.Requested.name and ventilator.order and ventilator.current_hospital.hospital_group == HospitalGroup.objects.get(user=request.user)):
@@ -662,7 +662,7 @@ class HospitalCEOSharedOffer(APIView):
     template_name = 'hospital_group/offer.html'
 
     def get(self, request, batchid, format=None):
-        requested_ventilators = Ventilator.objects.filter(batch_id=batchid)
+        requested_ventilators = Ventilator.objects.filter(ventilator_batch=VentilatorBatch.objects.get(pk=batchid))
         if (requested_ventilators.count() > 0):
             ventilator = requested_ventilators.first()
             if (ventilator.state == Ventilator.State.Requested.name and ventilator.order and ventilator.current_hospital.hospital_group == HospitalGroup.objects.get(user=request.user)):
