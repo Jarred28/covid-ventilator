@@ -6,8 +6,11 @@
     {% url 'ventilator-list' as ventilator_list_url %}
     <a class="nav-link {% if request.get_full_path == ventilator_list_url %}active{% endif %}" href="{{ ventilator_list_url }}">Ventilators</a>
 
-    {% url 'order' as order_url %}
-    <a class="nav-link {% if request.get_full_path == order_url %}active{% endif %}" href="{{ order_url }}">Orders</a>
+    {% url 'requested-order' as requested_order_url %}
+    <a class="nav-link {% if request.get_full_path == requested_order_url %}active{% endif %}" href="{{ requested_order_url }}">Requested Orders</a>
+
+    {% url 'supplied-order' as supplied_order_url %}
+    <a class="nav-link {% if request.get_full_path == supplied_order_url %}active{% endif %}" href="{{ supplied_order_url }}">Supplied Orders</a>
 
     {% endif %}
 
