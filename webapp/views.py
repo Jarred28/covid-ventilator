@@ -51,11 +51,10 @@ class RequestCredentials(APIView):
         serializer.save()
         return HttpResponseRedirect(reverse('login', request=request))
 
-
-class OrderInfo(APIView):
+class RequestedOrders(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
-    template_name = 'hospital/order.html'
+    template_name = 'hospital/requested_orders.html'
 
     # Gives all of your requested ventilators + ventilator orders you have out.
     def get(self, request, format=None):
@@ -72,6 +71,32 @@ class OrderInfo(APIView):
                 reserve_demand_orders.append(order)
             if Ventilator.objects.filter(order=order).filter(state=Ventilator.State.RequestedReserve.name).count() > 0:
                 requested_reserve_demand_orders.append(order)
+
+        return Response({
+            'active_demand_orders': active_demand_orders,
+            'reserve_demand_orders': reserve_demand_orders,
+            'requested_reserve_demand_orders': requested_reserve_demand_orders
+        })
+
+    def post(self, request, format=None):
+        hospital = Hospital.objects.get(user=request.user)
+        order = Order(
+            num_requested=request.data['num_requested'],
+            time_submitted=datetime.now(),
+            active=True,
+            auto_generated=False,
+            requesting_hospital=hospital,
+        )
+        order.save()
+        return HttpResponseRedirect(reverse('requested-order', request=request))
+
+class SuppliedOrders(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/supplied_orders.html'
+
+    def get(self, request, format=None):
+        hospital = Hospital.objects.get(user=request.user)
         all_sent_ventilator_orders = list(Order.objects.filter(sending_hospital=hospital))
         # ventilators = [[order.ventilator_set.all()] for order in all_sent_ventilator_orders]
         transit_orders = []
@@ -97,58 +122,11 @@ class OrderInfo(APIView):
                 else:
                     arrived_non_reserve_orders.append(sent_order)
         return Response({
-                'active_demand_orders': active_demand_orders,
-                'reserve_demand_orders': reserve_demand_orders,
-                'requested_reserve_demand_orders': requested_reserve_demand_orders,
-                'transit_orders': transit_orders,
-                'arrived_reserve_orders': arrived_reserve_orders,
-                'arrived_requested_reserve_orders': arrived_requested_reserve_orders,
-                'arrived_non_reserve_orders': arrived_non_reserve_orders
+            'transit_orders': transit_orders,
+            'arrived_reserve_orders': arrived_reserve_orders,
+            'arrived_requested_reserve_orders': arrived_requested_reserve_orders,
+            'arrived_non_reserve_orders': arrived_non_reserve_orders
         })
-
-    def post(self, request, format=None):
-        hospital = Hospital.objects.get(user=request.user)
-        order = Order(
-            num_requested=request.data['num_requested'],
-            time_submitted=datetime.now(),
-            active=True,
-            auto_generated=False,
-            requesting_hospital=hospital,
-        )
-        order.save()
-        demand_ventilator_orders = list(Order.objects.filter(requesting_hospital=hospital))
-        all_sent_ventilator_orders = list(Order.objects.filter(sending_hospital=hospital))
-        transit_orders = []
-        arrived_reserve_orders = []
-        arrived_non_reserve_orders = []
-        requested_reserve_orders = []
-        for sent_order in all_sent_ventilator_orders:
-            # Replacing num_requested with actual amt shipped for copy of object for purposes of frontend.
-            ventilators = sent_order.ventilator_set.all()
-            if ventilators.count() == 0:
-                continue
-            sent_order.num_requested = ventilators.count()
-
-            if (ventilators.first().state == Ventilator.State.InTransit.name):
-                # No Manipulation on in-transit orders
-                transit_orders.append(sent_order)
-            else:
-                # Ventilators are at the location.
-                if (ventilators.filter(state=Ventilator.State.Reserve.name)):
-                    # There are reserve ventilators.
-                    arrived_reserve_orders.append(sent_order)
-                elif (ventilators.filter(state=Ventilator.State.RequestedReserve.name)):
-                    requested_reserve_orders.append(sent_order)
-                else:
-                    arrived_non_reserve_orders.append(sent_order)
-        return Response({
-                'demand_orders': demand_ventilator_orders,
-                'transit_orders': transit_orders,
-                'arrived_reserve_orders': arrived_reserve_orders,
-                'arrived_non_reserve_orders': arrived_non_reserve_orders,
-                'requested_reserve_orders': requested_reserve_orders
-        })
-
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
