@@ -232,7 +232,7 @@ def deploy_reserve(request, order_id, format=None):
     # Need to send emails to receiving hospital.
     order = Order.objects.get(pk=order_id)
     notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, count)
-    return HttpResponseRedirect(reverse('order/supplied', request=request))
+    return HttpResponseRedirect(reverse('supplied-order', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
@@ -240,7 +240,7 @@ def request_reserve(request, order_id, format=None):
     count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.RequestedReserve.name)
     order = Order.objects.get(pk=order_id)
     notifications.send_requested_reserve_email(order.sending_hospital, order.requesting_hospital, count)
-    return HttpResponseRedirect(reverse('order/requested', request=request))
+    return HttpResponseRedirect(reverse('requested-order', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
@@ -248,7 +248,7 @@ def deny_reserve(request, order_id, format=None):
     count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Reserve.name)
     order = Order.objects.get(pk=order_id)
     notifications.send_denied_reserve_email(order.sending_hospital, order.requesting_hospital, count)
-    return HttpResponseRedirect(reverse('order/supplied', request=request))
+    return HttpResponseRedirect(reverse('supplied-order', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
