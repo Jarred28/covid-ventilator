@@ -106,6 +106,7 @@ class Command(BaseCommand):
                 within_group_only=False
             )
             h.save()
+        count = 0
         for vent_count in range(20):
             hosp = Hospital.objects.all()[vent_count % 4]
             monetary_value = 0
@@ -113,9 +114,13 @@ class Command(BaseCommand):
                 monetary_value = random.randint(5000, 20000)
             else:
                 monetary_value = random.randint(15000, 30000)
+            state = Ventilator.State.Available.name
+            if vent_count % 4 == count:
+                state = Ventilator.State.SourceReserve.name
+                count += 1
             vent = Ventilator(
                 model_num=model_nums[(vent_count) % len(model_nums)],
-                state=Ventilator.State.Available.name,
+                state=state,
                 owning_hospital=hosp,
                 current_hospital=hosp,
                 monetary_value=monetary_value
