@@ -204,7 +204,7 @@ def call_back_reserve(request, order_id, format=None):
         ventilator.save()
         # Need to send notification to receiving hospital.
     notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, requisitioned_ventilators.count())
-    return HttpResponseRedirect(reverse('order/supplied', request=request))
+    return HttpResponseRedirect(reverse('supplied-order', request=request))
 
 def change_ventilator_state(order_id, old_state, new_state):
     order = Order.objects.get(pk=order_id)
