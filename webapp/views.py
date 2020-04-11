@@ -189,7 +189,7 @@ def call_back_reserve(request, order_id, format=None):
         ventilator.save()
         # Need to send notification to receiving hospital.
     notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, requisitioned_ventilators.count())
-    return HttpResponseRedirect(reverse('order', request=request))
+    return HttpResponseRedirect(reverse('order/supplied', request=request))
 
 def change_ventilator_state(order_id, old_state, new_state):
     order = Order.objects.get(pk=order_id)
@@ -208,7 +208,7 @@ def deploy_reserve(request, order_id, format=None):
     # Need to send emails to receiving hospital.
     order = Order.objects.get(pk=order_id)
     notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, count)
-    return HttpResponseRedirect(reverse('order', request=request))
+    return HttpResponseRedirect(reverse('order/supplied', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
@@ -216,7 +216,7 @@ def request_reserve(request, order_id, format=None):
     count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.RequestedReserve.name)
     order = Order.objects.get(pk=order_id)
     notifications.send_requested_reserve_email(order.sending_hospital, order.requesting_hospital, count)
-    return HttpResponseRedirect(reverse('order', request=request))
+    return HttpResponseRedirect(reverse('order/requested', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
@@ -224,7 +224,7 @@ def deny_reserve(request, order_id, format=None):
     count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Reserve.name)
     order = Order.objects.get(pk=order_id)
     notifications.send_denied_reserve_email(order.sending_hospital, order.requesting_hospital, count)
-    return HttpResponseRedirect(reverse('order', request=request))
+    return HttpResponseRedirect(reverse('order/supplied', request=request))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
