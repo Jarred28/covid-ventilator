@@ -1,10 +1,11 @@
 from django.urls import path
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, LogoutView
 from rest_framework.urlpatterns import format_suffix_patterns
 from . import views
 
 urlpatterns = [
-    path('', LoginView.as_view()),
+    path('', LoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('home/', views.home, name='home'),
     path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
     path('order/requested', views.RequestedOrders.as_view(), name='requested-order'),

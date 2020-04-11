@@ -29,12 +29,11 @@ from webapp.serializers import SignupSerializer, SystemParametersSerializer, Ven
 def home(request, format=None):
     if request.user.user_type == User.UserType.Hospital.name:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-    if request.user.user_type == User.UserType.SystemOperator.name:
+    elif request.user.user_type == User.UserType.SystemOperator.name:
         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
-    if request.user.user_type == User.UserType.HospitalGroup.name:
+    elif request.user.user_type == User.UserType.HospitalGroup.name:
         return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
