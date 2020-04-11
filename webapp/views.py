@@ -155,10 +155,18 @@ class VentilatorList(APIView):
             data_set = csv_file.read().decode('UTF-8')
             io_string = io.StringIO(data_set)
             next(io_string)
-
+            available_vent_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(Ventilator.State.Available.name).count()
+            src_reserve_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
+            vent_ct = available_vent_ct + src_reserve_ct
             for column in csv.reader(io_string, delimiter=',', quotechar="|"):
+                state = column[1]
+                # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
+                if state == Ventilator.State.Available.name and (src_reserve_ct / (vent_count + 1) < SystemParameters.getInstance().strategic_reserve / 100):
+                    state = Ventilator.State.SourceReserve.name
+                    src_reserve_ct += 1
+                vent_ct += 1
                 ventilator = Ventilator(
-                    model_num=column[0], state=column[1],
+                    model_num=column[0], state=state,
                     owning_hospital=Hospital.objects.get(user=request.user),
                     current_hospital=Hospital.objects.get(user=request.user)
                 )
@@ -166,14 +174,21 @@ class VentilatorList(APIView):
         else:
             if not request.data.get("model_num", None) or not request.data.get("state", None):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
-
+            state = request.data["state"]
+            # If it isn't an available ventilator, it won't mess up supply ratio. 
+            if state == Ventilator.State.Available.name:
+                available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
+                src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
+                vent_ct = available_vent_ct + src_reserve_ct
+                # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
+                if (src_reserve_ct / (vent_ct + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
+                    state = Ventilator.State.SourceReserve.name
             ventilator = Ventilator(
-                model_num=request.data["model_num"], state=request.data["state"],
+                model_num=request.data["model_num"], state=state,
                 owning_hospital=Hospital.objects.get(user=request.user),
                 current_hospital=Hospital.objects.get(user=request.user)
             )
             ventilator.save()
-
         ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
         serializer = VentilatorSerializer(ventilator)
         return Response({'ventilators': ventilators, 'serializer': serializer})
@@ -205,6 +220,15 @@ def deploy_reserve(request, order_id, format=None):
     count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.Available.name)
     if count == 0:
         count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Available.name)
+    available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
+    src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
+    vent_ct = available_vent_ct + src_reserve_ct
+    if (src_reserve_ct / vent_ct) < SystemParameters.getInstance().strategic_reserve / 100:
+        necessary_amt = (SystemParameters.getInstance().strategic_reserve / 100) * vent_ct - src_reserve_ct
+        vents = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name)[:necessary_amt]
+        for vent in vents:
+            vent.state = Ventilator.State.SourceReserve.name
+            vent.save()
     # Need to send emails to receiving hospital.
     order = Order.objects.get(pk=order_id)
     notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, count)
@@ -238,12 +262,26 @@ def approve_ventilators(request, batchid, format=None):
         # This means it wasn't a requisition
         if not ventilators.first().order.sending_hospital == Hospital.objects.get(user=request.user):
             reserve_amt = SystemParameters.getInstance().destination_reserve / 100  * len(ventilators)
+        # So there is some ventilators.count()
+        # Src Rsv calc, must happen regardless of requisition.
+        potential_available_ventilators_ct = ventilators.count() - reserve_amt
+        available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
+        src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
+        new_src_reserve_ct = 0
+        vent_ct = potential_available_ventilators_ct + available_vent_ct + src_reserve_ct
+        if (src_reserve_ct / vent_ct) < (SystemParameters.getInstance().strategic_reserve / 100):
+            new_src_reserve_ct = (SystemParameters.getInstance().strategic_reserve / 100) * (vent_ct) - src_reserve_ct
         reserve_ventilator_count = 0
+        src_reserve_ventilator_count = 0
+
         for vent in ventilators:
             if vent.state == Ventilator.State.InTransit.name:
                 if reserve_ventilator_count < reserve_amt:
                     vent.state = Ventilator.State.Reserve.name
                     reserve_ventilator_count += 1
+                elif src_reserve_ventilator_count < new_src_reserve_ct:
+                    vent.state = Ventilator.State.SourceReserve.name
+                    src_reserve_ventilator_count += 1
                 else:
                     vent.state = Ventilator.State.Available.name
             vent.save()
@@ -342,7 +380,6 @@ class Dashboard(APIView):
                 vent.ventilator_batch = VentilatorBatch.objects.get(pk=batch.id)
                 vent.order = order
                 vent.save()
-            print(Ventilator.objects.filter(state=Ventilator.State.Requested.name).count())
             # We were only able to partially fulfil the request, so we add a new order
             # with the remaining amount
             if order.num_requested > amount:
@@ -451,6 +488,7 @@ def reset_db(request, format=None):
             within_group_only=False
         )
         h.save()
+    count = 0
     for vent_count in range(20):
         hosp = Hospital.objects.all()[vent_count % 4]
         monetary_value = 0
@@ -458,9 +496,13 @@ def reset_db(request, format=None):
             monetary_value = random.randint(5000, 20000)
         else:
             monetary_value = random.randint(15000, 30000)
+        state = Ventilator.State.Available.name
+        if vent_count % 4 == count:
+            state = Ventilator.State.SourceReserve.name
+            count += 1
         vent = Ventilator(
             model_num=model_nums[(vent_count) % len(model_nums)],
-            state=Ventilator.State.Available.name,
+            state=state,
             owning_hospital=hosp,
             current_hospital=hosp,
             monetary_value=monetary_value
@@ -543,8 +585,18 @@ class SystemSourceReserve(APIView):
     template_name = 'sysoperator/strategic_reserve.html'
 
     def get(self, request):
-        serializer = SystemParametersSerializer(SystemParameters.getInstance())
-        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+        src_reserve_lst = []
+        for hospital in Hospital.objects.all():
+            reserve_obj = type('test', (object,), {})()
+            src_reserve = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.State.SourceReserve.name)
+            if src_reserve.count() == 0:
+                continue
+            reserve_obj.src_hospital = hospital.name
+            reserve_obj.parent = hospital.hospital_group.name
+            reserve_obj.quantity = src_reserve.count()
+            reserve_obj.model_nums = {ventilator.model_num for ventilator in src_reserve}
+            src_reserve_lst.append(reserve_obj)
+        return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemDestinationReserve(APIView):
     renderer_classes = [TemplateHTMLRenderer]

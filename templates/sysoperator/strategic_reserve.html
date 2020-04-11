@@ -20,6 +20,21 @@
         </tr>
       </thead>
       <tbody>
+      {% for ventilator in ventilators %}
+      <tr>
+        <td>{{ ventilator.src_hospital }}</td>
+        <td>{{ ventilator.parent }}</td>
+        <td>{{ ventilator.quantity }}</td>
+        <!-- Todo: Need to replace this date with something meaningful -->
+        <td>Wednesday, June 25th, 2020, 8:00PM</td>
+        <td>
+          {% for model_num in ventilator.model_nums %}
+            <span class="model-number badge badge-pill badge-dark">{{ model_num }}</span>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if ventilators|length == 0 %}
         <tr>
           <td colspan="5">
             <div class="alert alert-info mb-0 text-center">
@@ -27,6 +42,7 @@
             </div>
           </td>
         </tr>
+      {% endif %}
       </tbody>
     </table>
   </div>
