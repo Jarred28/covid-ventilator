@@ -74,6 +74,7 @@ class Ventilator(models.Model):
         InUse = 'InUse'
         Reserve = 'Reserve'
         RequestedReserve = 'RequestedReserve'
+        SourceReserve = 'SourceReserve'
 
     model_num = models.CharField(max_length=128)
     state = models.CharField(
