@@ -63,6 +63,14 @@ class User(AbstractUser):
 # SYSTEM user is used to set user fields when system-generated or
 # system-updated.
 
+class System(AbstractCommon):
+    name = models.CharField(max_length=100, default='System')
+    users = models.ManyToManyField(
+        User,
+        through='UserRole',
+        through_fields=('system','user'),
+    )
+    
 class HospitalGroup(AbstractCommon):
     name = models.CharField(max_length=100)
     users = models.ManyToManyField(
@@ -74,6 +82,7 @@ class HospitalGroup(AbstractCommon):
 class Hospital(AbstractCommon):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=100)
+    # need to expand into street_1, street_2, city, state, postal_code
     reputation_score = models.FloatField(null=True, blank=True)
     hospital_group = models.ForeignKey(HospitalGroup, on_delete=models.CASCADE)
     users = models.ManyToManyField(
@@ -108,6 +117,12 @@ class UserRole(AbstractCommon):
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Role]
     )
+    system = models.ForeignKey(
+        System,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     hospital_group = models.ForeignKey(
         HospitalGroup,
         on_delete=models.CASCADE,
@@ -126,6 +141,17 @@ class UserRole(AbstractCommon):
         null=True,
         blank=True,
     )
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'system'],
+                                    name='user_system_uq'),
+            models.UniqueConstraint(fields=['user', 'hospital'],
+                                    name='user_hospital_uq'),
+            models.UniqueConstraint(fields=['user', 'hospital_group'],
+                                    name='user_hospital_group_uq'),
+            models.UniqueConstraint(fields=['user', 'supplier'],
+                                    name='user_supplier_uq'),
+        ]
 
 class VentilatorModel(AbstractCommon):
     manufacturer = models.CharField(max_length=100)
