@@ -481,3 +481,9 @@ class Shipment(AbstractCommon):
 class ShipmentVentilator(AbstractCommon):
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)
     ventilator = models.ForeignKey(Ventilator, on_delete=models.CASCADE)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['shipment', 'ventilator'],
+                                    name='shipment_ventilator_uq'),
+        ]
+
