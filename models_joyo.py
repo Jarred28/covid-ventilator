@@ -27,14 +27,36 @@ from django.contrib.auth.models import AbstractUser
 
 class AbstractCommon(models.Model):
     inserted_at = models.DateTimeField(auto_now_add=True)
+    inserted_by_user  = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        default=0,
+    )
     updated_at = models.DateTimeField(auto_now=True)
+    updated_by_user  = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        default=0,
+    )
     is_valid = models.BooleanField(default=True)
     class Meta:
         abstract = True
 
 class User(AbstractUser):
     inserted_at = models.DateTimeField(auto_now_add=True)
+    inserted_by_user  = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     updated_at = models.DateTimeField(auto_now=True)
+    updated_by_user  = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     is_valid = models.BooleanField(default=True)
 
 # How to insert the first user SYSTEM with id=0?
