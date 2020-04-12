@@ -54,7 +54,35 @@
             {% endif %}
           </td>
           <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
-          <td class='select'><a class='btn btn-dark btn-sm' href="{% url 'ventilator-detail' ventilator.id %}">Edit</a></td>
+          <td data-title='Edit' class="card-footer d-flex justify-content-between bg-white">
+            <div>
+                <button class="btn btn-dark mb-sm" data-toggle="modal" data-target="#editVentilatorModal">
+                  Edit
+                </button>
+            </div>
+            <div class="modal fade" id="editVentilatorModal" tabindex="-1" role="dialog" aria-labelledby="singleVentilatorModal" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <form id="modal-action-url" action="{% url 'ventilator-list' %}" method="POST" class="modal-content">
+                  <input type="hidden" name="_method" value="put"/>
+                  <input type="hidden" name="ventilator-pk" value="{{ventilator.id}}"/>
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Edit</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    {% csrf_token %}
+                    {% render_form serializer %}
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-dark">Update</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </td>
         </tr>
         {% endfor %}
         {% if ventilators|length == 0 %}
