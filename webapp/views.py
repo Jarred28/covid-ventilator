@@ -149,7 +149,8 @@ class VentilatorList(APIView):
 
     def post(self, request, format=None):
         # Update existing ventilator or add a new one
-        if request.data.get('_method') == "put":
+        method = request.data.get('_method', None)
+        if  method == "put":
             if not request.data.get("ventilator-pk", None):
                 return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             if not request.data.get("model_num", None) or not request.data.get("state", None):
@@ -158,7 +159,7 @@ class VentilatorList(APIView):
             model_num = request.data["model_num"]
             state = request.data["state"]
             ventilator = Ventilator.objects.get(pk=pk)
-            # Add checks to see if changing status is allowed
+            # Add checks to see if changing status change is allowed
             if ventilator.model_num != model_num:
                 ventilator.model_num = model_num
             if ventilator.state != state:
