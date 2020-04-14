@@ -11,11 +11,11 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  {% if user.is_authenticated and request.get_full_path != '/' and '/accounts/' not in request.get_full_path %}
+  {% if user.is_authenticated %}
     {% include 'shared/navbar.html' %}
     {% include 'shared/sidebar.html' %}
   {% endif %}
-  <main {% if user.is_authenticated and request.get_full_path != '/' and '/accounts/' not in request.get_full_path %} class="main-content" {% endif %}>
+  <main {% if user.is_authenticated %} class="main-content" {% endif %}>
     {% block content %}{% endblock %}
   </main>
 
