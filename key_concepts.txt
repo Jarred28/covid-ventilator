@@ -1,0 +1,57 @@
+User:
+A User can log into the System and manage System, Hospital, Hospital Group,
+and/or Supplier based on User Role given.
+
+System:
+A System is a running system or application.
+
+Hospital Group:
+A Hospital Group is a group of Hospitals.
+
+Hospital:
+A Hospital has ventilators, can offer ventilators to allocate and ship to other
+Hospitals, and can request ventilators.
+
+Supplier:
+A Supplier has ventilators to offer to allocate and ship to Hospitals.
+
+Role:
+A Role dictates the access Privileges that a User has on the System, Hospital
+Group, Hospital, and/or Supplier.  Currently there are 5 Roles:
+None - has no access Privileges
+Shipper - has shipping Privileges
+Operator - is Shipper plus operating Privileges
+Manager - is Operator plus managing Privileges
+Admin - is Manager plus admin Privileges
+
+Role Privilege:
+A table of Privileges granted to Roles.  TBD.
+
+User Role:
+A User Role is a Role that a User has on the System or a Hospital Group,
+Hospital, or Supplier.  A User has one and only one Role per System, Hospital
+Group, Hospital, and Supplier.
+
+Ventilator Model:
+A Ventilator Model describes a ventilator model.
+
+Ventilator:
+A Ventilator represents a physical ventilator at a Hospital or Supplier.
+
+Request:
+A Hospital can request a number of ventilators to be allocated and shipped to
+it from other Hospitals or Suppliers.
+
+Offer:
+A Hospital or Supplier can offer a number of ventilators to be allocated and
+shipped to other requesting Hospitals.
+
+Allocation:
+An Allocation is to allocate a number of ventilators from an Offer to a Request.
+
+Shipment:
+A Shipment is recorded when specific Ventilators are packed and shipped to
+a requesting Hospital based on an Allocation.
+
+Shipment Ventilator:
+A Ventilator is associated to a Shipment.
