@@ -14,3 +14,13 @@ $('body').on('click', '#closeBtn', function() {
   $('.fallback').text('No file selected');
   $(this).addClass('d-none');
 });
+
+$('#singleVentilatorModal').on("show.bs.modal", function (e) {
+     $(".modal-title").html(''+ $(e.relatedTarget).data('title'));
+     if ($(e.relatedTarget).data('method') === 'PUT') {
+        $("#input-method").attr('value', '' + $(e.relatedTarget).data('method'));
+        $("#input-id").attr('value','' + $(e.relatedTarget).data('id'));
+        $($("input[name='model_num']")).attr('value', '' + $(e.relatedTarget).data('model-num'));
+        $($('option[value=' + $(e.relatedTarget).data('state') + ']')).attr('selected', 'selected');
+     };
+});

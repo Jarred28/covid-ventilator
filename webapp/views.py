@@ -174,7 +174,7 @@ class VentilatorList(APIView):
             if not request.data.get("model_num", None) or not request.data.get("state", None):
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             state = request.data["state"]
-            # If it isn't an available ventilator, it won't mess up supply ratio. 
+            # If it isn't an available ventilator, it won't mess up supply ratio.
             if state == Ventilator.State.Available.name:
                 available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
                 src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
@@ -188,6 +188,27 @@ class VentilatorList(APIView):
                 current_hospital=Hospital.objects.get(user=request.user)
             )
             ventilator.save()
+        ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
+        serializer = VentilatorSerializer(ventilator)
+        return Response({'ventilators': ventilators, 'serializer': serializer})
+
+    def put(self, request, format=None):
+        print("PUT /ventilators")
+        # Update existing ventilator details
+        if not request.data.get("ventilator-id", None):
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if not request.data.get("model_num", None) or not request.data.get("state", None):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        pk = request.data["ventilator-id"]
+        model_num = request.data["model_num"]
+        state = request.data["state"]
+        ventilator = Ventilator.objects.get(pk=pk)
+        # Add checks to see if changing status change is allowed
+        if ventilator.model_num != model_num:
+            ventilator.model_num = model_num
+        if ventilator.state != state:
+            ventilator.state = state
+        ventilator.save()
         ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
         serializer = VentilatorSerializer(ventilator)
         return Response({'ventilators': ventilators, 'serializer': serializer})
