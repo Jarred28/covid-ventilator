@@ -4,28 +4,28 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.utils.crypto import get_random_string
 
 from .forms import CovidUserCreationForm
-from .models import Hospital, HospitalGroup, Supplier, SystemOperator, User
+from .models import Hospital, HospitalGroup, Supplier, System, User
 
-class HospitalInline(admin.StackedInline):
-    model = Hospital
-    verbose_name_plural = 'Hospital'
+# class HospitalInline(admin.StackedInline):
+#     model = Hospital
+#     verbose_name_plural = 'Hospital'
 
-class SupplierInline(admin.StackedInline):
-    model = Supplier
-    verbose_name_plural = 'Supplier'
+# class SupplierInline(admin.StackedInline):
+#     model = Supplier
+#     verbose_name_plural = 'Supplier'
 
-class HospitalGroupInline(admin.StackedInline):
-    model = HospitalGroup
-    verbose_name_plural = 'Hospital Group'
+# class HospitalGroupInline(admin.StackedInline):
+#     model = HospitalGroup
+#     verbose_name_plural = 'Hospital Group'
 
-class SystemOperatorInline(admin.StackedInline):
-    model = SystemOperator
-    verbose_name_plural = 'System Operator'
+# class SystemInline(admin.StackedInline):
+#     model = System
+#     verbose_name_plural = 'System Operator'
 
 
 class CovidUserAdmin(UserAdmin):
     add_form = CovidUserCreationForm
-    inlines = (HospitalGroupInline, HospitalInline, SupplierInline, SystemOperatorInline)
+    # inlines = (HospitalGroupInline, SupplierInline, SystemInline)
 
     add_fieldsets = (
         (None, {
@@ -37,26 +37,26 @@ class CovidUserAdmin(UserAdmin):
             'fields': ('password1', 'password2'),
             'classes': ('collapse', 'collapse-closed'),
         }),
-        ('Hospital Group', {
-            'description': 'Only fill out this section if the user represents a hospital group.',
-            'fields': ('hospitalgroup_name',),
-            'classes': ('collapse', 'collapse-closed'),
-        }),
-        ('Hospital', {
-            'description': 'Only fill out this section if the user represents a hospital.',
-            'fields': ('hospital_name', 'hospital_address', 'hospital_within_group_only', 'hospital_hospitalgroup'),
-            'classes': ('collapse', 'collapse-closed'),
-        }),
-        ('Supplier', {
-            'description': 'Only fill out this section if the user represents a supplier.',
-            'fields': ('supplier_name', 'supplier_address'),
-            'classes': ('collapse', 'collapse-closed'),
-        }),
-        ('System Operator', {
-            'description': 'Only fill out this section if the user is a system operator.',
-            'fields': ('systemoperator_name',),
-            'classes': ('collapse', 'collapse-closed'),
-        }),
+        # ('Hospital Group', {
+        #     'description': 'Fill out this section if your user would like to be associated to a HospitalOnly fill out this section if the user represents a hospital group.',
+        #     'fields': ('hospitalgroup_name',),
+        #     'classes': ('collapse', 'collapse-closed'),
+        # }),
+        # ('Hospital', {
+        #     'description': 'Only fill out this section if the user represents a hospital.',
+        #     'fields': ('hospital_name', 'hospital_address', 'hospital_within_group_only', 'hospital_hospitalgroup'),
+        #     'classes': ('collapse', 'collapse-closed'),
+        # }),
+        # ('Supplier', {
+        #     'description': 'Only fill out this section if the user represents a supplier.',
+        #     'fields': ('supplier_name', 'supplier_address'),
+        #     'classes': ('collapse', 'collapse-closed'),
+        # }),
+        # ('System Operator', {
+        #     'description': 'Only fill out this section if the user is a system operator.',
+        #     'fields': ('System_name',),
+        #     'classes': ('collapse', 'collapse-closed'),
+        # }),
     )
 
 
@@ -86,22 +86,22 @@ class CovidUserAdmin(UserAdmin):
         supplier_name = form.cleaned_data.get('supplier_name', None)
         supplier_address = form.cleaned_data.get('supplier_address', None)
         hospitalgroup_name = form.cleaned_data.get('hospitalgroup_name', None)
-        systemoperator_name = form.cleaned_data.get('systemoperator_name', None)
+        System_name = form.cleaned_data.get('System_name', None)
 
-        if user_type == User.UserType.Hospital.name:
-            Hospital(
-                name=hospital_name,
-                address=hospital_address,
-                user=obj,
-                within_group_only=hospital_within_group_only,
-                hospital_group=HospitalGroup.objects.get(id=hospital_hospitalgroup)
-            ).save()
-        if user_type == User.UserType.Supplier.name:
-            Supplier(name=supplier_name, address=supplier_address, user=obj).save()
-        if user_type == User.UserType.HospitalGroup.name:
-            HospitalGroup(name=hospitalgroup_name, user=obj).save()
-        if user_type == User.UserType.SystemOperator.name:
-            SystemOperator(name=systemoperator_name, user=obj).save()
+        # if user_type == User.UserType.Hospital.name:
+        #     Hospital(
+        #         name=hospital_name,
+        #         address=hospital_address,
+        #         user=obj,
+        #         within_group_only=hospital_within_group_only,
+        #         hospital_group=HospitalGroup.objects.get(id=hospital_hospitalgroup)
+        #     ).save()
+        # if user_type == User.UserType.Supplier.name:
+        #     Supplier(name=supplier_name, address=supplier_address, user=obj).save()
+        # if user_type == User.UserType.HospitalGroup.name:
+        #     HospitalGroup(name=hospitalgroup_name, user=obj).save()
+        # if user_type == User.UserType.System.name:
+        #     System(name=System_name, user=obj).save()
 
         if reset_password:
             reset_form = PasswordResetForm({'email': form.cleaned_data['email']})

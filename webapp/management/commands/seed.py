@@ -1,8 +1,8 @@
 import os
 
-from datetime import date
+from datetime import date, datetime
 from django.core.management.base import BaseCommand, CommandError
-from webapp.models import Hospital, HospitalGroup, Order, User, Ventilator, SystemOperator, SystemParameters
+from webapp.models import Allocation, Request, Offer, ShipmentVentilator, Shipment, Ventilator, VentilatorModel, SystemParameters, System, HospitalGroup, Hospital, Supplier, User, UserRole
 import random
 class Command(BaseCommand):
     help = "Seed the Database"
@@ -10,11 +10,21 @@ class Command(BaseCommand):
         parser.add_argument("--reset_db", type=int)
 
     def delete_existing_records(self):
-        Order.objects.all().delete()
-        Hospital.objects.all().delete()
+        Allocation.objects.all().delete()
+        Request.objects.all().delete()
+        Offer.objects.all().delete()
+        ShipmentVentilator.objects.all().delete()
+        Shipment.objects.all().delete()
         Ventilator.objects.all().delete()
+        VentilatorModel.objects.all().delete()
+        SystemParameters.objects.all().delete()
+        System.objects.all().delete()
         HospitalGroup.objects.all().delete()
+        Supplier.objects.all().delete()
+        Hospital.objects.all().delete()
         User.objects.all().delete()
+        UserRole.objects.all().delete()
+
 
     def handle(self, *args, **options):
         if options["reset_db"] == 0:
@@ -69,87 +79,138 @@ class Command(BaseCommand):
             "Hamilton Portable",
             "Hamilton Non-Portable"
         ]
-        email = "covid_test_group"
-        username = "ny_state"
-        hg_user = User(
-            user_type=User.UserType.HospitalGroup.name,
-            email=email,
-            username=username
-        )
         default_pw = os.environ.get('DEFAULT_PW')
-        hg_user.set_password(default_pw)
-        hg_user.save()
-        name = "NY State"
-        hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
-        hg.save()
-        for hospital_count in range(10):
-            email = "{0}{1}{2}".format("covid_test_hospital", str(hospital_count), "@gmail.com")
-            username = "{0}{1}".format("test_hospital", str(hospital_count))
-            h_user = User(
-                user_type=User.UserType.Hospital.name,
-                email=email,
-                username=username
+        for user_count in range(10):
+            user = User(
+                email="test{0}@gmail.com".format(user_count),
+                username="user{0}".format(user_count)
             )
-            h_user.set_password(default_pw)
-            h_user.save()
-            name = "{0}{1}".format("Hospital", str(hospital_count))
-            current_load = random.randint(10, 30)
-            case_load = random.randint(40, 100)
+            user.set_password(default_pw)
+            user.save()
+        for model_num in model_nums:
+            m_value = random.randint(10000, 30000)
+            vent_model = VentilatorModel(
+                manufacturer='Default Manufacturer',
+                model=model_num,
+                monetary_value=m_value,
+                inserted_by_user=User.objects.first(),
+                updated_by_user=User.objects.first()
+            )
+            vent_model.save()
+
+        sys_params = SystemParameters(
+            destination_reserve=10.0,
+            strategic_reserve=10.0,
+            inserted_by_user=User.objects.first(),
+            updated_by_user=User.objects.first()
+        )
+        sys_params.save()
+        sys = System(
+            name='Sys Operator',
+            inserted_by_user=User.objects.first(),
+            updated_by_user=User.objects.first()
+        )
+        sys.save()
+        hospital_group = HospitalGroup(
+            name='NY State',
+            inserted_by_user=User.objects.first(),
+            updated_by_user=User.objects.first()
+        )
+        hospital_group.save()
+
+        for hospital_count in range(10):
             h = Hospital(
                 name=hospital_addresses[hospital_count]['name'],
-                user=h_user,
-                contribution=0,
-                current_load=current_load,
-                hospital_group=hg,
-                address=hospital_addresses[hospital_count]['address'], 
-                projected_load=case_load, 
-                within_group_only=False
+                address=hospital_addresses[hospital_count]['address'],
+                hospital_group=hospital_group,
+                within_group_only=True,
+                current_load=random.randint(10, 30),
+                projected_load=random.randint(40, 70),
+                inserted_by_user=User.objects.first(),
+                updated_by_user=User.objects.first()
             )
             h.save()
-        count = 0
-        for vent_count in range(20):
-            hosp = Hospital.objects.all()[vent_count % 4]
-            monetary_value = 0
-            if ((vent_count) % len(model_nums)) % 2 == 0:
-                monetary_value = random.randint(5000, 20000)
+            if hospital_count < 5:
+                o = Offer(
+                    status=Offer.Status.Open,
+                    hospital=h,
+                    requested_qty=random.randint(5, 15),
+                    opened_by_user=user,
+                    opened_at=datetime.now(),
+                    inserted_by_user=User.objects.first(),
+                    updated_by_user=User.objects.first()
+                )
+                o.save()
             else:
-                monetary_value = random.randint(15000, 30000)
-            state = Ventilator.State.Available.name
-            if vent_count % 4 == count:
-                state = Ventilator.State.SourceReserve.name
-                count += 1
+                r1 = Request(
+                    status=Request.Status.Open,
+                    hospital=h,
+                    requested_qty=random.randint(5, 10),
+                    opened_by_user=user,
+                    opened_at=datetime.now(),
+                    inserted_by_user=User.objects.first(),
+                    updated_by_user=User.objects.first()
+                )
+                r1.save()
+                r2 = Request(
+                    status=Request.Status.Open,
+                    hospital=h,
+                    requested_qty=random.randint(5, 10),
+                    opened_by_user=user,
+                    opened_at=datetime.now(),
+                    inserted_by_user=User.objects.first(),
+                    updated_by_user=User.objects.first()
+                )
+                r2.save()
+        total_vent_count = 75
+        first_vent_model_pk = VentilatorModel.objects.first().id
+        first_hospital_model_pk = Hospital.objects.first().id
+        user = User(
+            email="admin_test@gmail.com".format(user_count),
+            username="admin_user".format(user_count)
+        )
+        user.set_password(default_pw)
+        user.save()
+        for vent_count in range(total_vent_count):
+            status = Ventilator.Status.Available
+            hosp = Hospital.objects.all()[vent_count % 4]
+            vent_model = VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums)))
             vent = Ventilator(
-                model_num=model_nums[(vent_count) % len(model_nums)],
-                state=state,
+                ventilator_model=VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums))),
+                status=status,
                 owning_hospital=hosp,
                 current_hospital=hosp,
-                monetary_value=monetary_value
+                monetary_value=vent_model.monetary_value,
+                inserted_by_user=User.objects.first(),
+                updated_by_user=User.objects.first()
             )
             vent.save()
-        for order_count in range(6):
-            num_req = random.randint(10, 30)
-            order = Order(
-                num_requested=num_req,
-                time_submitted=date(2020, 4, 9),
-                active=True,
-                auto_generated=False,
-                requesting_hospital=Hospital.objects.all()[order_count+4],
-            )
-            order.save()
 
-        params = SystemParameters.getInstance()
-        params.destination_reserve = 10.0
-        params.strategic_reserve = 10.0
-        params.save()
-        sys_oper_user = User(
-                user_type=User.UserType.SystemOperator.name,
-                email="sys_admin_covid@gmail.com",
-                username="sys_admin"
-            )
-        sys_oper_user.set_password(default_pw)
-        sys_oper_user.save()
-        sys_oper = SystemOperator(
-            name="admin",
-            user=User.objects.get(pk=sys_oper_user.id)
-        )
-        sys_oper.save()
+        for count in range(15):
+            if count < 10:
+                UserRole.objects.create(
+                    user_role=UserRole.Role.NoRole,
+                    assigned_user=User.objects.all()[count],
+                    hospital=Hospital.objects.all()[count],
+                    granted_by_user=user,
+                    inserted_by_user=user,
+                    updated_by_user=user
+                )
+            if count < 3:
+                UserRole.objects.create(
+                    user_role=UserRole.Role.NoRole,
+                    assigned_user=User.objects.all()[count],
+                    hospital_group=hospital_group,
+                    granted_by_user=user,
+                    inserted_by_user=user,
+                    updated_by_user=user
+                )
+            if count == 4 or count == 5:
+                UserRole.objects.create(
+                    user_role=UserRole.Role.NoRole,
+                    assigned_user=User.objects.all()[count],
+                    system=sys,
+                    granted_by_user=user,
+                    inserted_by_user=user,
+                    updated_by_user=user
+                )

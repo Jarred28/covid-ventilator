@@ -24,6 +24,6 @@ class SupplierPermission(BasePermission):
     def has_permission(self, request, view):
         return usertype_permissions(request, User.UserType.Supplier)
 
-class SystemOperatorPermission(BasePermission):
+class SystemPermission(BasePermission):
     def has_permission(self, request, view):
-        return usertype_permissions(request, User.UserType.SystemOperator)
+        return usertype_permissions(request, User.UserType.System)

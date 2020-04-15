@@ -11,7 +11,7 @@ def validate_signup(data, user_type, ValidationError):
     required_fields[User.UserType.Hospital.name] = ['hospital_name', 'hospital_address']
     required_fields[User.UserType.Supplier.name] = ['supplier_name', 'supplier_address']
     required_fields[User.UserType.HospitalGroup.name] = ['hospitalgroup_name']
-    required_fields[User.UserType.SystemOperator.name] = ['systemoperator_name']
+    required_fields[User.UserType.System.name] = ['System_name']
 
     if not user_type:
         return
