@@ -26,6 +26,8 @@ from enum import Enum
 from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 
+from django.db.models.signals import pre_init
+
 class User(AbstractUser):
     inserted_at = models.DateTimeField(auto_now_add=True)
     inserted_by_user  = models.ForeignKey(
@@ -146,6 +148,30 @@ class UserRole(AbstractCommon):
         null=True,
         blank=True,
     )
+    # This is a Private Field! Do not access it directly! 
+    # until we impose some restriction, exactly 1 role per user should be set to true.
+        # Upon user creation, this is the last role created.
+        # If a new role is made (by a new association), that is automatically made the last used role (make sure the last one is made false)
+    _last_used_role = models.BooleanField(default=True)
+    @staticmethod
+    def clear_roles(user):
+        role = UserRole.get_default_role(user)
+        if role == None:
+            return
+        role._last_used_role = False
+        role.save()
+
+    @staticmethod
+    @transaction.atomic
+    def make_default_role(user, new_role):
+        UserRole.clear_roles(user)
+        new_role._last_used_role = True
+        new_role.save()
+
+    @staticmethod
+    def get_default_role(user):
+        return UserRole.objects.filter(assigned_user=user).filter(_last_used_role=True).first()
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['assigned_user', 'system'],
@@ -157,6 +183,13 @@ class UserRole(AbstractCommon):
             models.UniqueConstraint(fields=['assigned_user', 'supplier'],
                                     name='user_supplier_uq'),
         ]
+def update_last_used_role(sender, **kwargs):
+    kwarg = kwargs['kwargs']
+    if (len(kwarg) == 0):
+        return
+    UserRole.clear_roles(kwarg['assigned_user'])
+
+pre_init.connect(update_last_used_role, sender=UserRole)
 
 class Request(AbstractCommon):
     class Status(Enum):

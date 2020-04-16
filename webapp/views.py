@@ -22,20 +22,24 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Request, Offer, User, Ventilator, System, Supplier
+from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, Shipment, System, Supplier
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def home(request, format=None):
-#     if request.user_type == User.UserType.Hospital.name:
-#         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-#     elif request.user_type == User.UserType.System.name:
-#         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
-#     elif request.user_type == User.UserType.HospitalGroup.name:
-#         return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
-#     return Response(status=status.HTTP_204_NO_CONTENT)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def home(request, format=None):
+    user = User.objects.get(pk=request.user.id)
+    last_role = UserRole.get_default_role(user)
+    if last_role.supplier != None:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    elif last_role.hospital_group != None:
+        return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
+    elif last_role.hospital != None:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    else:
+        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -66,20 +70,27 @@ class RequestCredentials(APIView):
         for entity_id, entity_type in entity_ids, entity_types:
             if entity_id == '':
                 errors.append('Blank Entity ID given for ' + entity_type)
-            # else:
-                # if entity_type == 'Hospital':
-                #     if Hospital.objects.get(pk=entity_id)
-                #         errors.append('No Hospital found for ID ' + entity_id)
-                # elif entity_type == 'Hospital Group':
-                #     if HospitalGroup.objects.get(pk=entity_id)
-                #         errors.append('No Hospital Group found for ID ' + entity_id)
-                # elif entity_type == 'Supplier':
-                #     if Supplier.objects.get(pk=entity_id)
-                #         errors.append('No Supplier found for ID ' + entity_id)
-                # else:
-                #     if System.objects.get(pk=entity_id)
-                #         errors.append('No System found for ID ' + entity_id)
-
+            else:
+                if entity_type == 'Hospital':
+                    try:
+                        Hospital.objects.get(pk=int(entity_id))
+                    except Hospital.DoesNotExist:
+                        errors.append('No Hospital found for ID ' + entity_id)
+                elif entity_type == 'Hospital Group':
+                    try:
+                        HospitalGroup.objects.get(pk=int(entity_id))
+                    except:
+                        errors.append('No Hospital Group found for ID ' + entity_id)
+                elif entity_type == 'Supplier':
+                    try:
+                        Supplier.objects.get(pk=int(entity_id))
+                    except Supplier.DoesNotExist:
+                        errors.append('No Supplier found for ID ' + entity_id)
+                else:
+                    try:
+                        System.objects.get(pk=int(entity_id))
+                    except System.DoesNotExist:
+                        errors.append('No System found for ID ' + entity_id)
         return errors
 
 
@@ -103,7 +114,7 @@ class RequestCredentials(APIView):
         user.save()
         for e_type, e_id in entity_type, entity_ids:
             if e_type == 'Hospital':
-                hospital = Hospital.objects.get(pk=e_id)
+                hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -115,7 +126,7 @@ class RequestCredentials(APIView):
                 hospital.updated_by_user = user
                 hospital.save()
             elif e_type == 'Hospital Group':
-                hospital_group = HospitalGroup.objects.get(pk=e_id)
+                hospital_group = HospitalGroup.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -127,7 +138,7 @@ class RequestCredentials(APIView):
                 hospital_group.updated_by_user = user
                 hospital_group.save()
             elif e_type == 'Supplier':
-                supplier = Supplier.objects.get(pk=e_id)
+                supplier = Supplier.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -139,7 +150,7 @@ class RequestCredentials(APIView):
                 supplier.updated_by_user = user
                 supplier.save()
             else:
-                system = System.objects.get(pk=e_id)
+                system = System.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -420,7 +431,8 @@ class VentilatorList(APIView):
 
 class Dashboard(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    permission_classes = [IsAuthenticated&SystemPermission]
+    # permission_classes = [IsAuthenticated&SystemPermission]
+    permission_classes = [IsAuthenticated]
     template_name = 'sysoperator/dashboard.html'
 
     def get(self, request, format=None):
@@ -440,8 +452,8 @@ class Dashboard(APIView):
             transits.append(shipment.allocation.request.hospital.address)
 
         return Response({
-            'demands': demands,
-            'supplies': supplies,
+            'demands': requests,
+            'supplies': offers,
             'transits': transits
         })
 
@@ -482,149 +494,10 @@ class Dashboard(APIView):
 
 #         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated&SystemPermission])
-# def reset_db(request, format=None):
-#     Order.objects.all().delete()
-#     Hospital.objects.all().delete()
-#     Ventilator.objects.all().delete()
-#     HospitalGroup.objects.all().delete()
-#     User.objects.all().delete()
-#     hospital_addresses = [
-#         {
-#             "name": "Elmhurst Hospital Center",
-#             "address": "79-01 Broadway, Elmhurst, NY 11373"
-#         },
-#         {
-#             "name": "Flushing Hospital Medical Center",
-#             "address": "45th Avenue & Parsons Blvd, Flushing, NY 11355"
-#         },
-#         {
-#             "name": "Jamaica Hospital Medical Center",
-#             "address": "89th Avenue & Van Wyck Expressway, Jamaica, NY 11418"
-#         },
-#         {
-#             "name": "Lewis County General Hospital",
-#             "address": "3926 NY-12, Lyons Falls, NY 13368"
-#         },
-#         {
-#             "name": "Brookdale Hospital Medical Center",
-#             "address": "1 Brookdale Plaza, Brooklyn, NY 11212"
-#         },
-#         {
-#             "name": "General Hospital",
-#             "address": "16 Bank St, Batavia, NY 14020"
-#         },
-#         {
-#             "name": "Margaretville Hospital",
-#             "address": "42084 NY-28, Margaretville, NY 12455"
-#         },
-#         {
-#             "name": "Central New York Psychiatric Center",
-#             "address": "9005 Old River Rd, Marcy, NY 13403"
-#         },
-#         {
-#             "name": "New York Eye and Ear Infirmary of Mount Sinai",
-#             "address": "310 East 14th Street, New York, NY 10003"
-#         },
-#         {
-#             "name": "New York Community Hospital of Brooklyn, Inc",
-#             "address": "2525 Kings Highway, Brooklyn, NY 11229"
-#         }
-#     ]
-#     model_nums = [
-#         "Medtronic Portable",
-#         "Medtronic Non-Portable",
-#         "Phillips Portable",
-#         "Phillips Non-Portable",
-#         "Hamilton Portable",
-#         "Hamilton Non-Portable"
-#     ]
-#     email = "covid_test_group"
-#     username = "ny_state"
-#     hg_user = User(
-#         user_type=User.UserType.HospitalGroup.name,
-#         email=email,
-#         username=username
-#     )
-#     default_pw = os.environ.get('DEFAULT_PW')
-#     hg_user.set_password(default_pw)
-#     hg_user.save()
-#     name = "NY State"
-#     hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
-#     hg.save()
-#     for hospital_count in range(10):
-#         email = "{0}{1}{2}".format("covid_test_hospital", str(hospital_count), "@gmail.com")
-#         username = "{0}{1}".format("test_hospital", str(hospital_count))
-#         h_user = User(
-#             user_type=User.UserType.Hospital.name,
-#             email=email,
-#             username=username
-#         )
-#         h_user.set_password(default_pw)
-#         h_user.save()
-#         name = "{0}{1}".format("Hospital", str(hospital_count))
-#         current_load = random.randint(10, 30)
-#         case_load = random.randint(40, 100)
-#         h = Hospital(
-#             name=hospital_addresses[hospital_count]['name'],
-#             user=h_user,
-#             contribution=0,
-#             current_load=current_load,
-#             hospital_group=hg,
-#             address=hospital_addresses[hospital_count]['address'], 
-#             projected_load=case_load, 
-#             within_group_only=False
-#         )
-#         h.save()
-#     count = 0
-#     for vent_count in range(20):
-#         hosp = Hospital.objects.all()[vent_count % 4]
-#         monetary_value = 0
-#         if ((vent_count) % len(model_nums)) % 2 == 0:
-#             monetary_value = random.randint(5000, 20000)
-#         else:
-#             monetary_value = random.randint(15000, 30000)
-#         state = Ventilator.State.Available.name
-#         if vent_count % 4 == count:
-#             state = Ventilator.State.SourceReserve.name
-#             count += 1
-#         vent = Ventilator(
-#             model_num=model_nums[(vent_count) % len(model_nums)],
-#             state=state,
-#             owning_hospital=hosp,
-#             current_hospital=hosp,
-#             monetary_value=monetary_value
-#         )
-#         vent.save()
-#     for order_count in range(6):
-#         num_req = random.randint(10, 30)
-#         order = Order(
-#             num_requested=num_req,
-#             time_submitted=date(2020, 4, 9),
-#             active=True,
-#             auto_generated=False,
-#             requesting_hospital=Hospital.objects.all()[order_count+4],
-#         )
-#         order.save()
-
-#     params = SystemParameters.getInstance()
-#     params.destination_reserve = 10.0
-#     params.strategic_reserve = 10.0
-#     params.save()
-#     sys_oper_user = User(
-#             user_type=User.UserType.System.name,
-#             email="sys_admin_covid@gmail.com",
-#             username="sys_admin"
-#         )
-#     sys_oper_user.set_password(default_pw)
-#     sys_oper_user.save()
-#     sys_oper = System(
-#         name="admin",
-#         user=User.objects.get(pk=sys_oper_user.id)
-#     )
-#     sys_oper.save()
-#     return HttpResponseRedirect(reverse('login', request=request))
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&SystemPermission])
+def reset_db(request, format=None):
+    return HttpResponseRedirect(reverse('login', request=request))
 
 # class SystemSettings(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
