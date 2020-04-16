@@ -188,9 +188,8 @@ class VentilatorList(APIView):
                 current_hospital=Hospital.objects.get(user=request.user)
             )
             ventilator.save()
-        ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
-        serializer = VentilatorSerializer(ventilator)
-        return Response({'ventilators': ventilators, 'serializer': serializer})
+
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
