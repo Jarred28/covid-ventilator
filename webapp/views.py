@@ -192,27 +192,6 @@ class VentilatorList(APIView):
         serializer = VentilatorSerializer(ventilator)
         return Response({'ventilators': ventilators, 'serializer': serializer})
 
-    def put(self, request, format=None):
-        print("PUT /ventilators")
-        # Update existing ventilator details
-        if not request.data.get("ventilator-id", None):
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        if not request.data.get("model_num", None) or not request.data.get("state", None):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        pk = request.data["ventilator-id"]
-        model_num = request.data["model_num"]
-        state = request.data["state"]
-        ventilator = Ventilator.objects.get(pk=pk)
-        # Add checks to see if changing status change is allowed
-        if ventilator.model_num != model_num:
-            ventilator.model_num = model_num
-        if ventilator.state != state:
-            ventilator.state = state
-        ventilator.save()
-        ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
-        serializer = VentilatorSerializer(ventilator)
-        return Response({'ventilators': ventilators, 'serializer': serializer})
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalPermission])
 def call_back_reserve(request, order_id, format=None):
@@ -314,7 +293,7 @@ def approve_ventilators(request, batchid, format=None):
         order = ventilators[0].order
         order.date_fulfilled = datetime.now()
         order.save()
-    return HttpResponseRedirect(reverse('home', request=request, format=format))    
+    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 
 class VentilatorDetail(APIView):
@@ -338,8 +317,7 @@ class VentilatorDetail(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return Response(serializer.data)
-
+        return HttpResponseRedirect(reverse('home', request=request, format=format))
 
     def delete(self, request, pk, format=None):
         ventilator = self.get_object(pk)

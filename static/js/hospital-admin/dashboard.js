@@ -16,11 +16,11 @@ $('body').on('click', '#closeBtn', function() {
 });
 
 $('#singleVentilatorModal').on("show.bs.modal", function (e) {
-     $(".modal-title").html(''+ $(e.relatedTarget).data('title'));
-     if ($(e.relatedTarget).data('method') === 'PUT') {
-        $("#input-method").attr('value', '' + $(e.relatedTarget).data('method'));
-        $("#input-id").attr('value','' + $(e.relatedTarget).data('id'));
-        $($("input[name='model_num']")).attr('value', '' + $(e.relatedTarget).data('model-num'));
-        $($('option[value=' + $(e.relatedTarget).data('state') + ']')).attr('selected', 'selected');
-     };
+   $(".modal-title").html(''+ $(e.relatedTarget).data('title'));
+   $("#single-modal-form").attr('action', '' + $(e.relatedTarget).data('action'));
+   if ($(e.relatedTarget).data('method') === 'PUT') {
+     $("#input-method").attr('value', '' + $(e.relatedTarget).data('method'));
+     $($("input[name='model_num']")).attr('value', '' + $(e.relatedTarget).data('model-num'));
+     $($('option[value=' + $(e.relatedTarget).data('state') + ']')).attr('selected', 'selected');
+   };
 });
