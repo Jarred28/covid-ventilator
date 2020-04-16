@@ -22,11 +22,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-<<<<<<< HEAD
 from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, Shipment, System, Supplier
-=======
-from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, System, Supplier
->>>>>>> a8a8d7bf462ce19d9151c67b9092402b6363853c
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 
