@@ -22,20 +22,24 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Request, Offer, User, Ventilator, System, Supplier
+from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, System, Supplier
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def home(request, format=None):
-#     if request.user_type == User.UserType.Hospital.name:
-#         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-#     elif request.user_type == User.UserType.System.name:
-#         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
-#     elif request.user_type == User.UserType.HospitalGroup.name:
-#         return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
-#     return Response(status=status.HTTP_204_NO_CONTENT)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def home(request, format=None):
+    user = User.objects.get(pk=request.user.id)
+    last_role = UserRole.get_default_role(user)
+    if last_role.supplier != None:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    elif last_role.hospital_group != None:
+        return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
+    elif last_role.hospital != None:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    else:
+        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -66,20 +70,27 @@ class RequestCredentials(APIView):
         for entity_id, entity_type in entity_ids, entity_types:
             if entity_id == '':
                 errors.append('Blank Entity ID given for ' + entity_type)
-            # else:
-                # if entity_type == 'Hospital':
-                #     if Hospital.objects.get(pk=entity_id)
-                #         errors.append('No Hospital found for ID ' + entity_id)
-                # elif entity_type == 'Hospital Group':
-                #     if HospitalGroup.objects.get(pk=entity_id)
-                #         errors.append('No Hospital Group found for ID ' + entity_id)
-                # elif entity_type == 'Supplier':
-                #     if Supplier.objects.get(pk=entity_id)
-                #         errors.append('No Supplier found for ID ' + entity_id)
-                # else:
-                #     if System.objects.get(pk=entity_id)
-                #         errors.append('No System found for ID ' + entity_id)
-
+            else:
+                if entity_type == 'Hospital':
+                    try:
+                        Hospital.objects.get(pk=int(entity_id))
+                    except Hospital.DoesNotExist:
+                        errors.append('No Hospital found for ID ' + entity_id)
+                elif entity_type == 'Hospital Group':
+                    try:
+                        HospitalGroup.objects.get(pk=int(entity_id))
+                    except:
+                        errors.append('No Hospital Group found for ID ' + entity_id)
+                elif entity_type == 'Supplier':
+                    try:
+                        Supplier.objects.get(pk=int(entity_id))
+                    except Supplier.DoesNotExist:
+                        errors.append('No Supplier found for ID ' + entity_id)
+                else:
+                    try:
+                        System.objects.get(pk=int(entity_id))
+                    except System.DoesNotExist:
+                        errors.append('No System found for ID ' + entity_id)
         return errors
 
 
@@ -103,7 +114,7 @@ class RequestCredentials(APIView):
         user.save()
         for e_type, e_id in entity_type, entity_ids:
             if e_type == 'Hospital':
-                hospital = Hospital.objects.get(pk=e_id)
+                hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -115,7 +126,7 @@ class RequestCredentials(APIView):
                 hospital.updated_by_user = user
                 hospital.save()
             elif e_type == 'Hospital Group':
-                hospital_group = HospitalGroup.objects.get(pk=e_id)
+                hospital_group = HospitalGroup.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -127,7 +138,7 @@ class RequestCredentials(APIView):
                 hospital_group.updated_by_user = user
                 hospital_group.save()
             elif e_type == 'Supplier':
-                supplier = Supplier.objects.get(pk=e_id)
+                supplier = Supplier.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
@@ -139,7 +150,7 @@ class RequestCredentials(APIView):
                 supplier.updated_by_user = user
                 supplier.save()
             else:
-                system = System.objects.get(pk=e_id)
+                system = System.objects.get(pk=int(e_id))
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole,
                     assigned_user=user,
