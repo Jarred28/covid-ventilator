@@ -5,9 +5,9 @@ from . import views
 
 urlpatterns = [
     path('', LoginView.as_view(), name='login'),
-    # path('logout/', LogoutView.as_view(), name='logout'),
-    # path('home/', views.home, name='home'),
-    # path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+    path('home/', views.home, name='home'),
+    path('ventilators/', views.VentilatorList.as_view(), name='ventilator-list'),
     # path('order/requested', views.RequestedOrders.as_view(), name='requested-order'),
     # path('order/supplied', views.SuppliedOrders.as_view(), name='supplied-order'),
     # path('ventilators/approve/<batchid>/', views.approve_ventilators, name='ventilator-approve'),

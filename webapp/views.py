@@ -229,70 +229,60 @@ class RequestCredentials(APIView):
 #             'arrived_non_reserve_orders': arrived_non_reserve_orders
 #         })
 
-# class VentilatorList(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&HospitalPermission]
-#     template_name = 'hospital/dashboard.html'
+class VentilatorList(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/dashboard.html'
 
-#     def get(self, request, format=None):
-#         ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user))
+    def get(self, request, format=None):
+        ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user))
+        serializer = VentilatorSerializer(Ventilator.objects.first())
+        return Response({'ventilators': ventilators, 'serializer': serializer})
 
-#         # If any ventilators are InTransit, let the user know
-#         in_transit_ventilators = ventilators.filter(state=Ventilator.State.InTransit.name)
-#         if in_transit_ventilators:
-#             batchid_to_ventilators = defaultdict(list)
-#             for ventilator in in_transit_ventilators:
-#                 batchid_to_ventilators[ventilator.ventilator_batch.id].append(ventilator)
-#             for batchid, vents in batchid_to_ventilators.items():
-#                 messages.add_message(request, messages.INFO, "%d ventilator(s) are in transit" % len(vents), str(batchid))
-
-#         serializer = VentilatorSerializer(Ventilator.objects.first())
-#         return Response({'ventilators': ventilators, 'serializer': serializer})
-
-#     def post(self, request, format=None):
-#         # Either batch upload through CSV  or add single ventilator entry
-#         csv_file = request.FILES.get('file', None)
-#         if csv_file:
-#             data_set = csv_file.read().decode('UTF-8')
-#             io_string = io.StringIO(data_set)
-#             next(io_string)
-#             available_vent_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(Ventilator.State.Available.name).count()
-#             src_reserve_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
-#             vent_ct = available_vent_ct + src_reserve_ct
-#             for column in csv.reader(io_string, delimiter=',', quotechar="|"):
-#                 state = column[1]
-#                 # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
-#                 if state == Ventilator.State.Available.name and (src_reserve_ct / (vent_count + 1) < SystemParameters.getInstance().strategic_reserve / 100):
-#                     state = Ventilator.State.SourceReserve.name
-#                     src_reserve_ct += 1
-#                 vent_ct += 1
-#                 ventilator = Ventilator(
-#                     model_num=column[0], state=state,
-#                     owning_hospital=Hospital.objects.get(user=request.user),
-#                     current_hospital=Hospital.objects.get(user=request.user)
-#                 )
-#                 ventilator.save()
-#         else:
-#             if not request.data.get("model_num", None) or not request.data.get("state", None):
-#                 return Response(status=status.HTTP_400_BAD_REQUEST)
-#             state = request.data["state"]
-#             # If it isn't an available ventilator, it won't mess up supply ratio. 
-#             if state == Ventilator.State.Available.name:
-#                 available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
-#                 src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
-#                 vent_ct = available_vent_ct + src_reserve_ct
-#                 # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
-#                 if (src_reserve_ct / (vent_ct + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
-#                     state = Ventilator.State.SourceReserve.name
-#             ventilator = Ventilator(
-#                 model_num=request.data["model_num"], state=state,
-#                 owning_hospital=Hospital.objects.get(user=request.user),
-#                 current_hospital=Hospital.objects.get(user=request.user)
-#             )
-#             ventilator.save()
-#         ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
-#         serializer = VentilatorSerializer(ventilator)
-#         return Response({'ventilators': ventilators, 'serializer': serializer})
+    # def post(self, request, format=None):
+    #     # Either batch upload through CSV  or add single ventilator entry
+    #     csv_file = request.FILES.get('file', None)
+    #     if csv_file:
+    #         data_set = csv_file.read().decode('UTF-8')
+    #         io_string = io.StringIO(data_set)
+    #         next(io_string)
+    #         available_vent_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(Ventilator.State.Available.name).count()
+    #         src_reserve_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
+    #         vent_ct = available_vent_ct + src_reserve_ct
+    #         for column in csv.reader(io_string, delimiter=',', quotechar="|"):
+    #             state = column[1]
+    #             # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
+    #             if state == Ventilator.State.Available.name and (src_reserve_ct / (vent_count + 1) < SystemParameters.getInstance().strategic_reserve / 100):
+    #                 state = Ventilator.State.SourceReserve.name
+    #                 src_reserve_ct += 1
+    #             vent_ct += 1
+    #             ventilator = Ventilator(
+    #                 model_num=column[0], state=state,
+    #                 owning_hospital=Hospital.objects.get(user=request.user),
+    #                 current_hospital=Hospital.objects.get(user=request.user)
+    #             )
+    #             ventilator.save()
+    #     else:
+    #         if not request.data.get("model_num", None) or not request.data.get("state", None):
+    #             return Response(status=status.HTTP_400_BAD_REQUEST)
+    #         state = request.data["state"]
+    #         # If it isn't an available ventilator, it won't mess up supply ratio. 
+    #         if state == Ventilator.State.Available.name:
+    #             available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
+    #             src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
+    #             vent_ct = available_vent_ct + src_reserve_ct
+    #             # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
+    #             if (src_reserve_ct / (vent_ct + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
+    #                 state = Ventilator.State.SourceReserve.name
+    #         ventilator = Ventilator(
+    #             model_num=request.data["model_num"], state=state,
+    #             owning_hospital=Hospital.objects.get(user=request.user),
+    #             current_hospital=Hospital.objects.get(user=request.user)
+    #         )
+    #         ventilator.save()
+    #     ventilators = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user))
+    #     serializer = VentilatorSerializer(ventilator)
+    #     return Response({'ventilators': ventilators, 'serializer': serializer})
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated&HospitalPermission])
@@ -428,34 +418,32 @@ class RequestCredentials(APIView):
 #         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# class Dashboard(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/dashboard.html'
+class Dashboard(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/dashboard.html'
 
-#     def get(self, request, format=None):
-#         demands = []
-#         for order in Order.objects.filter(active=True):
-#             if order.requesting_hospital:
-#                 demands.append(order.requesting_hospital.address)
+    def get(self, request, format=None):
+        offers = []
+        for offer in Offer.objects.filter(status=Offer.Status.Approved):
+            if offer.hospital:
+                offers.append(offer.hospital.address)
+            else:
+                offers.append(offer.supplier.address)
 
-#         supplies = []
-#         for hospital in Hospital.objects.all():
-#             ventilatorCount = Ventilator.objects.filter(state=Ventilator.State.Available.name).filter(owning_hospital=hospital).count()
-#             if (ventilatorCount > 0):
-#                 supplies.append(hospital.address)
+        requests = []
+        for request in Request.objects.filter(status=Request.Status.Approved):
+            requests.append(request.hospital.address)
 
-#         transits = []
-#         for order in Order.objects.all():
-#             ventilators = order.ventilator_set.all()
-#             if ventilators.count() > 0 and ventilators.first().state == Ventilator.State.InTransit.name:
-#                 transits.append(order.requesting_hospital.address)
+        transits = []
+        for shipment in Shipment.objects.filter(status=Shipment.Status.Shipped):
+            transits.append(shipment.allocation.request.hospital.address)
 
-#         return Response({
-#             'demands': demands,
-#             'supplies': supplies,
-#             'transits': transits
-#         })
+        return Response({
+            'demands': demands,
+            'supplies': supplies,
+            'transits': transits
+        })
 
 #     @transaction.atomic
 #     def post(self, request, format=None):
