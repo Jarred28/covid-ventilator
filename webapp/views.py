@@ -317,7 +317,7 @@ class VentilatorDetail(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
-        return HttpResponseRedirect(reverse('ventilator-detail', request=request, format=format))
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
     def delete(self, request, pk, format=None):
         ventilator = self.get_object(pk)
