@@ -37,27 +37,27 @@
       <tbody>
         {% for ventilator in ventilators %}
         <tr>
-          <td data-title='Model Number'>{{ ventilator.model_num }}</td>
+          <td data-title='Model Number'>{{ ventilator.ventilator_model.model }}</td>
           <td data-title='State'>
-            {% if ventilator.state == 'Requested' %}
-            <span class="badge badge-danger">{{ ventilator.state }}</span>
-            {% elif ventilator.state == 'Available' %}
-            <span class="badge badge-success">{{ ventilator.state }}</span>
-            {% elif ventilator.state == 'InTransit' %}
-            <span class="badge badge-warning">{{ ventilator.state }}</span>
-            {% elif ventilator.state == 'InUse' %}
-            <span class="badge badge-primary">{{ ventilator.state }}</span>
-            {% elif ventilator.state == 'Reserve' %}
-            <span class="badge badge-info">{{ ventilator.state }}</span>
-            {% else %}
-            <span class="badge badge-dark">{{ ventilator.state }}</span>
+            {% if ventilator.status == 'Status.Unknown' %}
+            <span class="badge badge-danger">Unknown</span>
+            {% elif ventilator.status == 'Status.Available' %}
+            <span class="badge badge-success">Available</span>
+            {% elif ventilator.status == 'Status.InTransit' %}
+            <span class="badge badge-warning">In Transit</span>
+            {% elif ventilator.status == 'Status.InUse' %}
+            <span class="badge badge-primary">In Use</span>
+            {% elif ventilator.status == 'Status.SourceReserve' %}
+            <span class="badge badge-info">Source Reserve</span>
+            {% elif ventilator.status == 'Status.DestinationReserve' %}
+            <span class="badge badge-dark">Destination Reserve</span>
             {% endif %}
           </td>
           <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
           <td data-title='Edit' class="select">
-            <button class="btn btn-dark mb-sm" data-toggle="modal" data-target="#singleVentilatorModal"
+            <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#singleVentilatorModal"
               data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}"
-              data-model-num="{{ ventilator.model_num }}" data-state="{{ ventilator.state }}"  >
+              data-model-num="{{ ventilator.ventilator_model.model }}" data-state="{{ ventilator.state }}"  >
                 Edit
             </button>
           </td>

@@ -29,16 +29,17 @@ from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def home(request, format=None):
-    user = User.objects.get(pk=request.user.id)
-    last_role = UserRole.get_default_role(user)
-    if last_role.supplier != None:
-        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-    elif last_role.hospital_group != None:
-        return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
-    elif last_role.hospital != None:
-        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-    else:
-        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+    last_role = UserRole.get_default_role(request.user)
+    if last_role != None:
+        if last_role.supplier != None:
+            return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+        elif last_role.hospital_group != None:
+            print('Hospital Group')
+            # return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
+        elif last_role.hospital != None:
+            return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+        # else:
+            # return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RequestCredentials(APIView):
@@ -276,7 +277,7 @@ class VentilatorList(APIView):
     template_name = 'hospital/dashboard.html'
 
     def get(self, request, format=None):
-        ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user))
+        ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(users=request.user))
         serializer = VentilatorSerializer(Ventilator.objects.first())
         return Response({'ventilators': ventilators, 'serializer': serializer})
 
@@ -428,33 +429,33 @@ class VentilatorList(APIView):
 #     return HttpResponseRedirect(reverse('home', request=request, format=format))
 
 
-# class VentilatorDetail(APIView):
-#     serializer_class = VentilatorSerializer
-#     permission_classes = [IsAuthenticated&HospitalPermission]
+class VentilatorDetail(APIView):
+    serializer_class = VentilatorSerializer
+    permission_classes = [IsAuthenticated&HospitalPermission]
 
-#     def get_object(self, pk):
-#         try:
-#             return Ventilator.objects.get(pk=pk)
-#         except Ventilator.DoesNotExist:
-#             raise Http404
+    # def get_object(self, pk):
+    #     try:
+    #         return Ventilator.objects.get(pk=pk)
+    #     except Ventilator.DoesNotExist:
+    #         raise Http404
 
-#     def get(self, request, pk, format=None):
-#         ventilator = self.get_object(pk)
-#         serializer = self.serializer_class(ventilator)
-#         return Response(serializer.data)
+    # def get(self, request, pk, format=None):
+    #     ventilator = self.get_object(pk)
+    #     serializer = self.serializer_class(ventilator)
+    #     return Response(serializer.data)
 
-#     def put(self, request, pk, format=None):
-#         ventilator = self.get_object(pk)
-#         serializer = self.serializer_class(ventilator, data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         serializer.save()
-#         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    def put(self, request, pk, format=None):
+        ventilator = self.get_object(pk)
+        serializer = self.serializer_class(ventilator, data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
-#     def delete(self, request, pk, format=None):
-#         ventilator = self.get_object(pk)
-#         ventilator.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+    # def delete(self, request, pk, format=None):
+    #     ventilator = self.get_object(pk)
+    #     ventilator.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 class Dashboard(APIView):
     renderer_classes = [TemplateHTMLRenderer]

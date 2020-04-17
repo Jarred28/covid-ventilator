@@ -12,7 +12,7 @@ from covid.settings import DEFAULT_EMAIL
 class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Ventilator
-        fields = ['id', 'model_num', 'state']
+        fields = ['id', 'status']
 
 
 class SystemParametersSerializer(serializers.ModelSerializer):
