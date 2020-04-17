@@ -489,17 +489,24 @@ class VentilatorModel(AbstractCommon):
 class Ventilator(AbstractCommon):
     class Status(Enum):
         Unknown = 'Unknown'
+        Unassigned = 'Unassigned'
         Available = 'Available'
         InUse = 'In Use'
         InTransit = 'In Transit'
         SourceReserve = 'Source Reserve'
         DestinationReserve = 'Destination Reserve'
 
+    class Quality(Enum):
+        Poor = 'Poor'
+        Fair = 'Fair'
+        Excellent = 'Excellent'
+
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
         default=Status.Unknown,
     )
+    serial_number = models.CharField(max_length=100, null=False, blank=False)
     ventilator_model = models.ForeignKey(
         VentilatorModel,
         on_delete=models.CASCADE,
@@ -545,7 +552,13 @@ class Ventilator(AbstractCommon):
     monetary_value = models.IntegerField()
 #   default to ventilator_model.monetary_value
     image = models.CharField(max_length=200, null=True, blank=True)
-    quality = models.IntegerField(null=True, blank=True)
+    quality = models.CharField(
+        max_length=100,
+        null=True, 
+        blank=True, 
+        choices=[(tag.name, tag.value) for tag in Quality],
+        default=Quality.Poor
+    )
 
 class ShipmentVentilator(AbstractCommon):
     shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE)

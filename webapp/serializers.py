@@ -3,16 +3,22 @@ import functools
 from django.core.mail import send_mail
 from rest_framework import serializers
 
-from .models import HospitalGroup, SystemParameters, Ventilator, User
+from .models import HospitalGroup, SystemParameters, Ventilator, VentilatorModel, User
 from .utilities import get_hospital_group_choices
 from .validation import validate_signup
 from covid.settings import DEFAULT_EMAIL
 
+class VentilatorModelSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = VentilatorModel
+        fields = ['id', 'manufacturer', 'model', 'monetary_value']
 
 class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
+    ventilator_model = VentilatorModelSerializer()
     class Meta:
         model = Ventilator
-        fields = ['id', 'model_num', 'state']
+        fields = ['id', 'quality', 'serial_number', 'ventilator_model']
+
 
 
 class SystemParametersSerializer(serializers.ModelSerializer):

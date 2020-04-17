@@ -173,11 +173,14 @@ class Command(BaseCommand):
         user.save()
         for vent_count in range(total_vent_count):
             status = Ventilator.Status.Available
+            if vent_count % 10 == 0:
+                status = Ventilator.Status.SourceReserve
             hosp = Hospital.objects.all()[vent_count % 4]
             vent_model = VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums)))
             vent = Ventilator(
                 ventilator_model=VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums))),
                 status=status,
+                serial_number=str(vent_count),
                 owning_hospital=hosp,
                 current_hospital=hosp,
                 monetary_value=vent_model.monetary_value,
