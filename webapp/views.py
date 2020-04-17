@@ -29,29 +29,40 @@ from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def home(request, format=None):
-    user = User.objects.get(pk=request.user.id)
-    last_role = UserRole.get_default_role(user)
+    last_role = UserRole.get_default_role(request.user)
+    if last_role == None:
+        last_role = UserRole.objects.filter(assigned_user=request.user).first()
+        UserRole.make_default_role(request.user, last_role)
+
     if last_role.supplier != None:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
     elif last_role.hospital_group != None:
-        return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
+        print('Hospital Group')
+        # return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
     elif last_role.hospital != None:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
     else:
         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'registration/request_credentials.html'
 
-    def validate_signup(request_data):
+    def validate_signup(self, request_data):
         errors = []
         fields = ['username', 'email', 'entity_type', 'entity_id']
+        displayFields = {
+            'username': 'Username',
+            'email': 'Email',
+            'entity_type': 'Entity Type',
+            'entity_id': 'Entity ID'
+        };
         # First, verify that all fields have been given. Deal with this validation
         for field in fields:
             if request_data.get(field, '') == '':
-                errors.append(field + ' has not been provided')
+                errors.append(displayFields[field] + ' has not been provided')
         if (len(errors) != 0):
             return errors
         if User.objects.filter(username=request_data.get('username')).count() == 1:
@@ -67,7 +78,7 @@ class RequestCredentials(APIView):
         entity_types = request_data.getlist('entity_type')
         entity_ids = request_data.getlist('entity_id')
 
-        for entity_id, entity_type in entity_ids, entity_types:
+        for entity_id, entity_type in zip(entity_ids, entity_types):
             if entity_id == '':
                 errors.append('Blank Entity ID given for ' + entity_type)
             else:
@@ -91,19 +102,42 @@ class RequestCredentials(APIView):
                         System.objects.get(pk=int(entity_id))
                     except System.DoesNotExist:
                         errors.append('No System found for ID ' + entity_id)
+
         return errors
 
-
     def get(self, request):
-        return Response({'style': {'template_pack': 'rest_framework/vertical/'}})
+        hospitals = Hospital.objects.filter(is_valid=True)
+        hospitalGroups = HospitalGroup.objects.filter(is_valid=True)
+        suppliers = Supplier.objects.filter(is_valid=True)
+        systems = System.objects.filter(is_valid=True)
+
+        return Response({
+            'hospitals': hospitals,
+            'hospitalGroups': hospitalGroups,
+            'suppliers': suppliers,
+            'systems': systems,
+            'style': {'template_pack': 'rest_framework/vertical/'}
+        })
 
     def post(self, request):
-        errors = validate_signup(request.data)
+        errors = self.validate_signup(request.data)
         if len(errors) != 0:
-            return Response({'errors': errors})
+            hospitals = Hospital.objects.filter(is_valid=True)
+            hospitalGroups = HospitalGroup.objects.filter(is_valid=True)
+            suppliers = Supplier.objects.filter(is_valid=True)
+            systems = System.objects.filter(is_valid=True)
+            return Response({
+                'hospitals': hospitals,
+                'hospitalGroups': hospitalGroups,
+                'suppliers': suppliers,
+                'systems': systems,
+                'errors': errors,
+                'style': {'template_pack': 'rest_framework/vertical/'}
+            })
+
         username = request.data.get('username')
         email = request.data.get('email')
-        entity_type = request.data.getlist('entity_type')
+        entity_types = request.data.getlist('entity_type')
         entity_ids = request.data.getlist('entity_id')
         user = User(
             email=email,
@@ -112,7 +146,8 @@ class RequestCredentials(APIView):
             updated_at=datetime.now()
         )
         user.save()
-        for e_type, e_id in entity_type, entity_ids:
+
+        for e_id, e_type in zip(entity_ids, entity_types):
             if e_type == 'Hospital':
                 hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
@@ -247,7 +282,7 @@ class VentilatorList(APIView):
 
     def get(self, request, format=None):
         last_role = UserRole.get_default_role(User.objects.get(pk=request.user.id))
-        ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(pk=last_role.hospital.id))
+        ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
 
         serializer = VentilatorSerializer(Ventilator.objects.first(), context={'request': request})
         return Response({'ventilators': ventilators, 'serializer': serializer})
@@ -349,6 +384,23 @@ class VentilatorList(APIView):
         ventilators = Ventilator.objects.filter(current_hospital=hospital)
         serializer = VentilatorSerializer(ventilators.first())
         return Response({'ventilators': ventilators, 'serializer': serializer})
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def switch_entity(request, type, pk, format=None):
+    if type == 'hospital-group':
+        roles = UserRole.objects.filter(hospital_group=pk).filter(assigned_user=request.user)
+    elif type == 'hospital':
+        roles = UserRole.objects.filter(hospital=pk).filter(assigned_user=request.user)
+    elif type == 'supplier':
+        roles = UserRole.objects.filter(supplier=pk).filter(assigned_user=request.user)
+    else:
+        roles = UserRole.objects.filter(system=pk).filter(assigned_user=request.user)
+
+    if len(roles) > 0:
+        newRole = roles.first()
+        UserRole.make_default_role(request.user, newRole)
+
+    return HttpResponseRedirect(reverse('home', request=request, format=format))
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated&HospitalPermission])
@@ -451,67 +503,63 @@ class VentilatorList(APIView):
 #         order = ventilators[0].order
 #         order.date_fulfilled = datetime.now()
 #         order.save()
-#     return HttpResponseRedirect(reverse('home', request=request, format=format))    
+#     return HttpResponseRedirect(reverse('home', request=request, format=format))
 
 
-# class VentilatorDetail(APIView):
-#     serializer_class = VentilatorSerializer
-#     permission_classes = [IsAuthenticated&HospitalPermission]
+class VentilatorDetail(APIView):
+    serializer_class = VentilatorSerializer
+    permission_classes = [IsAuthenticated&HospitalPermission]
 
-#     def get_object(self, pk):
-#         try:
-#             return Ventilator.objects.get(pk=pk)
-#         except Ventilator.DoesNotExist:
-#             raise Http404
+    def get_object(self, pk):
+        try:
+            return Ventilator.objects.get(pk=pk)
+        except Ventilator.DoesNotExist:
+            raise Http404
 
-#     def get(self, request, pk, format=None):
-#         ventilator = self.get_object(pk)
-#         serializer = self.serializer_class(ventilator)
-#         return Response(serializer.data)
+    # def get(self, request, pk, format=None):
+    #     ventilator = self.get_object(pk)
+    #     serializer = self.serializer_class(ventilator)
+    #     return Response(serializer.data)
 
-#     def put(self, request, pk, format=None):
-#         ventilator = self.get_object(pk)
-#         serializer = self.serializer_class(ventilator, data=request.data)
-#         if not serializer.is_valid():
-#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-#         serializer.save()
-#         return Response(serializer.data)
+    def put(self, request, pk, format=None):
+        ventilator = self.get_object(pk)
+        serializer = self.serializer_class(ventilator, data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
+    # def delete(self, request, pk, format=None):
+    #     ventilator = self.get_object(pk)
+    #     ventilator.delete()
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
-#     def delete(self, request, pk, format=None):
-#         ventilator = self.get_object(pk)
-#         ventilator.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+class Dashboard(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/dashboard.html'
 
+    def get(self, request, format=None):
+        offers = []
+        for offer in Offer.objects.filter(status=Offer.Status.Approved):
+            if offer.hospital:
+                offers.append(offer.hospital.address)
+            else:
+                offers.append(offer.supplier.address)
 
-# class Dashboard(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/dashboard.html'
+        requests = []
+        for request in Request.objects.filter(status=Request.Status.Approved):
+            requests.append(request.hospital.address)
 
-#     def get(self, request, format=None):
-#         demands = []
-#         for order in Order.objects.filter(active=True):
-#             if order.requesting_hospital:
-#                 demands.append(order.requesting_hospital.address)
+        transits = []
+        for shipment in Shipment.objects.filter(status=Shipment.Status.Shipped):
+            transits.append(shipment.allocation.request.hospital.address)
 
-#         supplies = []
-#         for hospital in Hospital.objects.all():
-#             ventilatorCount = Ventilator.objects.filter(state=Ventilator.State.Available.name).filter(owning_hospital=hospital).count()
-#             if (ventilatorCount > 0):
-#                 supplies.append(hospital.address)
-
-#         transits = []
-#         for order in Order.objects.all():
-#             ventilators = order.ventilator_set.all()
-#             if ventilators.count() > 0 and ventilators.first().state == Ventilator.State.InTransit.name:
-#                 transits.append(order.requesting_hospital.address)
-
-#         return Response({
-#             'demands': demands,
-#             'supplies': supplies,
-#             'transits': transits
-#         })
+        return Response({
+            'demands': requests,
+            'supplies': offers,
+            'transits': transits
+        })
 
 #     @transaction.atomic
 #     def post(self, request, format=None):
@@ -550,149 +598,10 @@ class VentilatorList(APIView):
 
 #         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated&SystemPermission])
-# def reset_db(request, format=None):
-#     Order.objects.all().delete()
-#     Hospital.objects.all().delete()
-#     Ventilator.objects.all().delete()
-#     HospitalGroup.objects.all().delete()
-#     User.objects.all().delete()
-#     hospital_addresses = [
-#         {
-#             "name": "Elmhurst Hospital Center",
-#             "address": "79-01 Broadway, Elmhurst, NY 11373"
-#         },
-#         {
-#             "name": "Flushing Hospital Medical Center",
-#             "address": "45th Avenue & Parsons Blvd, Flushing, NY 11355"
-#         },
-#         {
-#             "name": "Jamaica Hospital Medical Center",
-#             "address": "89th Avenue & Van Wyck Expressway, Jamaica, NY 11418"
-#         },
-#         {
-#             "name": "Lewis County General Hospital",
-#             "address": "3926 NY-12, Lyons Falls, NY 13368"
-#         },
-#         {
-#             "name": "Brookdale Hospital Medical Center",
-#             "address": "1 Brookdale Plaza, Brooklyn, NY 11212"
-#         },
-#         {
-#             "name": "General Hospital",
-#             "address": "16 Bank St, Batavia, NY 14020"
-#         },
-#         {
-#             "name": "Margaretville Hospital",
-#             "address": "42084 NY-28, Margaretville, NY 12455"
-#         },
-#         {
-#             "name": "Central New York Psychiatric Center",
-#             "address": "9005 Old River Rd, Marcy, NY 13403"
-#         },
-#         {
-#             "name": "New York Eye and Ear Infirmary of Mount Sinai",
-#             "address": "310 East 14th Street, New York, NY 10003"
-#         },
-#         {
-#             "name": "New York Community Hospital of Brooklyn, Inc",
-#             "address": "2525 Kings Highway, Brooklyn, NY 11229"
-#         }
-#     ]
-#     model_nums = [
-#         "Medtronic Portable",
-#         "Medtronic Non-Portable",
-#         "Phillips Portable",
-#         "Phillips Non-Portable",
-#         "Hamilton Portable",
-#         "Hamilton Non-Portable"
-#     ]
-#     email = "covid_test_group"
-#     username = "ny_state"
-#     hg_user = User(
-#         user_type=User.UserType.HospitalGroup.name,
-#         email=email,
-#         username=username
-#     )
-#     default_pw = os.environ.get('DEFAULT_PW')
-#     hg_user.set_password(default_pw)
-#     hg_user.save()
-#     name = "NY State"
-#     hg = HospitalGroup(name=name, user=User.objects.get(pk=hg_user.id))
-#     hg.save()
-#     for hospital_count in range(10):
-#         email = "{0}{1}{2}".format("covid_test_hospital", str(hospital_count), "@gmail.com")
-#         username = "{0}{1}".format("test_hospital", str(hospital_count))
-#         h_user = User(
-#             user_type=User.UserType.Hospital.name,
-#             email=email,
-#             username=username
-#         )
-#         h_user.set_password(default_pw)
-#         h_user.save()
-#         name = "{0}{1}".format("Hospital", str(hospital_count))
-#         current_load = random.randint(10, 30)
-#         case_load = random.randint(40, 100)
-#         h = Hospital(
-#             name=hospital_addresses[hospital_count]['name'],
-#             user=h_user,
-#             contribution=0,
-#             current_load=current_load,
-#             hospital_group=hg,
-#             address=hospital_addresses[hospital_count]['address'], 
-#             projected_load=case_load, 
-#             within_group_only=False
-#         )
-#         h.save()
-#     count = 0
-#     for vent_count in range(20):
-#         hosp = Hospital.objects.all()[vent_count % 4]
-#         monetary_value = 0
-#         if ((vent_count) % len(model_nums)) % 2 == 0:
-#             monetary_value = random.randint(5000, 20000)
-#         else:
-#             monetary_value = random.randint(15000, 30000)
-#         state = Ventilator.State.Available.name
-#         if vent_count % 4 == count:
-#             state = Ventilator.State.SourceReserve.name
-#             count += 1
-#         vent = Ventilator(
-#             model_num=model_nums[(vent_count) % len(model_nums)],
-#             state=state,
-#             owning_hospital=hosp,
-#             current_hospital=hosp,
-#             monetary_value=monetary_value
-#         )
-#         vent.save()
-#     for order_count in range(6):
-#         num_req = random.randint(10, 30)
-#         order = Order(
-#             num_requested=num_req,
-#             time_submitted=date(2020, 4, 9),
-#             active=True,
-#             auto_generated=False,
-#             requesting_hospital=Hospital.objects.all()[order_count+4],
-#         )
-#         order.save()
-
-#     params = SystemParameters.getInstance()
-#     params.destination_reserve = 10.0
-#     params.strategic_reserve = 10.0
-#     params.save()
-#     sys_oper_user = User(
-#             user_type=User.UserType.System.name,
-#             email="sys_admin_covid@gmail.com",
-#             username="sys_admin"
-#         )
-#     sys_oper_user.set_password(default_pw)
-#     sys_oper_user.save()
-#     sys_oper = System(
-#         name="admin",
-#         user=User.objects.get(pk=sys_oper_user.id)
-#     )
-#     sys_oper.save()
-#     return HttpResponseRedirect(reverse('login', request=request))
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&SystemPermission])
+def reset_db(request, format=None):
+    return HttpResponseRedirect(reverse('login', request=request))
 
 # class SystemSettings(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]

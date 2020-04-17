@@ -20,7 +20,6 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['id', 'quality', 'serial_number', 'ventilator_model']
 
 
-
 class SystemParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemParameters

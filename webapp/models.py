@@ -47,6 +47,30 @@ class User(AbstractUser):
     )
     is_valid = models.BooleanField(default=True)
 
+    def set_current_type(self, entityType):
+        self.current_type = entityType
+
+    def get_roles(self):
+        roles = {
+            'hospital': [],
+            'hospital_group': [],
+            'supplier': [],
+            'system': []
+        };
+        for role in self.user_role_user.all():
+            if role.hospital_group:
+                roles['hospital_group'].append(role.hospital_group)
+            elif role.hospital:
+                roles['hospital'].append(role.hospital)
+            elif role.supplier:
+                roles['supplier'].append(role.supplier)
+            else:
+                roles['system'].append(role.system)
+        return roles
+
+    def get_current_role(self):
+        return UserRole.get_default_role(self)
+
 class AbstractCommon(models.Model):
     inserted_at = models.DateTimeField(auto_now_add=True)
     inserted_by_user  = models.ForeignKey(
@@ -211,7 +235,7 @@ class Request(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open,
+        default=Status.Open.name,
     )
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
     requested_qty = models.IntegerField()
@@ -274,7 +298,7 @@ class Offer(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open,
+        default=Status.Open.name,
     )
     hospital = models.ForeignKey(
         Hospital,
@@ -351,7 +375,7 @@ class Allocation(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open,
+        default=Status.Open.name,
     )
     request = models.ForeignKey(Request, on_delete=models.CASCADE)
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
@@ -416,7 +440,7 @@ class Shipment(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open,
+        default=Status.Open.name,
     )
     allocation = models.ForeignKey(Allocation, on_delete=models.CASCADE)
     # this can be referenced with [shipment_ventilator.ventilator for shipment_ventilator in shipment.shipment_ventilator_set.all()], since order of declaration matters in Django.
@@ -504,7 +528,7 @@ class Ventilator(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Unknown,
+        default=Status.Unknown.name,
     )
     serial_number = models.CharField(max_length=100, null=False, blank=False)
     ventilator_model = models.ForeignKey(

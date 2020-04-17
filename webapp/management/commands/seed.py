@@ -132,7 +132,7 @@ class Command(BaseCommand):
             h.save()
             if hospital_count < 5:
                 o = Offer(
-                    status=Offer.Status.Open,
+                    status=Offer.Status.Open.name,
                     hospital=h,
                     requested_qty=random.randint(5, 15),
                     opened_by_user=user,
@@ -143,7 +143,7 @@ class Command(BaseCommand):
                 o.save()
             else:
                 r1 = Request(
-                    status=Request.Status.Open,
+                    status=Request.Status.Open.name,
                     hospital=h,
                     requested_qty=random.randint(5, 10),
                     opened_by_user=user,
@@ -153,7 +153,7 @@ class Command(BaseCommand):
                 )
                 r1.save()
                 r2 = Request(
-                    status=Request.Status.Open,
+                    status=Request.Status.Open.name,
                     hospital=h,
                     requested_qty=random.randint(5, 10),
                     opened_by_user=user,
@@ -192,7 +192,7 @@ class Command(BaseCommand):
         for count in range(15):
             if count < 10:
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=User.objects.all()[count],
                     hospital=Hospital.objects.all()[count],
                     granted_by_user=user,
@@ -201,7 +201,7 @@ class Command(BaseCommand):
                 )
             if count < 3:
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=User.objects.all()[count],
                     hospital_group=hospital_group,
                     granted_by_user=user,
@@ -210,7 +210,7 @@ class Command(BaseCommand):
                 )
             if count == 4 or count == 5:
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=User.objects.all()[count],
                     system=sys,
                     granted_by_user=user,

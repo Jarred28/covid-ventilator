@@ -73,3 +73,7 @@ table {
 table.table-bordered thead th {
   border-bottom-width: 1px; 
 }
+
+.drop-submenu a.dropdown-toggle:before {
+  display: none;
+}
