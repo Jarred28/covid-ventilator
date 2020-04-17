@@ -41,8 +41,8 @@ def home(request, format=None):
         # return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
     elif last_role.hospital != None:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-    # else:
-        # return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+    else:
+        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
     return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -276,11 +276,22 @@ class RequestCredentials(APIView):
 #         })
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated&HospitalPermission])
-def manage_hospital(request, pk, format=None):
-    newRole = UserRole.objects.filter(hospital=pk).filter(assigned_user=request.user).first()
-    UserRole.make_default_role(request.user, newRole)
-    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+@permission_classes([IsAuthenticated])
+def switch_entity(request, type, pk, format=None):
+    if type == 'hospital-group':
+        roles = UserRole.objects.filter(hospital_group=pk).filter(assigned_user=request.user)
+    elif type == 'hospital':
+        roles = UserRole.objects.filter(hospital=pk).filter(assigned_user=request.user)
+    elif type == 'supplier':
+        roles = UserRole.objects.filter(supplier=pk).filter(assigned_user=request.user)
+    else:
+        roles = UserRole.objects.filter(system=pk).filter(assigned_user=request.user)
+
+    if len(roles) > 0:
+        newRole = roles.first()
+        UserRole.make_default_role(request.user, newRole)
+
+    return HttpResponseRedirect(reverse('home', request=request, format=format))
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -471,8 +482,7 @@ class VentilatorDetail(APIView):
 
 class Dashboard(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    # permission_classes = [IsAuthenticated&SystemPermission]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated&SystemPermission]
     template_name = 'sysoperator/dashboard.html'
 
     def get(self, request, format=None):

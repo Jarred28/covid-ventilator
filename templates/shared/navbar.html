@@ -7,16 +7,6 @@
     {% if user.is_authenticated %}
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown">
-        {% if user.user_type == 'HospitalGroup' %}
-        <span class="nav-link">CEO / Governor</span>
-        {% elif user.user_type == 'System' %}
-        <span class="nav-link">System Operator</span>
-        {% elif user.user_type == 'Hospital' %}
-        <span class="nav-link">Hospital Admin</span>
-        {% elif user.user_type == 'Supplier' %}
-        <span class="nav-link">Supplier</span>
-        {% endif %}
-
         <span class="nav-link dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {{ user.username }}
         </span>
@@ -29,7 +19,7 @@
             </a>
             <div class="dropdown-menu">
               {% for hospital in user.get_roles.hospital %}
-              <a class="dropdown-item{% if user.get_current_role.hospital == hospital %} active{% endif %}" href="{% url 'manage-hospital' hospital.id %}">{{ hospital.name }}</a>
+              <a class="dropdown-item{% if user.get_current_role.hospital == hospital %} active{% endif %}" href="{% url 'switch-entity' 'hospital' hospital.id %}">{{ hospital.name }}</a>
               {% endfor %}
             </div>
           </div>
@@ -65,7 +55,7 @@
             </a>
             <div class="dropdown-menu">
               {% for system in user.get_roles.system %}
-              <a class="dropdown-item{% if user.get_current_role.system == system %} active{% endif %}" href="#">{{ system.name }}</a>
+              <a class="dropdown-item{% if user.get_current_role.system == system %} active{% endif %}" href="{% url 'switch-entity' 'system' system.id %}">{{ system.name }}</a>
               {% endfor %}
             </div>
           </div>
