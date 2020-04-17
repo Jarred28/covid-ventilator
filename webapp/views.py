@@ -45,13 +45,19 @@ class RequestCredentials(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = 'registration/request_credentials.html'
 
-    def validate_signup(request_data):
+    def validate_signup(self, request_data):
         errors = []
         fields = ['username', 'email', 'entity_type', 'entity_id']
+        displayFields = {
+            'username': 'Username',
+            'email': 'Email',
+            'entity_type': 'Entity Type',
+            'entity_id': 'Entity ID'
+        };
         # First, verify that all fields have been given. Deal with this validation
         for field in fields:
             if request_data.get(field, '') == '':
-                errors.append(field + ' has not been provided')
+                errors.append(displayFields[field] + ' has not been provided')
         if (len(errors) != 0):
             return errors
         if User.objects.filter(username=request_data.get('username')).count() == 1:
@@ -67,7 +73,7 @@ class RequestCredentials(APIView):
         entity_types = request_data.getlist('entity_type')
         entity_ids = request_data.getlist('entity_id')
 
-        for entity_id, entity_type in entity_ids, entity_types:
+        for entity_id, entity_type in zip(entity_ids, entity_types):
             if entity_id == '':
                 errors.append('Blank Entity ID given for ' + entity_type)
             else:
@@ -91,19 +97,42 @@ class RequestCredentials(APIView):
                         System.objects.get(pk=int(entity_id))
                     except System.DoesNotExist:
                         errors.append('No System found for ID ' + entity_id)
+
         return errors
 
-
     def get(self, request):
-        return Response({'style': {'template_pack': 'rest_framework/vertical/'}})
+        hospitals = Hospital.objects.filter(is_valid=True)
+        hospitalGroups = HospitalGroup.objects.filter(is_valid=True)
+        suppliers = Supplier.objects.filter(is_valid=True)
+        systems = System.objects.filter(is_valid=True)
+
+        return Response({
+            'hospitals': hospitals,
+            'hospitalGroups': hospitalGroups,
+            'suppliers': suppliers,
+            'systems': systems,
+            'style': {'template_pack': 'rest_framework/vertical/'}
+        })
 
     def post(self, request):
-        errors = validate_signup(request.data)
+        errors = self.validate_signup(request.data)
         if len(errors) != 0:
-            return Response({'errors': errors})
+            hospitals = Hospital.objects.filter(is_valid=True)
+            hospitalGroups = HospitalGroup.objects.filter(is_valid=True)
+            suppliers = Supplier.objects.filter(is_valid=True)
+            systems = System.objects.filter(is_valid=True)
+            return Response({
+                'hospitals': hospitals,
+                'hospitalGroups': hospitalGroups,
+                'suppliers': suppliers,
+                'systems': systems,
+                'errors': errors,
+                'style': {'template_pack': 'rest_framework/vertical/'}
+            })
+
         username = request.data.get('username')
         email = request.data.get('email')
-        entity_type = request.data.getlist('entity_type')
+        entity_types = request.data.getlist('entity_type')
         entity_ids = request.data.getlist('entity_id')
         user = User(
             email=email,
@@ -112,7 +141,8 @@ class RequestCredentials(APIView):
             updated_at=datetime.now()
         )
         user.save()
-        for e_type, e_id in entity_type, entity_ids:
+
+        for e_id, e_type in zip(entity_ids, entity_types):
             if e_type == 'Hospital':
                 hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
