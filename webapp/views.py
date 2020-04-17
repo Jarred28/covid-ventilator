@@ -73,11 +73,7 @@ class RequestCredentials(APIView):
         entity_types = request_data.getlist('entity_type')
         entity_ids = request_data.getlist('entity_id')
 
-        idx = 0
-
-        for entity_id in entity_ids:
-            entity_type = entity_types[idx]
-            idx += 1
+        for entity_id, entity_type in zip(entity_ids, entity_types):
             if entity_id == '':
                 errors.append('Blank Entity ID given for ' + entity_type)
             else:
@@ -146,11 +142,7 @@ class RequestCredentials(APIView):
         )
         user.save()
 
-        idx = 0
-
-        for e_id in entity_ids:
-            e_type = entity_types[idx]
-            idx += 1
+        for e_id, e_type in zip(entity_ids, entity_types):
             if e_type == 'Hospital':
                 hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
