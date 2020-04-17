@@ -30,16 +30,20 @@ from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 @permission_classes([IsAuthenticated])
 def home(request, format=None):
     last_role = UserRole.get_default_role(request.user)
-    if last_role != None:
-        if last_role.supplier != None:
-            return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-        elif last_role.hospital_group != None:
-            print('Hospital Group')
-            # return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
-        elif last_role.hospital != None:
-            return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
-        # else:
-            # return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+    if last_role == None:
+        last_role = UserRole.objects.filter(assigned_user=request.user).first()
+        UserRole.make_default_role(request.user, last_role)
+
+    if last_role.supplier != None:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    elif last_role.hospital_group != None:
+        print('Hospital Group')
+        # return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
+    elif last_role.hospital != None:
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+    # else:
+        # return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 class RequestCredentials(APIView):
@@ -271,15 +275,23 @@ class RequestCredentials(APIView):
 #             'arrived_non_reserve_orders': arrived_non_reserve_orders
 #         })
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def manage_hospital(request, pk, format=None):
+    newRole = UserRole.objects.filter(hospital=pk).filter(assigned_user=request.user).first()
+    UserRole.make_default_role(request.user, newRole)
+    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
     template_name = 'hospital/dashboard.html'
 
     def get(self, request, format=None):
-        ventilators = Ventilator.objects.filter(current_hospital=Hospital.objects.get(users=request.user))
+        userRole = UserRole.get_default_role(request.user)
+        ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
         serializer = VentilatorSerializer(Ventilator.objects.first())
-        return Response({'ventilators': ventilators, 'serializer': serializer})
+        return Response({'ventilators': ventilators, 'serializer': serializer, 'role': 'Hospital'})
 
 #     def post(self, request, format=None):
 #         # Either batch upload through CSV  or add single ventilator entry
@@ -433,11 +445,11 @@ class VentilatorDetail(APIView):
     serializer_class = VentilatorSerializer
     permission_classes = [IsAuthenticated&HospitalPermission]
 
-    # def get_object(self, pk):
-    #     try:
-    #         return Ventilator.objects.get(pk=pk)
-    #     except Ventilator.DoesNotExist:
-    #         raise Http404
+    def get_object(self, pk):
+        try:
+            return Ventilator.objects.get(pk=pk)
+        except Ventilator.DoesNotExist:
+            raise Http404
 
     # def get(self, request, pk, format=None):
     #     ventilator = self.get_object(pk)
