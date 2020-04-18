@@ -277,7 +277,7 @@ class RequestCredentials(APIView):
 
 class VentilatorList(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    # permission_classes = [IsAuthenticated&HospitalPermission]
+    permission_classes = [IsAuthenticated&HospitalPermission]
     template_name = 'hospital/dashboard.html'
 
     def get(self, request, format=None):
@@ -384,6 +384,7 @@ class VentilatorList(APIView):
         ventilators = Ventilator.objects.filter(current_hospital=hospital)
         serializer = VentilatorSerializer(ventilators.first())
         return Response({'ventilators': ventilators, 'serializer': serializer})
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def switch_entity(request, type, pk, format=None):
@@ -548,13 +549,12 @@ class Dashboard(APIView):
                 offers.append(offer.supplier.address)
 
         requests = []
-        for request in Request.objects.filter(status=Request.Status.Approved):
+        for request in Request.objects.filter(status=Request.Status.Approved.name):
             requests.append(request.hospital.address)
 
         transits = []
-        for shipment in Shipment.objects.filter(status=Shipment.Status.Shipped):
+        for shipment in Shipment.objects.filter(status=Shipment.Status.Shipped.name):
             transits.append(shipment.allocation.request.hospital.address)
-
         return Response({
             'demands': requests,
             'supplies': offers,
