@@ -281,7 +281,7 @@ class VentilatorList(APIView):
     template_name = 'hospital/dashboard.html'
 
     def get(self, request, format=None):
-        userRole = UserRole.get_default_role(User.objects.get(pk=request.user.id))
+        userRole = UserRole.get_default_role(request.user)
         ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
 
         serializer = VentilatorSerializer(Ventilator.objects.first(), context={'request': request})
@@ -290,7 +290,7 @@ class VentilatorList(APIView):
     def post(self, request, format=None):
         # Either batch upload through CSV  or add single ventilator entry
         csv_file = request.FILES.get('file', None)
-        last_role = UserRole.get_default_role(User.objects.get(pk=request.user.id))
+        last_role = UserRole.get_default_role(request.user)
         hospital = Hospital.objects.get(pk=last_role.hospital.id)
         if csv_file:
             data_set = csv_file.read().decode('UTF-8')
@@ -388,9 +388,7 @@ class VentilatorList(APIView):
                 updated_by_user=User.objects.get(pk=request.user.id)
             )
             ventilator.save()
-        ventilators = Ventilator.objects.filter(current_hospital=hospital)
-        serializer = VentilatorSerializer(ventilators.first())
-        return Response({'ventilators': ventilators, 'serializer': serializer})
+        return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -532,9 +530,8 @@ class VentilatorDetail(APIView):
     def put(self, request, pk, format=None):
         ventilator = self.get_object(pk)
         serializer = self.serializer_class(ventilator, data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        serializer.save()
+        if serializer.is_valid():
+            serializer.save()
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
     # def delete(self, request, pk, format=None):

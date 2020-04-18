@@ -41,7 +41,15 @@
         <tr>
           <td data-title='Model Number'>{{ ventilator.ventilator_model.model }}</td>
           <td data-title="Serial Number">{{ ventilator.serial_number }}</td>
-          <td data-title="Quality">{{ ventilator.quality }}</td>
+          <td data-title="Quality">
+            {% if ventilator.quality == 'Poor' %}
+            <span class="badge badge-danger">{{ ventilator.quality }}</span>
+            {% elif ventilator.quality == 'Fair' %}
+            <span class="badge badge-info">{{ ventilator.quality }}</span>
+            {% elif ventilator.quality == 'Excellent' %}
+            <span class="badge badge-success">{{ ventilator.quality }}</span>
+            {% endif %}
+          </td>
           <td data-title='Status'>
             {% if ventilator.status == 'Unavailable' %}
             <span class="badge badge-danger">{{ ventilator.unavailable_status }}</span>
@@ -60,8 +68,7 @@
           <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
           <td data-title='Edit' class="select">
             <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#singleVentilatorModal"
-              data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}"
-              data-model-num="{{ ventilator.ventilator_model.model }}" data-status="{{ ventilator.status }}"  >
+              data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}" data-quality="{{ ventilator.quality }}" data-serial-number="{{ ventilator.serial_number }}" data-model-manufacturer="{{ ventilator.ventilator_model.manufacturer }}" data-model="{{ ventilator.ventilator_model.model }}" data-monetary-value="{{ ventilator.ventilator_model.monetary_value }}">
                 Edit
             </button>
           </td>
