@@ -1,7 +1,7 @@
 {% if user.is_authenticated %}
 <aside>
   <nav class="nav bg-white flex-column covid-sidebar">
-    {% if user.user_type == 'Hospital' %}
+    {% if user.current_type == 'Hospital' %}
 
     {% url 'ventilator-list' as ventilator_list_url %}
     <a class="nav-link {% if request.get_full_path == ventilator_list_url %}active{% endif %}" href="{{ ventilator_list_url }}">Ventilators</a>
@@ -14,7 +14,7 @@
 
     {% endif %}
 
-    {% if user.user_type == 'System' %}
+    {% if user.current_type == 'System' %}
 
     {% url 'sys-dashboard' as sys_dashboard_url %}
     <a class="nav-link {% if request.get_full_path == sys_dashboard_url %}active{% endif %}" href="{{ sys_dashboard_url }}">Dashboard</a>
@@ -36,7 +36,7 @@
 
     {% endif %}
 
-    {% if user.user_type == 'HospitalGroup' %}
+    {% if user.current_type == 'Hospital Group' %}
 
     {% url 'ceo-dashboard' as ceo_dashboard_url %}
     <a class="nav-link {% if request.get_full_path == ceo_dashboard_url %}active{% endif %}" href="{{ ceo_dashboard_url }}">View</a>

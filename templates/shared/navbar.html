@@ -6,19 +6,63 @@
 
     {% if user.is_authenticated %}
     <ul class="navbar-nav ml-auto">
-      <li class="nav-item">
-        {% if user.user_type == 'HospitalGroup' %}
-        <span class="nav-link">CEO / Governor</span>
-        {% elif user.user_type == 'System' %}
-        <span class="nav-link">System Operator</span>
-        {% elif user.user_type == 'Hospital' %}
-        <span class="nav-link">Hospital Admin</span>
-        {% elif user.user_type == 'Supplier' %}
-        <span class="nav-link">Supplier</span>
-        {% endif %}
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'logout' %}">Log out</a>
+      <li class="nav-item dropdown">
+        <span class="nav-link dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          {{ user.username }}
+        </span>
+        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
+          <h6 class="dropdown-header">{{ user.email }}</h6>
+          {% if user.get_roles.hospital|length > 0 %}
+          <div class="dropleft drop-submenu">
+            <a class="dropdown-item dropdown-toggle{% if user.current_type == 'Hospital' %} active{% endif %}" data-toggle="dropdown" href="#">
+              Hospital
+            </a>
+            <div class="dropdown-menu">
+              {% for hospital in user.get_roles.hospital %}
+              <a class="dropdown-item{% if user.get_current_role.hospital == hospital %} active{% endif %}" href="{% url 'switch-entity' 'hospital' hospital.id %}">{{ hospital.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if user.get_roles.hospital_group|length > 0 %}
+          <div class="dropleft drop-submenu">
+            <a class="dropdown-item dropdown-toggle{% if user.current_type == 'Hospital Group' %} active{% endif %}" data-toggle="dropdown" href="#">
+              Hospital Group
+            </a>
+            <div class="dropdown-menu">
+              {% for group in user.get_roles.hospital_group %}
+              <a class="dropdown-item{% if user.get_current_role.hospital_group == group %} active{% endif %}" href="#">{{ group.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if user.get_roles.supplier|length > 0 %}
+          <div class="dropleft drop-submenu">
+            <a class="dropdown-item dropdown-toggle{% if user.current_type == 'Supplier' %} active{% endif %}" data-toggle="dropdown" href="#">
+              Supplier
+            </a>
+            <div class="dropdown-menu">
+              {% for supplier in user.get_roles.supplier %}
+              <a class="dropdown-item{% if user.get_current_role.supplier == supplier %} active{% endif %}" href="#">{{ supplier.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          {% if user.get_roles.system|length > 0 %}
+          <div class="dropleft drop-submenu">
+            <a class="dropdown-item dropdown-toggle{% if user.current_type == 'System' %} active{% endif %}" data-toggle="dropdown" href="#">
+              System
+            </a>
+            <div class="dropdown-menu">
+              {% for system in user.get_roles.system %}
+              <a class="dropdown-item{% if user.get_current_role.system == system %} active{% endif %}" href="{% url 'switch-entity' 'system' system.id %}">{{ system.name }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" href="{% url 'logout' %}">Log out</a>
+        </div>
       </li>
     </ul>
     {% endif %}
