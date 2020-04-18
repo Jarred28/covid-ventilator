@@ -297,8 +297,8 @@ class VentilatorList(APIView):
             io_string = io.StringIO(data_set)
             next(io_string)
             available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(Ventilator.Status.Available.name).count()
-            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(Ventilator.Status.Unassigned.name).count()
-            src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.Status.SourceReserve.name).count()
+            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.InUse.name).count()
+            src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name).count()
             vent_ct = available_vent_ct + src_reserve_ct
             for column in csv.reader(io_string, delimiter=',', quotechar="|"):
                 # Assumes serial_number, quality_level, model_type, model_mfg, monetary_value
@@ -313,11 +313,14 @@ class VentilatorList(APIView):
                 model_type = column[3]
                 model_mfg = column[4]
                 monetary_value = column[5]
-                status = Ventilator.Status.Unassigned.name
+                status = Ventilator.Status.Unavailable.name
+                unavailable_status = Ventilator.UnavailableReason.InUse.name
                 # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
+                print(src_reserve_ct / (vent_count + 1))
                 if (src_reserve_ct / (vent_count + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
                     status = Ventilator.State.SourceReserve.name
                     src_reserve_ct += 1
+                    unknown_status = None
                 vent_ct += 1
                 vent_model = None
                 if VentilatorModel.objects.filter(model=model_type):
@@ -336,6 +339,7 @@ class VentilatorList(APIView):
                     quality=quality_level,
                     monetary_value=monetary_value,
                     status=status,
+                    unavailable_status=unavailable_status,
                     owning_hospital=hospital,
                     current_hospital=hospital,
                     inserted_by_user=User.objects.get(pk=request.user.id),
@@ -361,20 +365,23 @@ class VentilatorList(APIView):
                     updated_by_user=User.objects.get(pk=request.user.id)
                 )
             # We'll choose the optimistic outcome and assume all unassigned ventilators will eventually become Available.
-            status = Ventilator.Status.Unassigned.name
+            status = Ventilator.Status.Unavailable.name
+            unavailable_status = Ventilator.UnavailableReason.InUse.name
             available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name).count()
-            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unassigned.name).count()
+            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.InUse.name).count()
             src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name).count()
             vent_ct = available_vent_ct + src_reserve_ct
             # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
-            if (src_reserve_ct / (vent_ct + 1)) > (SystemParameters.getInstance().strategic_reserve / 100):
+            if (src_reserve_ct / (vent_ct + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
                 status = Ventilator.Status.SourceReserve.name
+                unavailable_status = None
             ventilator = Ventilator(
                 ventilator_model=vent_model,
                 serial_number=request.data['serial_number'],
                 quality=request.data['quality'],
                 monetary_value=vent_model.monetary_value,
                 status=status,
+                unavailable_status=unavailable_status,
                 owning_hospital=hospital,
                 current_hospital=hospital,
                 inserted_by_user=User.objects.get(pk=request.user.id),

@@ -28,7 +28,7 @@
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
         <tr>
-          <th>Model Number</th>
+          <th>Model Name</th>
           <th>Serial Number</th>
           <th>Quality</th>
           <th>Status</th>
@@ -40,17 +40,17 @@
         {% for ventilator in ventilators %}
         <tr>
           <td data-title='Model Number'>{{ ventilator.ventilator_model.model }}</td>
-          <td data-title="Serial Number">123456</td>
+          <td data-title="Serial Number">{{ ventilator.serial_number }}</td>
           <td data-title="Quality">{{ ventilator.quality }}</td>
           <td data-title='Status'>
-            {% if ventilator.status == 'Unknown' %}
-            <span class="badge badge-danger">Unknown</span>
+            {% if ventilator.status == 'Unavailable' %}
+            <span class="badge badge-danger">{{ ventilator.unavailable_status }}</span>
             {% elif ventilator.status == 'Available' %}
             <span class="badge badge-success">Available</span>
             {% elif ventilator.status == 'InTransit' %}
             <span class="badge badge-warning">In Transit</span>
-            {% elif ventilator.status == 'InUse' %}
-            <span class="badge badge-primary">In Use</span>
+            {% elif ventilator.status == 'Packing' %}
+            <span class="badge badge-primary">Packing</span>
             {% elif ventilator.status == 'SourceReserve' %}
             <span class="badge badge-info">Source Reserve</span>
             {% elif ventilator.status == 'DestinationReserve' %}

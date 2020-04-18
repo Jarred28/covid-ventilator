@@ -180,6 +180,7 @@ class Command(BaseCommand):
             vent = Ventilator(
                 ventilator_model=VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums))),
                 status=status,
+                unavailable_status=None,
                 serial_number=str(vent_count),
                 owning_hospital=hosp,
                 current_hospital=hosp,
