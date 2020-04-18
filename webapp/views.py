@@ -22,7 +22,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, Shipment, System, Supplier
+from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, Shipment, System, SystemParameters, Supplier
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 
@@ -151,7 +151,7 @@ class RequestCredentials(APIView):
             if e_type == 'Hospital':
                 hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     hospital=hospital,
                     granted_by_user=user,
@@ -163,7 +163,7 @@ class RequestCredentials(APIView):
             elif e_type == 'Hospital Group':
                 hospital_group = HospitalGroup.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     hospital_group=hospital_group,
                     granted_by_user=user,
@@ -175,7 +175,7 @@ class RequestCredentials(APIView):
             elif e_type == 'Supplier':
                 supplier = Supplier.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     supplier=supplier,
                     granted_by_user=user,
@@ -187,7 +187,7 @@ class RequestCredentials(APIView):
             else:
                 system = System.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     system=system,
                     granted_by_user=user,
@@ -275,6 +275,115 @@ class RequestCredentials(APIView):
 #             'arrived_non_reserve_orders': arrived_non_reserve_orders
 #         })
 
+class VentilatorList(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    # permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/dashboard.html'
+
+    def get(self, request, format=None):
+        last_role = UserRole.get_default_role(User.objects.get(pk=request.user.id))
+        ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
+
+        serializer = VentilatorSerializer(Ventilator.objects.first(), context={'request': request})
+        return Response({'ventilators': ventilators, 'serializer': serializer})
+
+    def post(self, request, format=None):
+        # Either batch upload through CSV  or add single ventilator entry
+        csv_file = request.FILES.get('file', None)
+        last_role = UserRole.get_default_role(User.objects.get(pk=request.user.id))
+        hospital = Hospital.objects.get(pk=last_role.hospital.id)
+        if csv_file:
+            data_set = csv_file.read().decode('UTF-8')
+            io_string = io.StringIO(data_set)
+            next(io_string)
+            available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(Ventilator.Status.Available.name).count()
+            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(Ventilator.Status.Unassigned.name).count()
+            src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.Status.SourceReserve.name).count()
+            vent_ct = available_vent_ct + src_reserve_ct
+            for column in csv.reader(io_string, delimiter=',', quotechar="|"):
+                # Assumes serial_number, quality_level, model_type, model_mfg, monetary_value
+                serial_number = column[1]
+                quality_level = None
+                if column[2] == 'Poor':
+                    quality_level = Ventilator.Quality.Poor.name
+                elif column[2] == 'Fair':
+                    quality_level = Ventilator.Quality.Fair.name
+                else:
+                    quality_level = Ventilator.Quality.Excellent.name
+                model_type = column[3]
+                model_mfg = column[4]
+                monetary_value = column[5]
+                status = Ventilator.Status.Unassigned.name
+                # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
+                if (src_reserve_ct / (vent_count + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
+                    status = Ventilator.State.SourceReserve.name
+                    src_reserve_ct += 1
+                vent_ct += 1
+                vent_model = None
+                if VentilatorModel.objects.filter(model=model_type):
+                    vent_model = VentilatorModel.objects.filter(model=model_type).first()
+                else:
+                    vent_model = VentilatorModel.objects.create(
+                        model=model_type,
+                        manufacturer=model_mfg,
+                        monetary_value=monetary_value,
+                        inserted_by_user=User.objects.get(pk=request.user.id),
+                        updated_by_user=User.objects.get(pk=request.user.id)
+                    )
+                ventilator = Ventilator(
+                    ventilator_model=vent_model,
+                    serial_number=serial_number,
+                    quality=quality_level,
+                    monetary_value=monetary_value,
+                    status=status,
+                    owning_hospital=hospital,
+                    current_hospital=hospital,
+                    inserted_by_user=User.objects.get(pk=request.user.id),
+                    updated_by_user=User.objects.get(pk=request.user.id)
+                )
+                ventilator.save()
+        else:
+            required_fields = ['quality', 'serial_number', 'ventilator_model.model']
+            for field in required_fields:
+                if not request.data.get(field, None):
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+            vent_model = None
+            if VentilatorModel.objects.filter(model=request.data['ventilator_model.model']):
+                vent_model = VentilatorModel.objects.filter(model=request.data['ventilator_model.model']).first()
+            else:
+                if not request.data.get('ventilator_model.manufacturer', None):
+                    return Response(status=status.HTTP_400_BAD_REQUEST)
+                vent_model = VentilatorModel.objects.create(
+                    model=request.data['ventilator_model.model'],
+                    manufacturer=request.data['ventilator_model.manufacturer'],
+                    monetary_value=int(request.data.get('ventilator_model.monetary_value', '')),
+                    inserted_by_user=User.objects.get(pk=request.user.id),
+                    updated_by_user=User.objects.get(pk=request.user.id)
+                )
+            # We'll choose the optimistic outcome and assume all unassigned ventilators will eventually become Available.
+            status = Ventilator.Status.Unassigned.name
+            available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name).count()
+            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unassigned.name).count()
+            src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name).count()
+            vent_ct = available_vent_ct + src_reserve_ct
+            # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
+            if (src_reserve_ct / (vent_ct + 1)) > (SystemParameters.getInstance().strategic_reserve / 100):
+                status = Ventilator.Status.SourceReserve.name
+            ventilator = Ventilator(
+                ventilator_model=vent_model,
+                serial_number=request.data['serial_number'],
+                quality=request.data['quality'],
+                monetary_value=vent_model.monetary_value,
+                status=status,
+                owning_hospital=hospital,
+                current_hospital=hospital,
+                inserted_by_user=User.objects.get(pk=request.user.id),
+                updated_by_user=User.objects.get(pk=request.user.id)
+            )
+            ventilator.save()
+        ventilators = Ventilator.objects.filter(current_hospital=hospital)
+        serializer = VentilatorSerializer(ventilators.first())
+        return Response({'ventilators': ventilators, 'serializer': serializer})
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def switch_entity(request, type, pk, format=None):
@@ -292,61 +401,6 @@ def switch_entity(request, type, pk, format=None):
         UserRole.make_default_role(request.user, newRole)
 
     return HttpResponseRedirect(reverse('home', request=request, format=format))
-
-class VentilatorList(APIView):
-    renderer_classes = [TemplateHTMLRenderer]
-    permission_classes = [IsAuthenticated&HospitalPermission]
-    template_name = 'hospital/dashboard.html'
-
-    def get(self, request, format=None):
-        userRole = UserRole.get_default_role(request.user)
-        ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
-        serializer = VentilatorSerializer(Ventilator.objects.first())
-        return Response({'ventilators': ventilators, 'serializer': serializer, 'role': 'Hospital'})
-
-#     def post(self, request, format=None):
-#         # Either batch upload through CSV  or add single ventilator entry
-#         csv_file = request.FILES.get('file', None)
-#         if csv_file:
-#             data_set = csv_file.read().decode('UTF-8')
-#             io_string = io.StringIO(data_set)
-#             next(io_string)
-#             available_vent_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(Ventilator.State.Available.name).count()
-#             src_reserve_ct = Ventilator.objects.filter(owning_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
-#             vent_ct = available_vent_ct + src_reserve_ct
-#             for column in csv.reader(io_string, delimiter=',', quotechar="|"):
-#                 state = column[1]
-#                 # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
-#                 if state == Ventilator.State.Available.name and (src_reserve_ct / (vent_count + 1) < SystemParameters.getInstance().strategic_reserve / 100):
-#                     state = Ventilator.State.SourceReserve.name
-#                     src_reserve_ct += 1
-#                 vent_ct += 1
-#                 ventilator = Ventilator(
-#                     model_num=column[0], state=state,
-#                     owning_hospital=Hospital.objects.get(user=request.user),
-#                     current_hospital=Hospital.objects.get(user=request.user)
-#                 )
-#                 ventilator.save()
-#         else:
-#             if not request.data.get("model_num", None) or not request.data.get("state", None):
-#                 return Response(status=status.HTTP_400_BAD_REQUEST)
-#             state = request.data["state"]
-#             # If it isn't an available ventilator, it won't mess up supply ratio.
-#             if state == Ventilator.State.Available.name:
-#                 available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
-#                 src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
-#                 vent_ct = available_vent_ct + src_reserve_ct
-#                 # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
-#                 if (src_reserve_ct / (vent_ct + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
-#                     state = Ventilator.State.SourceReserve.name
-#             ventilator = Ventilator(
-#                 model_num=request.data["model_num"], state=state,
-#                 owning_hospital=Hospital.objects.get(user=request.user),
-#                 current_hospital=Hospital.objects.get(user=request.user)
-#             )
-#             ventilator.save()
-
-#         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated&HospitalPermission])
