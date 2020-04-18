@@ -22,7 +22,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, System, SystemParameters, Supplier
+from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, Shipment, System, SystemParameters, Supplier
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 
@@ -116,7 +116,7 @@ class RequestCredentials(APIView):
             if e_type == 'Hospital':
                 hospital = Hospital.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     hospital=hospital,
                     granted_by_user=user,
@@ -128,7 +128,7 @@ class RequestCredentials(APIView):
             elif e_type == 'Hospital Group':
                 hospital_group = HospitalGroup.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     hospital_group=hospital_group,
                     granted_by_user=user,
@@ -140,7 +140,7 @@ class RequestCredentials(APIView):
             elif e_type == 'Supplier':
                 supplier = Supplier.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     supplier=supplier,
                     granted_by_user=user,
@@ -152,7 +152,7 @@ class RequestCredentials(APIView):
             else:
                 system = System.objects.get(pk=int(e_id))
                 UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole,
+                    user_role=UserRole.Role.NoRole.name,
                     assigned_user=user,
                     system=system,
                     granted_by_user=user,
@@ -270,11 +270,11 @@ class VentilatorList(APIView):
                 serial_number = column[1]
                 quality_level = None
                 if column[2] == 'Poor':
-                    quality_level = Ventilator.Quality.Poor
+                    quality_level = Ventilator.Quality.Poor.name
                 elif column[2] == 'Fair':
-                    quality_level = Ventilator.Quality.Fair
+                    quality_level = Ventilator.Quality.Fair.name
                 else:
-                    quality_level = Ventilator.Quality.Excellent
+                    quality_level = Ventilator.Quality.Excellent.name
                 model_type = column[3]
                 model_mfg = column[4]
                 monetary_value = column[5]
