@@ -281,7 +281,7 @@ class VentilatorList(APIView):
     template_name = 'hospital/dashboard.html'
 
     def get(self, request, format=None):
-        last_role = UserRole.get_default_role(User.objects.get(pk=request.user.id))
+        userRole = UserRole.get_default_role(User.objects.get(pk=request.user.id))
         ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
 
         serializer = VentilatorSerializer(Ventilator.objects.first(), context={'request': request})
