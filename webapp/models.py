@@ -581,7 +581,7 @@ class Ventilator(AbstractCommon):
         null=True, 
         blank=True, 
         choices=[(tag.name, tag.value) for tag in Quality],
-        default=Quality.Poor
+        default=Quality.Poor.name
     )
 
 class ShipmentVentilator(AbstractCommon):
