@@ -19,6 +19,17 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
         model = Ventilator
         fields = ['id', 'quality', 'serial_number', 'ventilator_model']
 
+    def update(self, instance, validated_data):
+        instance.quality = validated_data['quality']
+        instance.serial_number = validated_data['serial_number']
+        instance.ventilator_model.manufacturer = validated_data['ventilator_model']['manufacturer']
+        instance.ventilator_model.model = validated_data['ventilator_model']['model']
+        instance.ventilator_model.monetary_value = validated_data['ventilator_model']['monetary_value']
+
+        instance.save()
+        instance.ventilator_model.save()
+
+        return instance
 
 class SystemParametersSerializer(serializers.ModelSerializer):
     class Meta:
