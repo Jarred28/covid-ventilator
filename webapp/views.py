@@ -277,8 +277,6 @@ class ShipmentView(APIView):
             'allocation_id': allocation_id
         })
     def post(self, request, allocation_id, format=None):
-        print(request.data)
-        print(allocation_id)
         last_role = UserRole.get_default_role(request.user)
         shipment = Shipment.objects.create(
             status=Shipment.Status.Open.name,
@@ -288,6 +286,15 @@ class ShipmentView(APIView):
             updated_by_user=request.user,
             opened_by_user=request.user
         )
+        alloc = Allocation.objects.get(pk=allocation_id)
+        alloc.shipped_qty += shipment.shipped_qty
+        offer = alloc.offer
+        request = alloc.request 
+        offer.shipped_qty += shipment.shipped_qty
+        request.shipped_qty += shipment.shipped_qty
+        alloc.save()
+        offer.save()
+        request.save()
         return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(allocation_id))
 # class SuppliedOrders(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
