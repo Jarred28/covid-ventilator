@@ -237,6 +237,58 @@ class RequestCredentials(APIView):
 #         order.save()
 #         return HttpResponseRedirect(reverse('requested-order', request=request))
 
+
+class Offers(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/offers.html'
+
+    def get(self, request, format=None):
+        last_role = UserRole.get_default_role(request.user)
+        hospital = last_role.hospital
+        print(hospital)
+        offers = list(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Closed.name))
+        offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first())
+        return Response({
+            'offers': offers,
+
+        })
+
+class AllocationView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/allocations.html'
+
+    def get(self, request, offer_id, format=None):
+        allocations = Allocation.objects.filter(is_valid=True).filter(offer=Offer.objects.get(pk=offer_id))
+        return Response({
+            'allocations': allocations
+        })
+
+class ShipmentView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/shipments.html'
+
+    def get(self, request, allocation_id, format=None):
+        shipments = Shipment.objects.filter(is_valid=True).filter(allocation=Allocation.objects.get(pk=allocation_id))
+        return Response({
+            'shipments': shipments,
+            'allocation_id': allocation_id
+        })
+    def post(self, request, allocation_id, format=None):
+        print(request.data)
+        print(allocation_id)
+        last_role = UserRole.get_default_role(request.user)
+        shipment = Shipment.objects.create(
+            status=Shipment.Status.Open.name,
+            allocation=Allocation.objects.get(pk=allocation_id),
+            shipped_qty=request.data['num_requested'],
+            inserted_by_user=request.user,
+            updated_by_user=request.user,
+            opened_by_user=request.user
+        )
+        return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(allocation_id))
 # class SuppliedOrders(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
 #     permission_classes = [IsAuthenticated&HospitalPermission]
@@ -572,10 +624,10 @@ class Dashboard(APIView):
         requests = []
         # One outstanding order, multiple outstanding requests.
         for hospital in hospitals:
-            offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Approved.name).first()
+            offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
             if offer:
                 htov.append((hospital, offer.offered_qty-offer.allocated_qty))
-            reqs = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Approved.name)
+            reqs = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Open.name)
             if reqs:
                 num_req = 0
                 for req in reqs:
@@ -585,8 +637,8 @@ class Dashboard(APIView):
         allocations = algorithm.allocate(requests, htov, sys_params)  # type: list[tuple[int, int, int]]
         for allocation in allocations:
             sender, amount, receiver = allocation[0], allocation[1], allocation[2]
-            receiver_reqs = Request.objects.filter(hospital=receiver).filter(is_valid=True).filter(status=Request.Status.Approved.name)
-            offer = Offer.objects.filter(hospital=sender).filter(is_valid=True).filter(status=Offer.Status.Approved.name).first()
+            receiver_reqs = Request.objects.filter(hospital=receiver).filter(is_valid=True).filter(status=Request.Status.Open.name)
+            offer = Offer.objects.filter(hospital=sender).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
             for req in receiver_reqs:
                 if amount == 0:
                     break
