@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 o = Offer(
                     status=Offer.Status.Open.name,
                     hospital=h,
-                    requested_qty=random.randint(5, 15),
+                    offered_qty=random.randint(5, 15),
                     opened_by_user=user,
                     opened_at=datetime.now(),
                     inserted_by_user=User.objects.first(),
