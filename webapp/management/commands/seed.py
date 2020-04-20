@@ -134,7 +134,7 @@ class Command(BaseCommand):
                 o = Offer(
                     status=Offer.Status.Open.name,
                     hospital=h,
-                    requested_qty=random.randint(5, 15),
+                    offered_qty=random.randint(5, 15),
                     opened_by_user=user,
                     opened_at=datetime.now(),
                     inserted_by_user=User.objects.first(),
@@ -200,15 +200,15 @@ class Command(BaseCommand):
                     inserted_by_user=user,
                     updated_by_user=user
                 )
-            if count < 3:
-                UserRole.objects.create(
-                    user_role=UserRole.Role.NoRole.name,
-                    assigned_user=User.objects.all()[count],
-                    hospital_group=hospital_group,
-                    granted_by_user=user,
-                    inserted_by_user=user,
-                    updated_by_user=user
-                )
+            # if count < 3:
+            #     UserRole.objects.create(
+            #         user_role=UserRole.Role.NoRole.name,
+            #         assigned_user=User.objects.all()[count],
+            #         hospital_group=hospital_group,
+            #         granted_by_user=user,
+            #         inserted_by_user=user,
+            #         updated_by_user=user
+            #     )
             if count == 4 or count == 5:
                 UserRole.objects.create(
                     user_role=UserRole.Role.NoRole.name,

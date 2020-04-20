@@ -2,49 +2,42 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Requested Orders - Hospital Administrator</title>
+<title>Offers - Hospital Administrator</title>
 {% endblock %}
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Requested Orders</h1>
+  <h1 class="card-header bg-white">Offers</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped mb-4">
       <thead class="thead-dark">
         <tr>
-          <th>Order Status</th>
-          <th>Ventilators Requested</th>
-          <th>Request Reserve</th>
+          <th>Offer Status</th>
+          <th>Offered Quantity</th>
+          <th>Allocated Quantity</th>
+          <th>Shipped Quantity</th>
+          <th>Allocations</th>
         </tr>
       </thead>
       <tbody>
-        {% for order in active_demand_orders %}
+        {% for offer in offers %}
         <tr>
-          <td><span class="badge badge-primary">Active</span></td>
-          <td>{{ order.num_requested }}</td>
-          <td>Request Not Fulfilled</td>
-        </tr>
-        {% endfor %}
-        {% for order in reserve_demand_orders %}
-        <tr>
-          <td><span class="badge badge-secondary">Inactive</span></td>
-          <td>{{ order.num_requested }}</td>
+        {% if offer.status == 'Open' %}
+          <td><span class="badge badge-primary">Open</span></td>
+        {% elif offer.status == 'Closed' %}
+          <td><span class="badge badge-dark">Closed</span></td>
+        {% endif %}
+          <td>{{ offer.offered_qty }}</td>
+          <td>{{ offer.allocated_qty }}</td>
+          <td>{{ offer.shipped_qty }}</td>
           <td>
-            <form action="{% url 'request-reserve' order.id %}" method="post" novalidate>
-              {% csrf_token %}
-              <button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
+            <form action="{% url 'allocation-list' offer.id %}" method="GET">
+              <button type="submit" class="btn btn-dark btn-sm">Allocations</button>
             </form>
           </td>
         </tr>
         {% endfor %}
-        {% for order in requested_reserve_demand_orders %}
-        <tr>
-          <td><span class="badge badge-secondary">Inactive</span></td>
-          <td>{{ order.num_requested }}</td>
-          <td>Pending Request</td>
-        </tr>
-        {% endfor %}
-        {% if active_demand_orders|length == 0 and reserve_demand_orders|length == 0 and requested_reserve_demand_orders|length == 0 %}
+        {% if offers|length == 0 %}
         <tr>
           <td colspan="3">
             <div class="alert alert-info mb-0 text-center">
