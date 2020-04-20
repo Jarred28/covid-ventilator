@@ -22,27 +22,30 @@
       <tbody>
         {% for allocation in allocations %}
         <tr>
-        {% if offer.status == 'Open' %}
-          <td><span class="badge badge-primary">Open</span></td>
-        {% elif offer.status == 'Closed' %}
-          <td><span class="badge badge-dark">Closed</span></td>
-        {% endif %}
+          <td>
+            {% if allocation.status == 'Open' %}
+            <span class="badge badge-primary">Open</span>
+            {% elif allocation.status == 'Approved' %}
+            <span class="badge badge-success">Approved</span>
+            {% elif allocation.status == 'Cancelled' %}
+            <span class="badge badge-danger">Cancelled</span>
+            {% elif allocation.status == 'Closed' %}
+            <span class="badge badge-secondary">Closed</span>
+            {% endif %}
+          </td>
           <td>{{ allocation.offered_qty }}</td>
           <td>{{ allocation.allocated_qty }}</td>
           <td>{{ allocation.shipped_qty }}</td>
           <td>
-            <form action="{% url 'shipment-list' allocation.id %}" method="GET">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-dark btn-sm" name="Shipments">Shipments</button>
-            </form>
+            <a class="btn btn-dark btn-sm" href="{% url 'shipment-list' allocation.id %}">Shipments</a>
           </td>
         </tr>
         {% endfor %}
         {% if allocations|length == 0  %}
         <tr>
-          <td colspan="3">
+          <td colspan="5">
             <div class="alert alert-info mb-0 text-center">
-              No requested order to display
+              No allocations to display
             </div>
           </td>
         </tr>

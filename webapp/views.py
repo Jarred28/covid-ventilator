@@ -246,12 +246,12 @@ class Offers(APIView):
     def get(self, request, format=None):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
-        print(hospital)
         offers = list(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Closed.name))
-        offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first())
+        openOffers = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name)
+        if len(openOffers) > 0:
+            offers.append(openOffers.first())
         return Response({
-            'offers': offers,
-
+            'offers': offers
         })
 
 class AllocationView(APIView):

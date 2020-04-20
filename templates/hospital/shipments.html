@@ -21,24 +21,36 @@
       <tbody>
         {% for shipment in shipments %}
         <tr>
-        {% if shipment.status == 'Open' %}
-          <td><span class="badge badge-primary">Open</span></td>
-        {% elif shipment.status == 'Closed' %}
-          <td><span class="badge badge-dark">Closed</span></td>
-        {% endif %}
+          <td>
+            {% if shipment.status == 'Open' %}
+            <span class="badge badge-primary">Open</span>
+            {% elif shipment.status == 'Packed' %}
+            <span class="badge badge-dark">Packed</span>
+            {% elif shipment.status == 'Shipped' %}
+            <span class="badge badge-warning">Shipped</span>
+            {% elif shipment.status == 'Arrived' %}
+            <span class="badge badge-info">Arrived</span>
+            {% elif shipment.status == 'Accepted' %}
+            <span class="badge badge-success">Accepted</span>
+            {% elif shipment.status == 'RequestedReserve' %}
+            <span class="badge badge-dark">RequestedReserve</span>
+            {% elif shipment.status == 'Cancelled' %}
+            <span class="badge badge-danger">Cancelled</span>
+            {% elif shipment.status == 'Closed' %}
+            <span class="badge badge-secondary">Closed</span>
+            {% endif %}
+          </td>
           <td>{{ shipment.shipped_qty }}</td>
           <td>
-            <form action="{% url 'allocation-list' shipment.id %}" method="GET">
-              <button type="submit" class="btn btn-dark btn-sm">Ventilators</button>
-            </form>
+            <a href="{% url 'allocation-list' shipment.id %}" class="btn btn-dark btn-sm">Ventilators</a>
           </td>
         </tr>
         {% endfor %}
         {% if shipments|length == 0 %}
         <tr>
-          <td colspan="3">
+          <td colspan="4">
             <div class="alert alert-info mb-0 text-center">
-              No requested order to display
+              No shipments to display
             </div>
           </td>
         </tr>
