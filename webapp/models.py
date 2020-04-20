@@ -522,6 +522,7 @@ class Ventilator(AbstractCommon):
     class UnavailableReason(Enum):
         Unknown = 'Unknown'
         InUse = 'In Use'
+        PendingOffer = 'Pending Offer'
         TestingNeeded = 'Testing Needed'
         InTesting = 'In Testing'
         NotWorking = 'Not Working'

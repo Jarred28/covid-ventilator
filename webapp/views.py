@@ -314,7 +314,7 @@ class VentilatorList(APIView):
                 model_mfg = column[4]
                 monetary_value = column[5]
                 status = Ventilator.Status.Unavailable.name
-                unavailable_status = Ventilator.UnavailableReason.InUse.name
+                unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
                 # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
                 print(src_reserve_ct / (vent_count + 1))
                 if (src_reserve_ct / (vent_count + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
@@ -366,7 +366,7 @@ class VentilatorList(APIView):
                 )
             # We'll choose the optimistic outcome and assume all unassigned ventilators will eventually become Available.
             status = Ventilator.Status.Unavailable.name
-            unavailable_status = Ventilator.UnavailableReason.InUse.name
+            unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
             available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name).count()
             available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.InUse.name).count()
             src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name).count()
@@ -388,6 +388,24 @@ class VentilatorList(APIView):
                 updated_by_user=User.objects.get(pk=request.user.id)
             )
             ventilator.save()
+        pending_offer_vent_ct = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Unknown.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
+        current_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Approved.name)
+        new_offer_qty = pending_offer_vent_ct + current_offer.offered_qty - current_offer.allocated_qty
+        current_open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+        if current_open_offer:
+            current_open_offer.offered_qty = new_offer_qty
+            current_open_offer.save()
+        else:
+            Offer.objects.create(
+                status=Offer.Status.Open.name,
+                hospital=hospital,
+                requested_qty=new_offer_qty,
+                allocated_qty=0,
+                shipped_qty=0,
+                inserted_by_user=request.user,
+                updated_by_user=request.user,
+                opened_by_user=request.user
+            )
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 @api_view(['GET'])
