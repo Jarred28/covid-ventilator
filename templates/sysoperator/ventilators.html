@@ -3,7 +3,6 @@
 
 {% block head %}
 <title>All Ventilators</title>
-<link rel="stylesheet" href="/static/css/operator/supply.css">
 {% endblock %}
 
 {% block content %}
@@ -34,7 +33,7 @@
         {% endfor %}
         {% if ventilators_list|length == 0 %}
           <tr>
-            <td colspan="5">
+            <td colspan="4">
               <div class="alert alert-info mb-0 text-center">
                 There is no data to display
               </div>
