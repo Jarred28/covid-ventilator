@@ -692,24 +692,23 @@ class SystemSourceReserve(APIView):
             src_reserve_lst.append(reserve_obj)
         return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class SystemDestinationReserve(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/destination_reserve.html'
-#
-#     def get(self, request):
-#         dst_reserve_list = []
-#         for order in Order.objects.all():
-#             count = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name).count()
-#             if count == 0:
-#                 continue
-#             dst_reserve_order = type('test', (object,), {})()
-#             dst_reserve_order.dst_hospital = order.requesting_hospital.name
-#             dst_reserve_order.src_hospital = order.sending_hospital.name
-#             dst_reserve_order.parent_hospital = order.requesting_hospital.hospital_group.name
-#             dst_reserve_order.quantity = count
-#             dst_reserve_list.append(dst_reserve_order)
-#         return Response({'dst_reserve_list': dst_reserve_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
+class SystemDestinationReserve(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/destination_reserve.html'
+
+    def get(self, request):
+        dst_reserve = Ventilator.objects.filter(status=Ventilator.Status.DestinationReserve.name)
+        shipment_details = {}
+        for ventilator in dst_reserve:
+            source_hospital = ventilator.last_shipment.allocation.offer.hospital.name
+            destination_hospital = ventilator.last_shipment.allocation.request.hospital.name
+            if shipment_details.get((source_hospital, destination_hospital), ""):
+                shipment_details[(source_hospital, destination_hospital)] += 1
+            else:
+                shipment_details[(source_hospital, destination_hospital)] = 1
+
+        return Response({'dst_reserve_list': shipment_details, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 # class HospitalCEO(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
