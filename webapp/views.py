@@ -22,7 +22,7 @@ from rest_framework import status
 
 from . import notifications
 from webapp.algorithm import algorithm
-from webapp.models import Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, Shipment, System, SystemParameters, Supplier
+from webapp.models import Allocation, Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, Shipment, System, SystemParameters, Supplier
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorSerializer
 
@@ -237,6 +237,65 @@ class RequestCredentials(APIView):
 #         order.save()
 #         return HttpResponseRedirect(reverse('requested-order', request=request))
 
+
+class Offers(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/offers.html'
+
+    def get(self, request, format=None):
+        last_role = UserRole.get_default_role(request.user)
+        hospital = last_role.hospital
+        offers = list(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Closed.name))
+        openOffers = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name)
+        if len(openOffers) > 0:
+            offers.append(openOffers.first())
+        return Response({
+            'offers': offers
+        })
+
+class AllocationView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/allocations.html'
+
+    def get(self, request, offer_id, format=None):
+        allocations = Allocation.objects.filter(is_valid=True).filter(offer=Offer.objects.get(pk=offer_id))
+        return Response({
+            'allocations': allocations
+        })
+
+class ShipmentView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/shipments.html'
+
+    def get(self, request, allocation_id, format=None):
+        shipments = Shipment.objects.filter(is_valid=True).filter(allocation=Allocation.objects.get(pk=allocation_id))
+        return Response({
+            'shipments': shipments,
+            'allocation_id': allocation_id
+        })
+    def post(self, request, allocation_id, format=None):
+        last_role = UserRole.get_default_role(request.user)
+        shipment = Shipment.objects.create(
+            status=Shipment.Status.Open.name,
+            allocation=Allocation.objects.get(pk=allocation_id),
+            shipped_qty=request.data['num_requested'],
+            inserted_by_user=request.user,
+            updated_by_user=request.user,
+            opened_by_user=request.user
+        )
+        alloc = Allocation.objects.get(pk=allocation_id)
+        alloc.shipped_qty += shipment.shipped_qty
+        offer = alloc.offer
+        request = alloc.request 
+        offer.shipped_qty += shipment.shipped_qty
+        request.shipped_qty += shipment.shipped_qty
+        alloc.save()
+        offer.save()
+        request.save()
+        return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(allocation_id))
 # class SuppliedOrders(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
 #     permission_classes = [IsAuthenticated&HospitalPermission]
@@ -316,7 +375,6 @@ class VentilatorList(APIView):
                 status = Ventilator.Status.Unavailable.name
                 unavailable_status = Ventilator.UnavailableReason.InUse.name
                 # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
-                print(src_reserve_ct / (vent_count + 1))
                 if (src_reserve_ct / (vent_count + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
                     status = Ventilator.State.SourceReserve.name
                     src_reserve_ct += 1
@@ -565,42 +623,70 @@ class Dashboard(APIView):
             'transits': transits
         })
 
-#     @transaction.atomic
-#     def post(self, request, format=None):
-#         active_orders = Order.objects.filter(active=True)
-#         hospitals = Hospital.objects.all()
-#         hospitals_of_orders = [Hospital.objects.filter(id = order.requesting_hospital.id)[0] for order in active_orders]
-#         orders = list(zip(active_orders, hospitals_of_orders))
+    @transaction.atomic
+    def post(self, request, format=None):
 
-#         num_ventilators = [Ventilator.objects.filter(current_hospital=hospital.id).filter(state=Ventilator.State.Available.name).count() for hospital in hospitals]
-#         htov = list(zip(hospitals, num_ventilators))
+        hospitals = Hospital.objects.all()
+        htov = []
+        requests = []
+        # One outstanding order, multiple outstanding requests.
+        for hospital in hospitals:
+            offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+            if offer:
+                htov.append((hospital, offer.offered_qty-offer.allocated_qty))
+            reqs = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Open.name)
+            if reqs:
+                num_req = 0
+                for req in reqs:
+                    num_req += (req.requested_qty - req.allocated_qty)
+                requests.append((num_req, hospital))
+        sys_params = SystemParameters.getInstance()
+        allocations = algorithm.allocate(requests, htov, sys_params)  # type: list[tuple[int, int, int]]
+        for allocation in allocations:
+            sender, amount, receiver = allocation[0], allocation[1], allocation[2]
+            receiver_reqs = Request.objects.filter(hospital=receiver).filter(is_valid=True).filter(status=Request.Status.Open.name)
+            offer = Offer.objects.filter(hospital=sender).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+            for req in receiver_reqs:
+                if amount == 0:
+                    break
+                if req.requested_qty == req.allocated_qty:
+                    continue
+                num_assigned = min(req.requested_qty - req.allocated_qty, amount)
+                req.allocated_qty += num_assigned
+                offer.allocated_qty += num_assigned
+                offer.save()
+                req.save()
+                Allocation.objects.create(
+                    request=req,
+                    offer=offer,
+                    status=Allocation.Status.Approved.name,
+                    allocated_qty=num_assigned,
+                    opened_by_user=request.user,
+                    inserted_by_user=request.user,
+                    updated_by_user=request.user,
+                    approved_by_user=request.user
+                )
+                amount -= num_assigned
+            # order = Order.objects.filter(active=True).filter(requesting_hospital=receiver).last()
+            # batch = VentilatorBatch(order=order)
+            # batch.save()
+            # for vent in Ventilator.objects.filter(current_hospital=sender).filter(state=Ventilator.State.Available.name)[:amount]:
+            #     vent.state = Ventilator.State.Requested.name
+            #     vent.ventilator_batch = VentilatorBatch.objects.get(pk=batch.id)
+            #     vent.order = order
+            #     vent.save()
+            # # We were only able to partially fulfil the request, so we add a new order
+            # # with the remaining amount
+            # if order.num_requested > amount:
+            #     new_order = Order(num_requested=order.num_requested - amount, requesting_hospital=Hospital.objects.get(id=receiver), auto_generated=True)
+            #     new_order.save()
+            # order.active = False
+            # order.sending_hospital = Hospital.objects.get(pk=sender)
+            # order.date_allocated = datetime.now()
+            # order.save()
+        # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
 
-#         sys_params = SystemParameters.getInstance()
-
-#         allocations = algorithm.allocate(orders, htov, sys_params)  # type: list[tuple[int, int, int]]
-
-#         for allocation in allocations:
-#             sender, amount, receiver = allocation[0], allocation[1], allocation[2]
-#             order = Order.objects.filter(active=True).filter(requesting_hospital=receiver).last()
-#             batch = VentilatorBatch(order=order)
-#             batch.save()
-#             for vent in Ventilator.objects.filter(current_hospital=sender).filter(state=Ventilator.State.Available.name)[:amount]:
-#                 vent.state = Ventilator.State.Requested.name
-#                 vent.ventilator_batch = VentilatorBatch.objects.get(pk=batch.id)
-#                 vent.order = order
-#                 vent.save()
-#             # We were only able to partially fulfil the request, so we add a new order
-#             # with the remaining amount
-#             if order.num_requested > amount:
-#                 new_order = Order(num_requested=order.num_requested - amount, requesting_hospital=Hospital.objects.get(id=receiver), auto_generated=True)
-#                 new_order.save()
-#             order.active = False
-#             order.sending_hospital = Hospital.objects.get(pk=sender)
-#             order.date_allocated = datetime.now()
-#             order.save()
-#         # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
-
-#         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
+        return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&SystemPermission])

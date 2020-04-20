@@ -2,10 +2,10 @@ import numpy as np
 
 # calculates a weighted average of contribution, reputation, and load for
 # each hospital to calculate the "importance" of each hospital and fulfulls
-# orders in order of importance (highest to lowest)
-def allocate(orders, htov, system_params):
+# requests in order of importance (highest to lowest)
+def allocate(requests, htov, system_params):
     """
-    orders: list[ tuple(Order, Hospital) ] (Hospital that submitted the order)
+    requests: list[ tuple(num_requested, Hospital) ] (Hospital that submitted the requests)
     htov: list[ tuple(Hospital, num_available) ]
     system_params: dict{
         contribution_weight, strategic_reserve, reputation_weight,
@@ -38,14 +38,14 @@ def allocate(orders, htov, system_params):
         return np.array([(hospital.reputation_score or 1) for hospital in hospitals],
             dtype=np.float)
 
-    hospitals = [t[1] for t in orders]
+    hospitals = [t[1] for t in requests]
     contribution_scores = relative_contributions(hospitals)
     load_scores = relative_loads(hospitals)
     rep_scores = reputations(hospitals)
     stress_factors = w_c*contribution_scores + w_r*rep_scores + w_p*load_scores
 
     # from highest importance to lowest
-    sorted_by_importance = list(zip(orders, stress_factors))
+    sorted_by_importance = list(zip(requests, stress_factors))
     sorted_by_importance = sorted(sorted_by_importance, key=lambda x: x[1], reverse=True)
 
 
@@ -57,7 +57,7 @@ def allocate(orders, htov, system_params):
 
     senders = [Sender(h[0], h[1]) for h in htov]
     allocs = []
-    for (order, receiver), stress_factors in sorted_by_importance:
+    for (num_req, receiver), stress_factors in sorted_by_importance:
 
 
         for sender in senders:
@@ -69,16 +69,16 @@ def allocate(orders, htov, system_params):
                 continue
             #eligible sender
             #more supply than demand
-            if sender.num_available >= order.num_requested:
-                sender.num_available -= order.num_requested
+            if sender.num_available >= num_req:
+                sender.num_available -= num_req
                 allocs.append((
-                    sender.hospital.id, order.num_requested, receiver.id
+                    sender.hospital.id, num_req, receiver.id
                 ))
-                order.num_requested = 0
+                num_req = 0
                 break
 
             else:
-                order.num_requested -= sender.num_available
+                num_req -= sender.num_available
                 allocs.append((
                     sender.hospital.id, sender.num_available, receiver.id
                 ))

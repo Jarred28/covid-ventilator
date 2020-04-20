@@ -2,53 +2,52 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Requested Orders - Hospital Administrator</title>
+<title>Offers - Hospital Administrator</title>
 {% endblock %}
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Requested Orders</h1>
+  <h1 class="card-header bg-white">Offers</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped mb-4">
       <thead class="thead-dark">
         <tr>
-          <th>Order Status</th>
-          <th>Ventilators Requested</th>
-          <th>Request Reserve</th>
+          <th>Offer Status</th>
+          <th>Offered Quantity</th>
+          <th>Allocated Quantity</th>
+          <th>Shipped Quantity</th>
+          <th>Allocations</th>
         </tr>
       </thead>
       <tbody>
-        {% for order in active_demand_orders %}
+        {% for offer in offers %}
         <tr>
-          <td><span class="badge badge-primary">Active</span></td>
-          <td>{{ order.num_requested }}</td>
-          <td>Request Not Fulfilled</td>
-        </tr>
-        {% endfor %}
-        {% for order in reserve_demand_orders %}
-        <tr>
-          <td><span class="badge badge-secondary">Inactive</span></td>
-          <td>{{ order.num_requested }}</td>
           <td>
-            <form action="{% url 'request-reserve' order.id %}" method="post" novalidate>
-              {% csrf_token %}
-              <button type="submit" class="btn btn-dark btn-sm" name="Request">Submit</button>
-            </form>
+            {% if offer.status == 'Open' %}
+            <span class="badge badge-primary">Open</span>
+            {% elif offer.status == 'Approved' %}
+            <span class="badge badge-success">Approved</span>
+            {% elif offer.status == 'Replaced' %}
+            <span class="badge badge-info">Replaced</span>
+            {% elif offer.status == 'Cancelled' %}
+            <span class="badge badge-danger">Cancelled</span>
+            {% elif offer.status == 'Closed' %}
+            <span class="badge badge-secondary">Closed</span>
+            {% endif %}
+          </td>
+          <td>{{ offer.offered_qty }}</td>
+          <td>{{ offer.allocated_qty }}</td>
+          <td>{{ offer.shipped_qty }}</td>
+          <td>
+            <a class="btn btn-dark btn-sm" href="{% url 'allocation-list' offer.id %}">Allocations</a>
           </td>
         </tr>
         {% endfor %}
-        {% for order in requested_reserve_demand_orders %}
+        {% if offers|length == 0 %}
         <tr>
-          <td><span class="badge badge-secondary">Inactive</span></td>
-          <td>{{ order.num_requested }}</td>
-          <td>Pending Request</td>
-        </tr>
-        {% endfor %}
-        {% if active_demand_orders|length == 0 and reserve_demand_orders|length == 0 and requested_reserve_demand_orders|length == 0 %}
-        <tr>
-          <td colspan="3">
+          <td colspan="5">
             <div class="alert alert-info mb-0 text-center">
-              No requested order to display
+              No offers to display
             </div>
           </td>
         </tr>
