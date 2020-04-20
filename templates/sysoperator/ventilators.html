@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load rest_framework %}
+
+{% block head %}
+<title>All Ventilators</title>
+<link rel="stylesheet" href="/static/css/operator/supply.css">
+{% endblock %}
+
+{% block content %}
+<div class="card fill fixed">
+  <h1 class="card-header bg-white">All Ventilators</h1>
+  <div class="card-body">
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th scope="col">Hospital</th>
+          <th scope="col">Hospital Group</th>
+          <th scope="col">Model (#)</th>
+          <th scope="col">Total Quantity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for hospital in ventilators_list %}
+        <tr>
+          <td>{{ hospital.name }}</td>
+          <td>{{ hospital.owning_hospital_group }}</td>
+          <td>
+            {% for model, quantity in hospital.ventilator_models.items %}
+            <span class="model-number badge badge-pill badge-dark">{{ model }} ({{ quantity }})</span>
+            {% endfor %}
+          </td>
+          <td>{{ hospital.ventilator_supply }}</td>
+        </tr>
+        {% endfor %}
+        {% if ventilators_list|length == 0 %}
+          <tr>
+            <td colspan="5">
+              <div class="alert alert-info mb-0 text-center">
+                There is no data to display
+              </div>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

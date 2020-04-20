@@ -19,6 +19,7 @@ urlpatterns = [
     # path('deny_reserve/<int:order_id>/', views.deny_reserve, name='deny-reserve'),
     # path('deploy_reserve/<int:order_id>/', views.deploy_reserve, name='deploy-reserve'),
     path('system/dashboard/', views.Dashboard.as_view(), name='sys-dashboard'),
+    path('system/ventilators', views.SystemVentilators.as_view(), name='sys-ventilators'),
     # path('system/settings/', views.SystemSettings.as_view(), name='sys-settings'),
     # path('system/demand/', views.SystemDemand.as_view(), name='sys-demand'),
     # path('system/supply/', views.SystemSupply.as_view(), name='sys-supply'),

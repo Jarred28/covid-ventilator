@@ -631,6 +631,30 @@ def reset_db(request, format=None):
 #         orders = Order.objects.filter(active=True)
 #         return Response({'orders': orders, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
+class SystemVentilators(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/ventilators.html'
+
+    def get(self, request, format=None):
+        ventilators_list = []
+        for hospital in Hospital.objects.all():
+            hospital_details = {}
+            hospital_details['name'] = hospital.name
+            hospital_details['owning_hospital_group'] = hospital.hospital_group.name
+            ventilators = Ventilator.objects.filter(current_hospital=hospital)
+            hospital_details['ventilator_supply'] = ventilators.count()
+            ventilator_models = {}
+            for ventilator in ventilators:
+                model = ventilator.ventilator_model.model
+                if ventilator_models.get(model, ""):
+                    ventilator_models[model] += 1
+                else:
+                    ventilator_models[model] = 1
+            hospital_details['ventilator_models'] = ventilator_models
+            ventilators_list.append(hospital_details)
+        return Response({'ventilators_list': ventilators_list})
+
 # class SystemSupply(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
 #     permission_classes = [IsAuthenticated&SystemPermission]
