@@ -653,7 +653,7 @@ class SystemVentilators(APIView):
                     ventilator_models[model] = 1
             hospital_details['ventilator_models'] = ventilator_models
             ventilators_list.append(hospital_details)
-        return Response({'ventilators_list': ventilators_list})
+        return Response({'ventilators_list': ventilators_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 # class SystemSupply(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
@@ -673,30 +673,30 @@ class SystemVentilators(APIView):
 #             supply_list.append(hospital_supply_list)
 #         return Response({'supply_list': supply_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class SystemSourceReserve(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/strategic_reserve.html'
+class SystemSourceReserve(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/strategic_reserve.html'
 
-#     def get(self, request):
-#         src_reserve_lst = []
-#         for hospital in Hospital.objects.all():
-#             reserve_obj = type('test', (object,), {})()
-#             src_reserve = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.State.SourceReserve.name)
-#             if src_reserve.count() == 0:
-#                 continue
-#             reserve_obj.src_hospital = hospital.name
-#             reserve_obj.parent = hospital.hospital_group.name
-#             reserve_obj.quantity = src_reserve.count()
-#             reserve_obj.model_nums = {ventilator.model_num for ventilator in src_reserve}
-#             src_reserve_lst.append(reserve_obj)
-#         return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def get(self, request):
+        src_reserve_lst = []
+        for hospital in Hospital.objects.all():
+            reserve_obj = type('test', (object,), {})()
+            src_reserve = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name)
+            if src_reserve.count() == 0:
+                continue
+            reserve_obj.src_hospital = hospital.name
+            reserve_obj.parent = hospital.hospital_group.name
+            reserve_obj.quantity = src_reserve.count()
+            reserve_obj.model_nums = {ventilator.ventilator_model.model for ventilator in src_reserve}
+            src_reserve_lst.append(reserve_obj)
+        return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 # class SystemDestinationReserve(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
 #     permission_classes = [IsAuthenticated&SystemPermission]
 #     template_name = 'sysoperator/destination_reserve.html'
-
+#
 #     def get(self, request):
 #         dst_reserve_list = []
 #         for order in Order.objects.all():
