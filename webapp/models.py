@@ -313,7 +313,7 @@ class Offer(AbstractCommon):
         blank=True,
     )
     requests = models.ManyToManyField(Request, through='Allocation')
-    requested_qty = models.IntegerField()
+    offered_qty = models.IntegerField()
     allocated_qty = models.IntegerField(default=0)
     shipped_qty = models.IntegerField(default=0)
     opened_by_user = models.ForeignKey(
