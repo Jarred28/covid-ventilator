@@ -12,26 +12,22 @@
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
         <tr>
+          <th scope="col">Source Hospital</th>
           <th scope="col">Destination Hospital</th>
           <th scope="col">Quantity</th>
-          <th scope="col">Parent Hospital</th>
-          <th scope="col">Prioritized Source Hospital</th>
-          <th scope="col">Date Held</th>
         </tr>
       </thead>
       <tbody>
-      {% for dst_reserve_order in dst_reserve_list %}
+      {% for hospitals, quantity in dst_reserve_list.items %}
       <tr>
-        <td>{{ dst_reserve_order.dst_hospital }}</td>
-        <td>{{ dst_reserve_order.quantity }}</td>
-        <td>{{ dst_reserve_order.parent_hospital }}</td>
-        <td>{{ dst_reserve_order.src_hospital }}</td>
-        <td>Wednesday, June 25th, 2020, 8:00PM</td>
+        <td>{{ hospitals.0 }}</td>
+        <td>{{ hospitals.1 }}</td>
+        <td>{{ quantity }}</td>
       </tr>
       {% endfor %}
       {% if dst_reserve_list|length == 0 %}
         <tr>
-          <td colspan="5">
+          <td colspan="3">
             <div class="alert alert-info mb-0 text-center">
               There is no data to display
             </div>

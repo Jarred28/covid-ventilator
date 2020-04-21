@@ -246,7 +246,6 @@ class Offers(APIView):
     def get(self, request, format=None):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
-        print(hospital)
         offers = list(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Closed.name))
         open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
         approved_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Approved.name).first()
@@ -256,7 +255,6 @@ class Offers(APIView):
             offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first())
         return Response({
             'offers': offers,
-
         })
 
 class AllocationView(APIView):
@@ -778,6 +776,30 @@ def reset_db(request, format=None):
 #         orders = Order.objects.filter(active=True)
 #         return Response({'orders': orders, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
+class SystemVentilators(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/ventilators.html'
+
+    def get(self, request, format=None):
+        ventilators_list = []
+        for hospital in Hospital.objects.all():
+            hospital_details = {}
+            hospital_details['name'] = hospital.name
+            hospital_details['owning_hospital_group'] = hospital.hospital_group.name
+            ventilators = Ventilator.objects.filter(current_hospital=hospital)
+            hospital_details['ventilator_supply'] = ventilators.count()
+            ventilator_models = {}
+            for ventilator in ventilators:
+                model = ventilator.ventilator_model.model
+                if ventilator_models.get(model, ""):
+                    ventilator_models[model] += 1
+                else:
+                    ventilator_models[model] = 1
+            hospital_details['ventilator_models'] = ventilator_models
+            ventilators_list.append(hospital_details)
+        return Response({'ventilators_list': ventilators_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
 # class SystemSupply(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
 #     permission_classes = [IsAuthenticated&SystemPermission]
@@ -796,43 +818,42 @@ def reset_db(request, format=None):
 #             supply_list.append(hospital_supply_list)
 #         return Response({'supply_list': supply_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class SystemSourceReserve(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/strategic_reserve.html'
+class SystemSourceReserve(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/strategic_reserve.html'
 
-#     def get(self, request):
-#         src_reserve_lst = []
-#         for hospital in Hospital.objects.all():
-#             reserve_obj = type('test', (object,), {})()
-#             src_reserve = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.State.SourceReserve.name)
-#             if src_reserve.count() == 0:
-#                 continue
-#             reserve_obj.src_hospital = hospital.name
-#             reserve_obj.parent = hospital.hospital_group.name
-#             reserve_obj.quantity = src_reserve.count()
-#             reserve_obj.model_nums = {ventilator.model_num for ventilator in src_reserve}
-#             src_reserve_lst.append(reserve_obj)
-#         return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def get(self, request):
+        src_reserve_lst = []
+        for hospital in Hospital.objects.all():
+            reserve_obj = type('test', (object,), {})()
+            src_reserve = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name)
+            if src_reserve.count() == 0:
+                continue
+            reserve_obj.src_hospital = hospital.name
+            reserve_obj.parent = hospital.hospital_group.name
+            reserve_obj.quantity = src_reserve.count()
+            reserve_obj.model_nums = {ventilator.ventilator_model.model for ventilator in src_reserve}
+            src_reserve_lst.append(reserve_obj)
+        return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class SystemDestinationReserve(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/destination_reserve.html'
+class SystemDestinationReserve(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/destination_reserve.html'
 
-#     def get(self, request):
-#         dst_reserve_list = []
-#         for order in Order.objects.all():
-#             count = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name).count()
-#             if count == 0:
-#                 continue
-#             dst_reserve_order = type('test', (object,), {})()
-#             dst_reserve_order.dst_hospital = order.requesting_hospital.name
-#             dst_reserve_order.src_hospital = order.sending_hospital.name
-#             dst_reserve_order.parent_hospital = order.requesting_hospital.hospital_group.name
-#             dst_reserve_order.quantity = count
-#             dst_reserve_list.append(dst_reserve_order)
-#         return Response({'dst_reserve_list': dst_reserve_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def get(self, request):
+        dst_reserve = Ventilator.objects.filter(status=Ventilator.Status.DestinationReserve.name)
+        shipment_details = {}
+        for ventilator in dst_reserve:
+            source_hospital = ventilator.last_shipment.allocation.offer.hospital.name
+            destination_hospital = ventilator.last_shipment.allocation.request.hospital.name
+            if shipment_details.get((source_hospital, destination_hospital), ""):
+                shipment_details[(source_hospital, destination_hospital)] += 1
+            else:
+                shipment_details[(source_hospital, destination_hospital)] = 1
+
+        return Response({'dst_reserve_list': shipment_details, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 # class HospitalCEO(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
