@@ -22,6 +22,7 @@
       <tbody>
         {% for offer in offers %}
         <tr>
+          <td>
           {% if offer.status == 'Open' %}
             <span class="badge badge-primary">Open</span>
           {% elif offer.status == 'Approved' %}
@@ -33,6 +34,7 @@
           {% elif offer.status == 'Closed' %}
             <span class="badge badge-secondary">Closed</span>
           {% endif %}
+          </td>
           <td>{{ offer.offered_qty }}</td>
           <td>{{ offer.allocated_qty }}</td>
           <td>{{ offer.shipped_qty }}</td>

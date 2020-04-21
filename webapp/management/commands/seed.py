@@ -153,7 +153,7 @@ class Command(BaseCommand):
                 )
                 r1.save()
                 r2 = Request(
-                    status=Request.Status.Open.name,
+                    status=Request.Status.Approved.name,
                     hospital=h,
                     requested_qty=random.randint(5, 10),
                     opened_by_user=user,
