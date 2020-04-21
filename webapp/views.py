@@ -257,13 +257,62 @@ class Offers(APIView):
             'offers': offers,
         })
 
-class AllocationView(APIView):
+class Requests(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/requests.html'
+
+    def get(self, request, format=None):
+        last_role = UserRole.get_default_role(request.user)
+        hospital = last_role.hospital
+        requests = list(Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Closed.name))
+        open_requests = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Open.name)
+        approved_requests = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Approved.name)
+        if approved_requests:
+            requests += [request for request in approved_requests.all()]
+        if open_requests:
+            requests += [request for request in open_requests.all()]
+        print(requests)
+        return Response({
+            'requests': requests,
+        })
+    def post(self, request, format=None):
+
+        last_role = UserRole.get_default_role(request.user)
+        hospital = last_role.hospital
+        requested_qty = int(request.data['num_requested'])
+        print(requested_qty)
+        Request.objects.create(
+            status=Request.Status.Approved.name,
+            hospital=hospital,
+            requested_qty=requested_qty,
+            allocated_qty=0,
+            shipped_qty=0,
+            inserted_by_user=request.user,
+            updated_by_user=request.user,
+            opened_by_user=request.user,
+            approved_by_user=request.user
+        )
+        return HttpResponseRedirect(reverse('requests', request=request))
+
+class OfferAllocationView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
     template_name = 'hospital/allocations.html'
 
     def get(self, request, offer_id, format=None):
         allocations = Allocation.objects.filter(is_valid=True).filter(offer=Offer.objects.get(pk=offer_id))
+        return Response({
+            'allocations': allocations
+        })
+
+class RequestAllocationView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/allocations.html'
+
+    def get(self, request, request_id, format=None):
+        allocations = Allocation.objects.filter(is_valid=True).filter(request=Request.objects.get(pk=request_id))
         return Response({
             'allocations': allocations
         })
