@@ -42,7 +42,7 @@
           </td>
           <td>{{ shipment.shipped_qty }}</td>
           <td>
-            <a href="{% url 'allocation-list' shipment.id %}" class="btn btn-dark btn-sm">Ventilators</a>
+            <a href="{% url 'offer-allocation-list' shipment.id %}" class="btn btn-dark btn-sm">Ventilators</a>
           </td>
         </tr>
         {% endfor %}
@@ -74,8 +74,7 @@
       </div>
       <div class="modal-body">
         {% csrf_token %}
-<!--         <input type="hidden" name="allocation_id" value="{{ allocation_id }}" />
- -->        <label for="num"> How large is your shipment </label>
+        <label for="num"> How large is your shipment </label>
         <input type="text" id="num_requested" class="form-control" name="num_requested">
       </div>
       <div class="modal-footer">
