@@ -22,14 +22,14 @@
       <tbody>
         {% for allocation in allocations %}
         <tr>
-        {% if offer.status == 'Open' %}
-          <td><span class="badge badge-primary">Open</span></td>
-        {% elif offer.status == 'Closed' %}
+        {% if allocation.status == 'Approved' %}
+          <td><span class="badge badge-primary">Approved</span></td>
+        {% elif allocation.status == 'Closed' %}
           <td><span class="badge badge-dark">Closed</span></td>
         {% endif %}
-          <td>{{ allocation.offered_qty }}</td>
           <td>{{ allocation.allocated_qty }}</td>
           <td>{{ allocation.shipped_qty }}</td>
+          <td>{{ allocation.request.hospital.name }}</td>
           <td>
             <form action="{% url 'shipment-list' allocation.id %}" method="GET">
               {% csrf_token %}

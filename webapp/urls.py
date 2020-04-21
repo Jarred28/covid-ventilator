@@ -15,6 +15,7 @@ urlpatterns = [
     path('ventilators/<int:pk>/', views.VentilatorDetail.as_view(), name='ventilator-detail'),
     path('accounts/request_credentials/', views.RequestCredentials.as_view(), name='request-credentials'),
     path('offers/', views.Offers.as_view(), name='offers'),
+    path('offer/approve/', views.approve_offer, name='offer-approval'),
     path('allocations/<int:offer_id>/', views.AllocationView.as_view(), name='allocation-list'),
     path('shipments/<int:allocation_id>/', views.ShipmentView.as_view(), name='shipment-list'),
     # path('call_back_reserve/<int:order_id>/', views.call_back_reserve, name='call-back-reserve'),

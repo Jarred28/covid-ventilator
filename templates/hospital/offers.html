@@ -16,26 +16,38 @@
           <th>Offered Quantity</th>
           <th>Allocated Quantity</th>
           <th>Shipped Quantity</th>
-          <th>Allocations</th>
+          <th>Allocations or Approve Offer</th>
         </tr>
       </thead>
       <tbody>
         {% for offer in offers %}
         <tr>
         {% if offer.status == 'Open' %}
-          <td><span class="badge badge-primary">Open</span></td>
+          <td><span class="badge badge-info">Open</span></td>
         {% elif offer.status == 'Closed' %}
           <td><span class="badge badge-dark">Closed</span></td>
+        {% elif offer.status == 'Approved' %}
+          <td><span class="badge badge-primary">Approved</span></td>
         {% endif %}
           <td>{{ offer.offered_qty }}</td>
           <td>{{ offer.allocated_qty }}</td>
           <td>{{ offer.shipped_qty }}</td>
+        {% if offer.status == 'Open' %}
+          <td>
+            <form action="{% url 'offer-approval' %}" method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="offer_id" value="{{ offer.id }}">
+              <button type="submit" class="btn btn-dark btn-sm">Approve</button>
+            </form>
+          </td>
+        {% elif offer.status == 'Approved' %}
           <td>
             <form action="{% url 'allocation-list' offer.id %}" method="GET">
               <button type="submit" class="btn btn-dark btn-sm">Allocations</button>
             </form>
           </td>
         </tr>
+        {% endif %}
         {% endfor %}
         {% if offers|length == 0 %}
         <tr>
