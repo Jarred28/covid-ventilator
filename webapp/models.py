@@ -26,7 +26,7 @@ from enum import Enum
 from django.db import models, transaction
 from django.contrib.auth.models import AbstractUser
 
-from django.db.models.signals import pre_init
+from django.db.models.signals import pre_init, pre_save
 
 class User(AbstractUser):
     inserted_at = models.DateTimeField(auto_now_add=True)
@@ -431,7 +431,14 @@ class Shipment(AbstractCommon):
 #       any unshipped allocation is also cancelled
         Closed = 'Closed'
 #       has been reviewed and closed by requesting hospital
-#
+#       
+        # If a shipment is open, it can become packed or cancelled
+        # If it's packed it can become shipped or cancelled. If it's shipped we need the tracking number and the service used.
+        # It it's shipped, it can only arrive.
+        # If it has arrived, for now it can only go to Accepted.
+        # From Arrived, it can go to Requested Reserve
+            # From Requested Reserve, it can go back to Accepted if the request is denied, it can go to Closed if reserve called back or if reserve deployed.
+
 #       Open -> Closed (lack of actions)
 #       Open -> Cancelled -> Closed
 #       Open -> Packed -> Cancelled -> Closed
@@ -500,7 +507,8 @@ class Shipment(AbstractCommon):
         related_name='shipment_closed_by_user',
     )
     closed_at = models.DateTimeField(null=True, blank=True)
-
+    tracking_number = models.CharField(max_length=100, null=True, blank=True)
+    shipping_service = models.CharField(max_length=100, null=True, blank=True)
 # Had to move this down to ensure that Shipment was declared before Ventilator since Ventilator references it. I can also remove 
 # the reference and replace it with a query if efficiency isn't a huge deal here?
 
@@ -522,6 +530,7 @@ class Ventilator(AbstractCommon):
     class UnavailableReason(Enum):
         Unknown = 'Unknown'
         InUse = 'In Use'
+        PendingOffer = 'Pending Offer'
         TestingNeeded = 'Testing Needed'
         InTesting = 'In Testing'
         NotWorking = 'Not Working'

@@ -153,7 +153,7 @@ class Command(BaseCommand):
                 )
                 r1.save()
                 r2 = Request(
-                    status=Request.Status.Open.name,
+                    status=Request.Status.Approved.name,
                     hospital=h,
                     requested_qty=random.randint(5, 10),
                     opened_by_user=user,
@@ -172,15 +172,17 @@ class Command(BaseCommand):
         user.set_password(default_pw)
         user.save()
         for vent_count in range(total_vent_count):
-            status = Ventilator.Status.Available.name
+            status = Ventilator.Status.Unavailable.name
+            unknown_status = Ventilator.UnavailableReason.PendingOffer.name
             if vent_count % 10 == 0:
                 status = Ventilator.Status.SourceReserve.name
+                unknown_status = None
             hosp = Hospital.objects.all()[vent_count % 4]
             vent_model = VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums)))
             vent = Ventilator(
                 ventilator_model=VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums))),
                 status=status,
-                unavailable_status=None,
+                unavailable_status=unknown_status,
                 serial_number=str(vent_count),
                 owning_hospital=hosp,
                 current_hospital=hosp,

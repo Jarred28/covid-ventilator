@@ -2,58 +2,46 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Offers - Hospital Administrator</title>
+<title>Requests - Hospital Administrator</title>
 {% endblock %}
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Offers</h1>
+  <h1 class="card-header bg-white">Requests</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped mb-4">
       <thead class="thead-dark">
         <tr>
-          <th>Offer Status</th>
-          <th>Offered Quantity</th>
+          <th>Request Status</th>
+          <th>Request Quantity</th>
           <th>Allocated Quantity</th>
           <th>Shipped Quantity</th>
-          <th>Allocations or Approve Offer</th>
+          <th>Allocations</th>
         </tr>
       </thead>
       <tbody>
-        {% for offer in offers %}
+        {% for request in requests %}
         <tr>
           <td>
-          {% if offer.status == 'Open' %}
+          {% if request.status == 'Open' %}
             <span class="badge badge-primary">Open</span>
-          {% elif offer.status == 'Approved' %}
+          {% elif request.status == 'Approved' %}
             <span class="badge badge-success">Approved</span>
-          {% elif offer.status == 'Replaced' %}
+          {% elif request.status == 'Cancelled' %}
             <span class="badge badge-info">Replaced</span>
-          {% elif offer.status == 'Cancelled' %}
+          {% elif request.status == 'Closed' %}
             <span class="badge badge-danger">Cancelled</span>
-          {% elif offer.status == 'Closed' %}
-            <span class="badge badge-secondary">Closed</span>
           {% endif %}
           </td>
-          <td>{{ offer.offered_qty }}</td>
-          <td>{{ offer.allocated_qty }}</td>
-          <td>{{ offer.shipped_qty }}</td>
-        {% if offer.status == 'Open' %}
+          <td>{{ request.requested_qty }}</td>
+          <td>{{ request.allocated_qty }}</td>
+          <td>{{ request.shipped_qty }}</td>
           <td>
-            <form action="{% url 'offer-approval' %}" method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="offer_id" value="{{ offer.id }}">
-              <button type="submit" class="btn btn-dark btn-sm">Approve</button>
-            </form>
-          </td>
-        {% elif offer.status == 'Approved' %}
-          <td>
-            <a class="btn btn-dark btn-sm" href="{% url 'offer-allocation-list' offer.id %}">Allocations</a>
+            <a class="btn btn-dark btn-sm" href="{% url 'request-allocation-list' request.id %}">Allocations</a>
           </td>
         </tr>
-        {% endif %}
         {% endfor %}
-        {% if offers|length == 0 %}
+        {% if requests|length == 0 %}
         <tr>
           <td colspan="5">
             <div class="alert alert-info mb-0 text-center">
@@ -81,7 +69,7 @@
       </div>
       <div class="modal-body">
         {% csrf_token %}
-        <label for="num"> How many ventilators do you need? </label>
+        <label for="num_requested"> How many ventilators do you need? </label>
         <input type="text" id="num_requested" class="form-control" name="num_requested">
       </div>
       <div class="modal-footer">

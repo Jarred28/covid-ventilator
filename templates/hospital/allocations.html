@@ -33,9 +33,9 @@
             <span class="badge badge-secondary">Closed</span>
             {% endif %}
           </td>
-          <td>{{ allocation.offered_qty }}</td>
           <td>{{ allocation.allocated_qty }}</td>
           <td>{{ allocation.shipped_qty }}</td>
+          <td>{{ allocation.request.hospital.name }}</td>
           <td>
             <a class="btn btn-dark btn-sm" href="{% url 'shipment-list' allocation.id %}">Shipments</a>
           </td>

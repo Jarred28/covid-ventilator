@@ -19,7 +19,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for shipment in shipments %}
+        {% for shipment, show_edit in shipments %}
         <tr>
           <td>
             {% if shipment.status == 'Open' %}
@@ -42,8 +42,16 @@
           </td>
           <td>{{ shipment.shipped_qty }}</td>
           <td>
-            <a href="{% url 'allocation-list' shipment.id %}" class="btn btn-dark btn-sm">Ventilators</a>
+            <a href="{% url 'offer-allocation-list' shipment.id %}" class="btn btn-dark btn-sm">Ventilators</a>
           </td>
+          {% if show_edit %}
+          <td>
+              <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#changeShipmentStatusModal" data-title="Change Shipment Status" data-method="PUT" data-action="{% url 'shipment-detail' shipment.id %}" data-status="{{ shipment.status }}">Change Shipment Status</button> 
+          </td>
+          {% else %}
+          <td>Unavailable to Change Status</td>
+          {% endif %}
+
         </tr>
         {% endfor %}
         {% if shipments|length == 0 %}
@@ -60,7 +68,7 @@
   </div>
   <div class="card-footer text-right bg-white">
     <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#shipmentCreationModal">Create a New Shipment</button>
-  </div>
+  </div>  
 </div>
 
 <div class="modal fade" id="shipmentCreationModal" tabindex="-1" role="dialog" aria-labelledby="shipmentCreationModal" aria-hidden="true">
@@ -74,9 +82,10 @@
       </div>
       <div class="modal-body">
         {% csrf_token %}
-<!--         <input type="hidden" name="allocation_id" value="{{ allocation_id }}" />
- -->        <label for="num"> How large is your shipment </label>
+        <label for="num_requested"> How large is your shipment </label>
         <input type="text" id="num_requested" class="form-control" name="num_requested">
+        <label for="num_requested"> Ventilator Serial Numbers. Please separate with commas </label>
+        <input type="textarea" id="ventilators" class="form-control" name="ventilators">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
@@ -86,4 +95,30 @@
   </div>
 </div>
 
+<div class="modal fade" id="changeShipmentStatusModal" tabindex="-1" role="dialog" aria-labelledby="changeShipmentStatusModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form id="single-modal-form" action="" method="POST" class="modal-content">
+      <input type="hidden" id="input-method" name="_method" value=""/>
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% csrf_token %}
+        {% render_form serializer %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-dark">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/hospital-admin/shipment.js"></script>
 {% endblock %}
