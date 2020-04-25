@@ -15,14 +15,18 @@
           <th scope="col">Source Hospital</th>
           <th scope="col">Destination Hospital</th>
           <th scope="col">Quantity</th>
+          <th scope="col">Allocation Status</th>
+          <th scope="col">Shipment Status</th>
         </tr>
       </thead>
       <tbody>
-      {% for hospitals, quantity in dst_reserve_list.items %}
+      {% for shipment in dst_reserve_list %}
       <tr>
-        <td>{{ hospitals.0 }}</td>
-        <td>{{ hospitals.1 }}</td>
-        <td>{{ quantity }}</td>
+        <td>{{ shipment.source_hospital }}</td>
+        <td>{{ shipment.destination_hospital }}</td>
+        <td>{{ shipment.quantity }}</td>
+        <td>{{ shipment.allocation_status }}</td>
+        <td>{{ shipment.shipment_status }}</td>
       </tr>
       {% endfor %}
       {% if dst_reserve_list|length == 0 %}

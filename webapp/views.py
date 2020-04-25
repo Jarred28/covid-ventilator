@@ -853,20 +853,20 @@ class Dashboard(APIView):
 def reset_db(request, format=None):
     return HttpResponseRedirect(reverse('login', request=request))
 
-# class SystemSettings(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/settings.html'
+class SystemSettings(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/settings.html'
 
-#     def get(self, request):
-#         serializer = SystemParametersSerializer(SystemParameters.getInstance())
-#         return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def get(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance())
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-#     def post(self, request):
-#         serializer = SystemParametersSerializer(SystemParameters.getInstance(), data=request.data)
-#         if serializer.is_valid():
-#             serializer.save()
-#         return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def post(self, request):
+        serializer = SystemParametersSerializer(SystemParameters.getInstance(), data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 # class SystemDemand(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
@@ -944,17 +944,24 @@ class SystemDestinationReserve(APIView):
     template_name = 'sysoperator/destination_reserve.html'
 
     def get(self, request):
-        dst_reserve = Ventilator.objects.filter(status=Ventilator.Status.DestinationReserve.name)
-        shipment_details = {}
-        for ventilator in dst_reserve:
-            source_hospital = ventilator.last_shipment.allocation.offer.hospital.name
-            destination_hospital = ventilator.last_shipment.allocation.request.hospital.name
-            if shipment_details.get((source_hospital, destination_hospital), ""):
-                shipment_details[(source_hospital, destination_hospital)] += 1
+        dst_reserve_ventilators = Ventilator.objects.filter(status=Ventilator.Status.DestinationReserve.name)
+        shipment_quantity = {}
+        for ventilator in dst_reserve_ventilators:
+            if shipment_quantity.get(ventilator.last_shipment.id, ""):
+                shipment_quantity[ventilator.last_shipment.id] += 1
             else:
-                shipment_details[(source_hospital, destination_hospital)] = 1
-
-        return Response({'dst_reserve_list': shipment_details, 'style': {'template_pack': 'rest_framework/vertical/'}})
+                shipment_quantity[ventilator.last_shipment.id] = 1
+        dst_reserve_list = []
+        for shipment_id, quantity in shipment_quantity.items():
+            shipment_obj = type('test', (object,), {})()
+            shipment = Shipment.objects.get(id=shipment_id)
+            shipment_obj.source_hospital = shipment.allocation.offer.hospital.name
+            shipment_obj.destination_hospital = shipment.allocation.request.hospital.name
+            shipment_obj.quantity = quantity
+            shipment_obj.allocation_status = shipment.allocation.status
+            shipment_obj.shipment_status = shipment.status
+            dst_reserve_list.append(shipment_obj)
+        return Response({'dst_reserve_list': dst_reserve_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 # class HospitalCEO(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
