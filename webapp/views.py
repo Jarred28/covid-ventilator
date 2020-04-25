@@ -272,7 +272,6 @@ class Requests(APIView):
             requests += [request for request in approved_requests.all()]
         if open_requests:
             requests += [request for request in open_requests.all()]
-        print(requests)
         return Response({
             'requests': requests,
         })
@@ -347,18 +346,23 @@ class ShipmentView(APIView):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
         allocation = Allocation.objects.get(pk=allocation_id)
+        show_reserve = False
+        if allocation.offer.hospital.id == hospital.id:
+            show_reserve = True
         sending_statuses = [Shipment.Status.Open.name, Shipment.Status.Packed.name]
         receiving_statuses = [Shipment.Status.Shipped.name, Shipment.Status.Arrived.name, Shipment.Status.Accepted.name]
         shipments = Shipment.objects.filter(is_valid=True).filter(allocation=Allocation.objects.get(pk=allocation_id))
         full_shipments = []
         for shipment in shipments:
+            should_allow_status_change = False
             if (hospital.id == allocation.request.hospital.id and shipment.status in receiving_statuses) or (hospital.id == allocation.offer.hospital.id and shipment.status in sending_statuses):
-                full_shipments.append((shipment, True))
-            else:
-                full_shipments.append((shipment, False))
-
+                should_allow_status_change = True
+            if shipment.is_requisition:
+                should_allow_status_change = not should_allow_status_change
+            full_shipments.append((shipment, should_allow_status_change))
         serializer = ShipmentSerializer()
         return Response({
+            'show_reserve': show_reserve,
             'serializer': serializer,
             'shipments': full_shipments,
             'allocation_id': allocation_id
@@ -401,43 +405,6 @@ class ShipmentView(APIView):
         offer.save()
         request.save()
         return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(allocation_id))
-# class SuppliedOrders(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&HospitalPermission]
-#     template_name = 'hospital/supplied_orders.html'
-
-#     def get(self, request, format=None):
-#         hospital = Hospital.objects.get(user=request.user)
-#         all_sent_ventilator_orders = list(Order.objects.filter(sending_hospital=hospital))
-#         # ventilators = [[order.ventilator_set.all()] for order in all_sent_ventilator_orders]
-#         transit_orders = []
-#         arrived_reserve_orders = []
-#         arrived_non_reserve_orders = []
-#         arrived_requested_reserve_orders = []
-#         for sent_order in all_sent_ventilator_orders:
-#             # Replacing num_requested with actual amt shipped for copy of object for purposes of frontend.
-#             ventilators = sent_order.ventilator_set.all()
-#             if ventilators.count() == 0:
-#                 continue
-#             sent_order.num_requested = ventilators.count()
-#             if (ventilators.first().state == Ventilator.State.InTransit.name):
-#                 # No Manipulation on in-transit orders
-#                 transit_orders.append(sent_order)
-#             else:
-#                 # Ventilators are at the location.
-#                 if (ventilators.filter(state=Ventilator.State.Reserve.name)):
-#                     # There are reserve ventilators.
-#                     arrived_reserve_orders.append(sent_order)
-#                 elif (ventilators.filter(state=Ventilator.State.RequestedReserve.name)):
-#                     arrived_requested_reserve_orders.append(sent_order)
-#                 else:
-#                     arrived_non_reserve_orders.append(sent_order)
-#         return Response({
-#             'transit_orders': transit_orders,
-#             'arrived_reserve_orders': arrived_reserve_orders,
-#             'arrived_requested_reserve_orders': arrived_requested_reserve_orders,
-#             'arrived_non_reserve_orders': arrived_non_reserve_orders
-#         })
 
 
 def update_offer(hospital, user):
@@ -626,63 +593,47 @@ def switch_entity(request, type, pk, format=None):
 
     return HttpResponseRedirect(reverse('home', request=request, format=format))
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated&HospitalPermission])
-# def call_back_reserve(request, order_id, format=None):
-#     order = Order.objects.get(pk=order_id)
-#     requisitioned_ventilators = Ventilator.objects.filter(order=order).filter(state=Ventilator.State.Reserve.name)
-#     for ventilator in requisitioned_ventilators:
-#         ventilator.state = Ventilator.State.InTransit.name
-#         ventilator.current_hospital = order.sending_hospital
-#         ventilator.save()
-#         # Need to send notification to receiving hospital.
-#     notifications.send_requisitioned_email(order.sending_hospital, order.requesting_hospital, requisitioned_ventilators.count())
-#     return HttpResponseRedirect(reverse('supplied-order', request=request))
+@api_view(['GET'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def call_back_reserve(request, shipment_id, format=None):
 
-# def change_ventilator_state(order_id, old_state, new_state):
-#     order = Order.objects.get(pk=order_id)
-#     allowed_ventilators = Ventilator.objects.filter(order=order).filter(state=old_state)
-#     for ventilator in allowed_ventilators:
-#         ventilator.state = new_state
-#         ventilator.save()
-#     return allowed_ventilators.count()
+    shipment = Shipment.objects.get(pk=shipment_id)
+    ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.DestinationReserve.name).filter(last_shipment=shipment)
+    new_shipment = Shipment.objects.create(
+        status=Shipment.Status.Open.name,
+        allocation=shipment.allocation,
+        shipped_qty=ventilators.count(),
+        opened_by_user=request.user,
+        is_requisition=True,
+        inserted_by_user=request.user,
+        updated_by_user=request.user
+    )
+    for ventilator in ventilators:
+        ShipmentVentilator.objects.create(
+            shipment=new_shipment,
+            ventilator=ventilator,
+            inserted_by_user=request.user,
+            updated_by_user=request.user
+        )
+        ventilator.last_shipment=new_shipment
+        ventilator.status = Ventilator.Status.Packing.name
+        ventilator.save()
+    shipment.status = Shipment.Status.Closed.name
+    shipment.save()
+    return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(shipment.allocation.id))
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated&HospitalPermission])
-# def deploy_reserve(request, order_id, format=None):
-#     count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.Available.name)
-#     if count == 0:
-#         count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Available.name)
-#     available_vent_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name).count()
-#     src_reserve_ct = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.SourceReserve.name).count()
-#     vent_ct = available_vent_ct + src_reserve_ct
-#     if (src_reserve_ct / vent_ct) < SystemParameters.getInstance().strategic_reserve / 100:
-#         necessary_amt = (SystemParameters.getInstance().strategic_reserve / 100) * vent_ct - src_reserve_ct
-#         vents = Ventilator.objects.filter(current_hospital=Hospital.objects.get(user=request.user)).filter(state=Ventilator.State.Available.name)[:necessary_amt]
-#         for vent in vents:
-#             vent.state = Ventilator.State.SourceReserve.name
-#             vent.save()
-#     # Need to send emails to receiving hospital.
-#     order = Order.objects.get(pk=order_id)
-#     notifications.send_deployable_email(order.sending_hospital, order.requesting_hospital, count)
-#     return HttpResponseRedirect(reverse('supplied-order', request=request))
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated&HospitalPermission])
-# def request_reserve(request, order_id, format=None):
-#     count = change_ventilator_state(order_id, Ventilator.State.Reserve.name, Ventilator.State.RequestedReserve.name)
-#     order = Order.objects.get(pk=order_id)
-#     notifications.send_requested_reserve_email(order.sending_hospital, order.requesting_hospital, count)
-#     return HttpResponseRedirect(reverse('requested-order', request=request))
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated&HospitalPermission])
-# def deny_reserve(request, order_id, format=None):
-#     count = change_ventilator_state(order_id, Ventilator.State.RequestedReserve.name, Ventilator.State.Reserve.name)
-#     order = Order.objects.get(pk=order_id)
-#     notifications.send_denied_reserve_email(order.sending_hospital, order.requesting_hospital, count)
-#     return HttpResponseRedirect(reverse('supplied-order', request=request))
-
+@api_view(['GET'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def deploy_reserve(request, shipment_id, format=None):
+    shipment = Shipment.objects.get(pk=shipment_id)
+    ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.DestinationReserve.name).filter(last_shipment=shipment)
+    for ventilator in ventilators:
+        ventilator.status = Ventilator.Status.Unavailable.name
+        ventilator.unavailable_status = Ventilator.UnavailableReason.InUse.name
+        ventilator.save()
+    shipment.status = Shipment.Status.Closed.name
+    shipment.save()
+    return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(shipment.allocation.id))
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 # @permission_classes([HospitalPermission|HospitalGroupPermission])

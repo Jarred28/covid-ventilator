@@ -509,6 +509,7 @@ class Shipment(AbstractCommon):
     closed_at = models.DateTimeField(null=True, blank=True)
     tracking_number = models.CharField(max_length=100, null=True, blank=True)
     shipping_service = models.CharField(max_length=100, null=True, blank=True)
+    is_requisition = models.BooleanField(null=False, blank=False, default=False)
 # Had to move this down to ensure that Shipment was declared before Ventilator since Ventilator references it. I can also remove 
 # the reference and replace it with a query if efficiency isn't a huge deal here?
 

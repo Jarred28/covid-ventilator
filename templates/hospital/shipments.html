@@ -16,6 +16,8 @@
           <th>Shipped Quantity</th>
           <th>Ventilators</th>
           <th>Transition to Next State</th>
+          <th>Call Back Reserve</th>
+          <th>Deploy Reserve</th>
         </tr>
       </thead>
       <tbody>
@@ -49,9 +51,15 @@
               <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#changeShipmentStatusModal" data-title="Change Shipment Status" data-method="PUT" data-action="{% url 'shipment-detail' shipment.id %}" data-status="{{ shipment.status }}">Change Shipment Status</button> 
           </td>
           {% else %}
-          <td>Unavailable to Change Status</td>
+          <td>Unable to Change Status</td>
           {% endif %}
-
+          {% if show_reserve and shipment.status == 'Accepted' and shipment.is_requisition == False %}
+            <td><a href="{% url 'call-back-reserve' shipment.id %}" class="btn btn-dark btn-sm">Call Back Reserve</a></td>
+            <td><a href="{% url 'deploy-reserve' shipment.id %}" class="btn btn-dark btn-sm">Deploy Reserve</a></td>
+          {% else %}
+            <td>Unable to Call Back Reserve</td>
+            <td>Unable to Deploy Reserve</td>
+          {% endif %}
         </tr>
         {% endfor %}
         {% if shipments|length == 0 %}
