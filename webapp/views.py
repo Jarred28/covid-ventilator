@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
 import random
 from rest_framework.decorators import api_view, permission_classes
@@ -839,14 +840,25 @@ class SystemSettings(APIView):
             serializer.save()
         return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class SystemDemand(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/demand.html'
+class SystemDemand(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/demand.html'
 
-#     def get(self, request):
-#         orders = Order.objects.filter(active=True)
-#         return Response({'orders': orders, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def get(self, request):
+        all_requests = Request.objects.filter(Q(status=Request.Status.Open.name) | Q(status=Request.Status.Approved.name))
+        requests = {}
+        for request_obj in all_requests:
+            if requests.get(request_obj.hospital.name, ""):
+                requests[request_obj.hospital.name]['status'][request_obj.status] = request_obj.requested_qty
+                requests[request_obj.hospital.name]['request_total'] += request_obj.requested_qty
+            else:
+                requests[request_obj.hospital.name] = {'status': {request_obj.status: request_obj.requested_qty}}
+                requests[request_obj.hospital.name]['hospital_group'] = request_obj.hospital.hospital_group.name
+                requests[request_obj.hospital.name]['request_total'] = request_obj.requested_qty
+                requests[request_obj.hospital.name]['hospital_current_load'] = request_obj.hospital.current_load
+                requests[request_obj.hospital.name]['hospital_projected_load'] = request_obj.hospital.projected_load
+        return Response({'requests': requests, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemVentilators(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -872,23 +884,30 @@ class SystemVentilators(APIView):
             ventilators_list.append(hospital_details)
         return Response({'ventilators_list': ventilators_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class SystemSupply(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&SystemPermission]
-#     template_name = 'sysoperator/supply.html'
+class SystemSupply(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&SystemPermission]
+    template_name = 'sysoperator/supply.html'
 
-#     def get(self, request):
-#         supply_list = []
-#         for hospital in Hospital.objects.all():
-#             hospital_supply_list = type('test', (object,), {})()
-#             hospital_supply_list.name = hospital.name
-#             hospital_supply_list.owning_hospital_group = hospital.hospital_group.name
-#             available_ventilators = Ventilator.objects.filter(current_hospital=hospital).filter(state=Ventilator.State.Available.name)
-#             hospital_supply_list.ventilator_supply = available_ventilators.count()
-#             hospital_supply_list.model_nums = {ventilator.model_num for ventilator in available_ventilators}
-#             hospital_supply_list.monetary_value = sum(ventilator.monetary_value for ventilator in available_ventilators) 
-#             supply_list.append(hospital_supply_list)
-#         return Response({'supply_list': supply_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
+    def get(self, request):
+        supply_list = []
+        for hospital in Hospital.objects.all():
+            hospital_supply_list = type('test', (object,), {})()
+            hospital_supply_list.name = hospital.name
+            hospital_supply_list.owning_hospital_group = hospital.hospital_group.name
+            available_ventilators = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name)
+            hospital_supply_list.ventilator_supply = available_ventilators.count()
+            if hospital_supply_list.ventilator_supply:
+                model_count = {}
+                for ventilator in available_ventilators:
+                    if model_count.get(ventilator.ventilator_model.model, ""):
+                        model_count[ventilator.ventilator_model.model] += 1
+                    else:
+                        model_count[ventilator.ventilator_model.model] = 1
+                hospital_supply_list.model_nums = model_count
+                hospital_supply_list.monetary_value = sum(ventilator.monetary_value for ventilator in available_ventilators)
+                supply_list.append(hospital_supply_list)
+        return Response({'supply_list': supply_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemSourceReserve(APIView):
     renderer_classes = [TemplateHTMLRenderer]

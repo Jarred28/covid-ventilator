@@ -8,16 +8,16 @@
 
 {% block content %}
 <div class="card fill fixed">
-  <h1 class="card-header bg-white">Current Supply of Ventilators</h1>
+  <h1 class="card-header bg-white">Current Supply of Available Ventilators</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
         <tr>
           <th scope="col">Owner Hospital</th>
-          <th scope="col">Hospital Parent</th>
-          <th scope="col">Model Number</th>
-          <th scope="col">Quantity</th>
-          <th scope="col">Value</th>
+          <th scope="col">Hospital Group</th>
+          <th scope="col">Model (#)</th>
+          <th scope="col">Total Quantity</th>
+          <th scope="col">Total Value</th>
         </tr>
       </thead>
       <tbody>
@@ -26,8 +26,8 @@
           <td>{{ hospital_supply_list.name }}</td>
           <td>{{ hospital_supply_list.owning_hospital_group }}</td>
           <td>
-            {% for model_num in hospital_supply_list.model_nums %}
-            <span class="model-number badge badge-pill badge-dark">{{ model_num }}</span>
+            {% for model_num, quantity in hospital_supply_list.model_nums.items %}
+            <span class="model-number badge badge-pill badge-dark">{{model_num}} ({{ quantity }})</span>
             {% endfor %}
           </td>
           <td>{{ hospital_supply_list.ventilator_supply }}</td>

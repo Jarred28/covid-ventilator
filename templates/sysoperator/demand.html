@@ -12,22 +12,30 @@
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
         <tr>
-          <th scope="col">Hospital Parent</th>
-          <th scope="col">Requested</th>
+          <th scope="col">Requesting Hospital</th>
+          <th scope="col">Hospital Group</th>
+          <th scope="col">Quantity Requested</th>
+          <th scope="col">Request Status (#)</th>
           <th scope="col">Current Case Load</th>
           <th scope="col">Projected Case Load</th>
         </tr>
       </thead>
       <tbody>
-        {% for order in orders %}
+        {% for hospital, request in requests.items %}
         <tr>
-          <td>{{ order.requesting_hospital.name }}</td>
-          <td>{{ order.num_requested }}</td>
-          <td>{{ order.requesting_hospital.current_load }}</td>
-          <td>{{ order.requesting_hospital.projected_load }}</td>
+          <td>{{ hospital }}</td>
+          <td>{{ request.hospital_group }}</td>
+          <td>{{ request.request_total }}</td>
+          <td>
+              {% for status, quantity in request.status.items %}
+                  <span class="model-number badge badge-pill badge-dark">{{ status }} ({{ quantity }})</span>
+              {% endfor %}
+          </td>
+          <td>{{ request.hospital_current_load }}</td>
+          <td>{{ request.hospital_projected_load }}</td>
         </tr>
         {% endfor %}
-        {% if orders|length == 0 %}
+        {% if requests|length == 0 %}
         <tr>
           <td colspan="4">
             <div class="alert alert-info mb-0 text-center">
