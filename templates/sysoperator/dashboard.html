@@ -21,6 +21,9 @@
         Reset DB
       </button>
     </form>
+    {% if show_deploy_reserve %}
+      <a class="btn btn-dark btn-sm" href="{% url 'sys-deploy-reserve' %}">Deploy Source Reserve</a>
+    {% endif %}
     <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
       {% csrf_token %}
       <button class='btn btn-dark' type="submit">

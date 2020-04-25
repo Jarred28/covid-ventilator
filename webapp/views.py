@@ -551,7 +551,9 @@ class VentilatorList(APIView):
 def approve_offer(request, format=None):
     offer_id = int(request.data['offer_id'])
     offer = Offer.objects.get(pk=offer_id)
+
     previous_offer = Offer.objects.filter(is_valid=True).filter(hospital=offer.hospital).filter(status=Offer.Status.Approved.name).first()
+    offer.offered_qty += previous_offer.offered_qty
     if previous_offer != None:
         for allocation in previous_offer.allocation_set.all():
             if allocation.status == Allocation.Status.Approved.name:
@@ -559,10 +561,8 @@ def approve_offer(request, format=None):
                 allocation.save()
                 offer.shipped_qty += allocation.shipped_qty
                 offer.allocated_qty += allocation.allocated_qty
-                offer.offered_qty += allocation.allocated_qty
                 previous_offer.shipped_qty -= allocation.shipped_qty
                 previous_offer.allocated_qty -= allocation.allocated_qty
-                previous_offer.offered_qty -= allocation.allocated_qty
 
         previous_offer.status = Offer.Status.Closed.name
         previous_offer.save()
@@ -728,10 +728,19 @@ class Dashboard(APIView):
         transits = []
         for shipment in Shipment.objects.filter(status=Shipment.Status.Shipped.name):
             transits.append(shipment.allocation.request.hospital.address)
+
+        num_requested = sum(request.requested_qty - request.shipped_qty for request in Request.objects.filter(is_valid=True).filter(status=Request.Status.Approved.name))
+        intermediate_vent_filter =  Ventilator.objects.filter(is_valid=True)
+
+        num_offered = intermediate_vent_filter.filter(status=Ventilator.Status.Available.name).count() + intermediate_vent_filter.filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
+        show_deploy_reserve = True
+        if num_offered >= num_requested:
+            show_deploy_reserve = False
         return Response({
             'demands': requests,
             'supplies': offers,
-            'transits': transits
+            'transits': transits,
+            'show_deploy_reserve': show_deploy_reserve
         })
 
     @transaction.atomic
@@ -803,6 +812,17 @@ class Dashboard(APIView):
 @permission_classes([IsAuthenticated&SystemPermission])
 def reset_db(request, format=None):
     return HttpResponseRedirect(reverse('login', request=request))
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated&SystemPermission])
+def deploy_all_strategic_reserve(request, format=None):
+    for ventilator in Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.SourceReserve.name):
+        hospital = ventilator.current_hospital
+        ventilator.status = Ventilator.Status.Unavailable.name
+        ventilator.unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
+        ventilator.save()
+        update_offer(hospital, request.user)
+    return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
 class SystemSettings(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -888,6 +908,7 @@ class SystemSourceReserve(APIView):
             reserve_obj.model_nums = {ventilator.ventilator_model.model for ventilator in src_reserve}
             src_reserve_lst.append(reserve_obj)
         return Response({'ventilators': src_reserve_lst, 'style': {'template_pack': 'rest_framework/vertical/'}})
+
 
 class SystemDestinationReserve(APIView):
     renderer_classes = [TemplateHTMLRenderer]

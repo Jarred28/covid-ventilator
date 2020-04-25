@@ -31,6 +31,7 @@ urlpatterns = [
     # path('system/supply/', views.SystemSupply.as_view(), name='sys-supply'),
     path('system/source-reserve/', views.SystemSourceReserve.as_view(), name='sys-source-reserve'),
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
+    path('system/deploy-reserve/', views.deploy_all_strategic_reserve, name='sys-deploy-reserve'),
     # path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
     # path('hospitals/approve/<batchid>/', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
     # path('hospitals/offer/<batchid>/', views.HospitalCEOSharedOffer.as_view(), name='ceo-sharedoffer'),
