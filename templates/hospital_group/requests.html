@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load rest_framework %}
+
+{% block head %}
+<title>Requests - HospitalGroup CEO</title>
+{% endblock %}
+
+{% block content %}
+<div class="card fixed fill">
+  <h1 class="card-header bg-white">Requests</h1>
+  <div class="card-body">
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th>Requesting Hospital</th>
+          <th>Request Status</th>
+          <th>Request Quantity</th>
+          <th>Allocated Quantity</th>
+          <th>Shipped Quantity</th>
+          <th>Approve</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ventRequest in ventRequests %}
+        <tr>
+          <td>{{ventRequest.hospital.name}}</td>
+          <td>
+          {% if ventRequest.status == 'Open' %}
+            <span class="badge badge-primary">Open</span>
+          {% elif ventRequest.status == 'Approved' %}
+            <span class="badge badge-success">Approved</span>
+          {% elif ventRequest.status == 'Cancelled' %}
+            <span class="badge badge-info">Replaced</span>
+          {% elif ventRequest.status == 'Closed' %}
+            <span class="badge badge-danger">Cancelled</span>
+          {% endif %}
+          </td>
+          <td>{{ ventRequest.requested_qty }}</td>
+          <td>{{ ventRequest.allocated_qty }}</td>
+          <td>{{ ventRequest.shipped_qty }}</td>
+          <td>
+            <form novalidate method="POST" action="{% url 'ceo-approval' 'request' ventRequest.id %}">
+              {% csrf_token %}
+              <button class="btn btn-dark btn-sm" type="submit">Approve</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if ventRequests|length == 0 %}
+        <tr>
+          <td colspan="6">
+            <div class="alert alert-info mb-0 text-center">
+              No requested order to display
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

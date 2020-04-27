@@ -31,7 +31,7 @@
             </a>
             <div class="dropdown-menu">
               {% for group in user.get_roles.hospital_group %}
-              <a class="dropdown-item{% if user.get_current_role.hospital_group == group %} active{% endif %}" href="#">{{ group.name }}</a>
+              <a class="dropdown-item{% if user.get_current_role.hospital_group == group %} active{% endif %}" href="{% url 'ceo-requests' %}">{{ group.name }}</a>
               {% endfor %}
             </div>
           </div>

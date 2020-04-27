@@ -32,9 +32,9 @@ urlpatterns = [
     path('system/source-reserve/', views.SystemSourceReserve.as_view(), name='sys-source-reserve'),
     path('system/destination-reserve/', views.SystemDestinationReserve.as_view(), name='sys-destination-reserve'),
     path('system/deploy-reserve/', views.deploy_all_strategic_reserve, name='sys-deploy-reserve'),
-    # path('hospitals/', views.HospitalCEO.as_view(), name='ceo-dashboard'),
-    # path('hospitals/approve/<batchid>/', views.HospitalCEOApprove.as_view(), name='ceo-approve'),
-    # path('hospitals/offer/<batchid>/', views.HospitalCEOSharedOffer.as_view(), name='ceo-sharedoffer'),
+    path('hospitals/request', views.HospitalCEORequests.as_view(), name='ceo-requests'),
+    path('hospitals/offer', views.HospitalCEOOffers.as_view(), name='ceo-offers'),
+    path('hospitals/<type>/approve/<int:pk>/', views.ceo_approve, name='ceo-approval'),
     path('reset_db/', views.reset_db, name='reset-db')
 ]
 

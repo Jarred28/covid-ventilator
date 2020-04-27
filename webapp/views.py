@@ -38,8 +38,7 @@ def home(request, format=None):
     if last_role.supplier != None:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
     elif last_role.hospital_group != None:
-        print('Hospital Group')
-        # return HttpResponseRedirect(reverse('ceo-dashboard', request=request, format=format))
+        return HttpResponseRedirect(reverse('ceo-requests', request=request, format=format))
     elif last_role.hospital != None:
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
     else:
@@ -554,8 +553,8 @@ def approve_offer(request, format=None):
     offer = Offer.objects.get(pk=offer_id)
 
     previous_offer = Offer.objects.filter(is_valid=True).filter(hospital=offer.hospital).filter(status=Offer.Status.Approved.name).first()
-    offer.offered_qty += previous_offer.offered_qty
     if previous_offer != None:
+        offer.offered_qty += previous_offer.offered_qty
         for allocation in previous_offer.allocation_set.all():
             if allocation.status == Allocation.Status.Approved.name:
                 allocation.offer = offer
@@ -566,9 +565,12 @@ def approve_offer(request, format=None):
                 previous_offer.allocated_qty -= allocation.allocated_qty
 
         previous_offer.status = Offer.Status.Closed.name
+        previous_offer.updated_by_user = request.user
         previous_offer.save()
 
     offer.status = Offer.Status.Approved.name
+    offer.approved_by_user = request.user
+    offer.updated_by_user = request.user
     offer.save()
     ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=offer.hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name)[:offer.offered_qty]
     for vent in ventilators:
@@ -954,48 +956,72 @@ class SystemDestinationReserve(APIView):
             dst_reserve_list.append(shipment_obj)
         return Response({'dst_reserve_list': dst_reserve_list, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
-# class HospitalCEO(APIView):
-#     renderer_classes = [TemplateHTMLRenderer]
-#     permission_classes = [IsAuthenticated&HospitalGroupPermission]
-#     template_name = 'hospital_group/dashboard.html'
+class HospitalCEORequests(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalGroupPermission]
+    template_name = 'hospital_group/requests.html'
 
-#     def get(self, request, format=None):
-#         hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(user=request.user)).all()
-#         requested_ventilators = Ventilator.objects.filter(
-#             state=Ventilator.State.Requested.name
-#         ).filter(
-#             current_hospital__in=[hospital.id for hospital in hospitals]
-#         )
+    def get(self, request, format=None):
+        hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
+        requests = list(Request.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Request.Status.Open.name))
 
-#         ventRequests = []
+        return Response({'ventRequests': requests})
 
-#         # If any ventilators are requested, let the user know
-#         if requested_ventilators:
-#             # Present notifications by batch as opposed to by individual ventilators
-#             batchid_to_ventilators = defaultdict(list)
-#             for ventilator in requested_ventilators:
-#                 batchid_to_ventilators[ventilator.ventilator_batch.id].append(ventilator)
-#             for batchid, vents in batchid_to_ventilators.items():
-#                 if len(vents) > 0 and vents[0].order:
-#                     requesting_hospital = vents[0].order.requesting_hospital
-#                     sending_hospital = vents[0].order.sending_hospital
+class HospitalCEOOffers(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalGroupPermission]
+    template_name = 'hospital_group/offers.html'
 
-#                     if not sending_hospital:
-#                         sending_hospital = vents[0].current_hospital
+    def get(self, request, format=None):
+        hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
+        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Offer.Status.Open.name))
 
-#                     # messages.add_message(
-#                     #     request,
-#                     #     messages.INFO,
-#                     #     "{} requests {} ventilator(s) from {}".format(requesting_hospital, len(vents), sending_hospital),
-#                     #     str(batchid)
-#                     # )
-#                     ventRequests.append({
-#                         'requesting_hospital': requesting_hospital,
-#                         'offer': "{} requests {} ventilator(s) from {}".format(requesting_hospital.name, len(vents), sending_hospital.name),
-#                         'batchid': str(batchid)
-#                     })
+        return Response({'offers': offers})
 
-#         return Response({"ventRequests": ventRequests})
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&HospitalGroupPermission])
+def ceo_approve(request, type, pk, format=None):
+    hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
+
+    if type == 'request':
+        ventRequest = Request.objects.get(id=pk)
+        if ventRequest.hospital in hospitals:
+            ventRequest.status = Request.Status.Approved.name
+            ventRequest.approved_by_user = request.user
+            ventRequest.updated_by_user = request.user
+            ventRequest.save()
+
+        return HttpResponseRedirect(reverse('ceo-requests', request=request))
+    else:
+        offer = Offer.objects.get(id=pk)
+        if offer.hospital in hospitals:
+            previous_offer = Offer.objects.filter(is_valid=True).filter(hospital=offer.hospital).filter(status=Offer.Status.Approved.name).first()
+            if previous_offer != None:
+                offer.offered_qty += previous_offer.offered_qty
+                for allocation in previous_offer.allocation_set.all():
+                    if allocation.status == Allocation.Status.Approved.name:
+                        allocation.offer = offer
+                        allocation.save()
+                        offer.shipped_qty += allocation.shipped_qty
+                        offer.allocated_qty += allocation.allocated_qty
+                        previous_offer.shipped_qty -= allocation.shipped_qty
+                        previous_offer.allocated_qty -= allocation.allocated_qty
+
+                previous_offer.status = Offer.Status.Closed.name
+                previous_offer.updated_by_user = request.user
+                previous_offer.save()
+
+            offer.status = Offer.Status.Approved.name
+            offer.approved_by_user = request.user
+            offer.updated_by_user = request.user
+            offer.save()
+            ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=offer.hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name)[:offer.offered_qty]
+            for vent in ventilators:
+                vent.status = Ventilator.Status.Available.name
+                vent.unavailable_status = None
+                vent.save()
+
+        return HttpResponseRedirect(reverse('ceo-offers', request=request))
 
 # class HospitalCEOApprove(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
