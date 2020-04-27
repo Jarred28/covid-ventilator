@@ -12,6 +12,9 @@
     {% url 'requests' as requests_url %}
     <a class="nav-link {% if request.get_full_path == requests_url %}active{% endif %}" href="{{ requests_url }}">Requests</a>
 
+    {% url 'shipment-requests' as shipment_requests_url %}
+    <a class="nav-link {% if request.get_full_path == shipment_requests_url %}active{% endif %}" href="{{ shipment_requests_url }}">Shipment Requests</a>
+
     {% endif %}
 
     {% if user.current_type == 'System' %}

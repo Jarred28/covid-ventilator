@@ -6,3 +6,14 @@ $('#changeShipmentStatusModal').on("show.bs.modal", function (e) {
     $('select[name="status"]').val($(e.relatedTarget).data('status'));
   }
 });
+
+$('#shipmentStatusUpdate').on("show.bs.modal", function (e) {
+  $("#shipment_id").attr('value', $(e.relatedTarget).data('shipment-id'));
+  let action = $(e.relatedTarget).data('action');
+  $("#action").attr('value', action);
+  if (action === 'approve') {
+    $("#modal-question").html('Do you want to approve this request?');
+  } else {
+    $("#modal-question").html('Do you want to deny this request?');
+  }
+});

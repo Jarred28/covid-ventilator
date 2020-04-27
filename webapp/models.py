@@ -416,6 +416,8 @@ class Allocation(AbstractCommon):
 class Shipment(AbstractCommon):
     class Status(Enum):
         Open = 'Open'
+#       has not been approved
+        Approved = 'Approved'
 #       has not been packed
         Packed = 'Packed'
 #       has been packed and can now be shipped

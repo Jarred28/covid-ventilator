@@ -338,6 +338,43 @@ class ShipmentDetail(APIView):
             serializer.save()
         return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(shipment.allocation.id))
 
+class ShipmentRequestsView(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    permission_classes = [IsAuthenticated&HospitalPermission]
+    template_name = 'hospital/shipment_requests.html'
+
+    def get(self, request, format=None):
+        last_role = UserRole.get_default_role(request.user)
+        hospital = last_role.hospital
+        owned_ventilators = Ventilator.objects.filter(owning_hospital=hospital)
+        shipments = {}
+        for ventilator in owned_ventilators:
+            if ventilator.current_hospital != hospital and ventilator.last_shipment:
+                if ventilator.last_shipment.status in [Shipment.Status.Open.name, Shipment.Status.Approved.name, Shipment.Status.Cancelled.name]:
+                    ventilator_info = {'model': ventilator.ventilator_model.model, 'status': ventilator.status}
+                    if shipments.get(ventilator.last_shipment.id, ""):
+                        shipments[ventilator.last_shipment.id]['ventilators'].append(ventilator_info)
+                    else:
+                        shipments[ventilator.last_shipment.id] = {
+                            'shipment_status': ventilator.last_shipment.status,
+                            'ventilators': [ventilator_info],
+                            'current_hospital': ventilator.current_hospital.name
+                        }
+        return Response({'shipments': shipments})
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def approve_shipment(request, format=None):
+    shipment_id = request.data['shipment_id']
+    shipment = Shipment.objects.get(id=shipment_id)
+    action = request.data['action']
+    if action == 'approve':
+        shipment.status = Shipment.Status.Approved.name
+    elif action == 'deny':
+        shipment.status = Shipment.Status.Cancelled.name
+    shipment.save()
+    return HttpResponseRedirect(reverse('shipment-requests', request=request, format=format))
+
 class ShipmentView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
@@ -368,6 +405,7 @@ class ShipmentView(APIView):
             'shipments': full_shipments,
             'allocation_id': allocation_id
         })
+
     def post(self, request, allocation_id, format=None):
         last_role = UserRole.get_default_role(request.user)
         allocation = Allocation.objects.get(pk=allocation_id)
@@ -406,7 +444,6 @@ class ShipmentView(APIView):
         offer.save()
         request.save()
         return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(allocation_id))
-
 
 def update_offer(hospital, user):
     pending_offer_vent_ct = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()

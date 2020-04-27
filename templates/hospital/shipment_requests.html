@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load rest_framework %}
+
+{% block head %}
+<title>Shipment Approvals</title>
+{% endblock %}
+
+{% block content %}
+<div class="card fixed fill">
+  <h1 class="card-header bg-white">Requested Shipments</h1>
+  <div class="card-body">
+    <table class="table table-bordered table-striped mb-4">
+      <thead class="thead-dark">
+        <tr>
+          <th>Current Hospital</th>
+          <th>Shipment Status</th>
+          <th>Ventilators</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for id, details in shipments.items %}
+        <tr>
+          <td>{{ details.current_hospital }}</td>
+          <td>
+              {% if details.shipment_status == 'Open' %}
+                <span class="badge badge-primary">Open</span>
+              {% elif details.shipment_status == 'Approved' %}
+                <span class="badge badge-success">Approved</span>
+              {% elif details.shipment_status == 'Cancelled' %}
+                <span class="badge badge-danger">Cancelled</span>
+              {% endif %}
+          </td>
+          <td>
+          {% for ventilators in details.ventilators %}
+              <span class="model-number badge badge-pill badge-dark">{{ ventilators.model }}</span>
+          {% endfor %}
+          </td>
+          <td>
+          {% if details.shipment_status == 'Open' %}
+              <button class="badge btn-success" data-toggle="modal" data-target="#shipmentStatusUpdate" data-shipment-id="{{ id }}" data-action="approve">Approve</button>
+              <button class="badge btn-danger" data-toggle="modal" data-target="#shipmentStatusUpdate" data-shipment-id="{{ id }}" data-action="deny">Deny</button>
+          {% elif details.shipment_status == 'Approved' %}
+              <button class="badge btn-danger" data-toggle="modal" data-target="#shipmentStatusUpdate" data-shipment-id="{{ id }}" data-action="deny">Deny</button>
+          {% elif details.shipment_status == 'Cancelled' %}
+              <button class="badge btn-success" data-toggle="modal" data-target="#shipmentStatusUpdate" data-shipment-id="{{ id }}" data-action="approve">Approve</button>
+          {%  endif %}
+          </td>
+        {% endfor %}
+        {% if shipments|length == 0 %}
+        <tr>
+          <td colspan="4">
+            <div class="alert alert-info mb-0 text-center">
+              No items to display
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal fade" id="shipmentStatusUpdate" tabindex="-1" role="dialog" aria-labelledby="shipmentStatusUpdate" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <form action="{% url 'shipment-approval' %}" method="POST" class="modal-content">
+      <input type="hidden" id="input-method" name="_method" value="put"/>
+      <input type="hidden" id="shipment_id" name="shipment_id" value="">
+      <input type="hidden" id="action" name="action" value="">
+      <div class="modal-body">
+        <h5 class="modal-body" id="modal-question"></h5>
+        {% csrf_token %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-dark">Yes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="/static/js/hospital-admin/shipment.js"></script>
+{% endblock %}
