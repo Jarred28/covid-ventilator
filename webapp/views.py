@@ -578,6 +578,7 @@ def approve_offer(request, format=None):
         vent.unavailable_status = None
         vent.save()
     return HttpResponseRedirect(reverse('offers', request=request, format=format))
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def switch_entity(request, type, pk, format=None):
@@ -983,6 +984,7 @@ class HospitalCEOOffers(APIView):
 def ceo_approve(request, type, pk, format=None):
     hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
 
+    # type can be either request or offer
     if type == 'request':
         ventRequest = Request.objects.get(id=pk)
         if ventRequest.hospital in hospitals:
@@ -992,7 +994,7 @@ def ceo_approve(request, type, pk, format=None):
             ventRequest.save()
 
         return HttpResponseRedirect(reverse('ceo-requests', request=request))
-    else:
+    elif type == 'offer':
         offer = Offer.objects.get(id=pk)
         if offer.hospital in hospitals:
             previous_offer = Offer.objects.filter(is_valid=True).filter(hospital=offer.hospital).filter(status=Offer.Status.Approved.name).first()
@@ -1021,7 +1023,7 @@ def ceo_approve(request, type, pk, format=None):
                 vent.unavailable_status = None
                 vent.save()
 
-        return HttpResponseRedirect(reverse('ceo-offers', request=request))
+    return HttpResponseRedirect(reverse('ceo-offers', request=request))
 
 # class HospitalCEOApprove(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
