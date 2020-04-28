@@ -545,13 +545,8 @@ class VentilatorList(APIView):
         update_offer(hospital, request.user)
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated&HospitalPermission])
-def approve_offer(request, format=None):
-    offer_id = int(request.data['offer_id'])
-    offer = Offer.objects.get(pk=offer_id)
-
+# func to approve offer
+def approve_offer(offer, user):
     previous_offer = Offer.objects.filter(is_valid=True).filter(hospital=offer.hospital).filter(status=Offer.Status.Approved.name).first()
     if previous_offer != None:
         offer.offered_qty += previous_offer.offered_qty
@@ -565,18 +560,27 @@ def approve_offer(request, format=None):
                 previous_offer.allocated_qty -= allocation.allocated_qty
 
         previous_offer.status = Offer.Status.Closed.name
-        previous_offer.updated_by_user = request.user
+        previous_offer.updated_by_user = user
         previous_offer.save()
 
     offer.status = Offer.Status.Approved.name
-    offer.approved_by_user = request.user
-    offer.updated_by_user = request.user
+    offer.approved_by_user = user
+    offer.updated_by_user = user
     offer.save()
     ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=offer.hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name)[:offer.offered_qty]
     for vent in ventilators:
         vent.status = Ventilator.Status.Available.name
         vent.unavailable_status = None
         vent.save()
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def hospital_approve_offer(request, format=None):
+    offer_id = int(request.data['offer_id'])
+    offer = Offer.objects.get(pk=offer_id)
+
+    approve_offer(offer, request.user)
+
     return HttpResponseRedirect(reverse('offers', request=request, format=format))
 
 @api_view(['GET'])
@@ -997,31 +1001,7 @@ def ceo_approve(request, type, pk, format=None):
     elif type == 'offer':
         offer = Offer.objects.get(id=pk)
         if offer.hospital in hospitals:
-            previous_offer = Offer.objects.filter(is_valid=True).filter(hospital=offer.hospital).filter(status=Offer.Status.Approved.name).first()
-            if previous_offer != None:
-                offer.offered_qty += previous_offer.offered_qty
-                for allocation in previous_offer.allocation_set.all():
-                    if allocation.status == Allocation.Status.Approved.name:
-                        allocation.offer = offer
-                        allocation.save()
-                        offer.shipped_qty += allocation.shipped_qty
-                        offer.allocated_qty += allocation.allocated_qty
-                        previous_offer.shipped_qty -= allocation.shipped_qty
-                        previous_offer.allocated_qty -= allocation.allocated_qty
-
-                previous_offer.status = Offer.Status.Closed.name
-                previous_offer.updated_by_user = request.user
-                previous_offer.save()
-
-            offer.status = Offer.Status.Approved.name
-            offer.approved_by_user = request.user
-            offer.updated_by_user = request.user
-            offer.save()
-            ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=offer.hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name)[:offer.offered_qty]
-            for vent in ventilators:
-                vent.status = Ventilator.Status.Available.name
-                vent.unavailable_status = None
-                vent.save()
+            approve_offer(offer, request.user)
 
     return HttpResponseRedirect(reverse('ceo-offers', request=request))
 

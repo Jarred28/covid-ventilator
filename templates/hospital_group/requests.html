@@ -24,17 +24,7 @@
         {% for ventRequest in ventRequests %}
         <tr>
           <td>{{ventRequest.hospital.name}}</td>
-          <td>
-          {% if ventRequest.status == 'Open' %}
-            <span class="badge badge-primary">Open</span>
-          {% elif ventRequest.status == 'Approved' %}
-            <span class="badge badge-success">Approved</span>
-          {% elif ventRequest.status == 'Cancelled' %}
-            <span class="badge badge-info">Replaced</span>
-          {% elif ventRequest.status == 'Closed' %}
-            <span class="badge badge-danger">Cancelled</span>
-          {% endif %}
-          </td>
+          <td><span class="badge badge-primary">{{ ventRequest.status }}</span></td>
           <td>{{ ventRequest.requested_qty }}</td>
           <td>{{ ventRequest.allocated_qty }}</td>
           <td>{{ ventRequest.shipped_qty }}</td>
