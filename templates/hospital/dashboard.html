@@ -11,19 +11,6 @@
 <div class="card fixed fill">
   <h1 class="card-header bg-white">Ventilators</h1>
   <div class="card-body">
-    {% if messages %}
-    <ul class="messages list-group mb-4">
-      {% for message in messages %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        {{ message }}
-        <form action="{% url 'ventilator-approve' message.extra_tags %}" method="POST" class="mb-0">
-          {% csrf_token %}
-          <button class="btn btn-dark btn-sm" type='submit'>Approve</button>
-        </form>
-      </li>
-      {% endfor %}
-    </ul>
-    {% endif %}
 
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
