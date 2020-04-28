@@ -7,3 +7,8 @@ function toggleSubmenu () {
 }
 
 $('.drop-submenu').hover(toggleSubmenu, toggleSubmenu);
+
+for (var i = 0; i < messages.length; i++) {
+  var message = messages[i];
+  toastr[message.type](message.content);
+}

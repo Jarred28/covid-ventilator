@@ -58,7 +58,7 @@ class RequestCredentials(APIView):
             'email': 'Email',
             'entity_type': 'Entity Type',
             'entity_id': 'Entity ID'
-        };
+        }
         # First, verify that all fields have been given. Deal with this validation
         for field in fields:
             if request_data.get(field, '') == '':
@@ -122,18 +122,9 @@ class RequestCredentials(APIView):
     def post(self, request):
         errors = self.validate_signup(request.data)
         if len(errors) != 0:
-            hospitals = Hospital.objects.filter(is_valid=True)
-            hospitalGroups = HospitalGroup.objects.filter(is_valid=True)
-            suppliers = Supplier.objects.filter(is_valid=True)
-            systems = System.objects.filter(is_valid=True)
-            return Response({
-                'hospitals': hospitals,
-                'hospitalGroups': hospitalGroups,
-                'suppliers': suppliers,
-                'systems': systems,
-                'errors': errors,
-                'style': {'template_pack': 'rest_framework/vertical/'}
-            })
+            for error in errors:
+                messages.add_message(request, messages.ERROR, error)
+            return HttpResponseRedirect(reverse('request-credentials', request=request))
 
         username = request.data.get('username')
         email = request.data.get('email')
@@ -196,6 +187,8 @@ class RequestCredentials(APIView):
                 )
                 system.updated_by_user = user
                 system.save()
+
+        messages.success(request, 'Successfully requested a new credential. Please reset your password')
         return HttpResponseRedirect(reverse('login', request=request))
 
 # class Requests(APIView):
@@ -276,11 +269,13 @@ class Requests(APIView):
             'requests': requests,
         })
     def post(self, request, format=None):
+        if not request.data['num_requested']:
+            messages.error(request, 'Number of requested ventilators is mandatory')
+            return HttpResponseRedirect(reverse('requests', request=request))
 
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
         requested_qty = int(request.data['num_requested'])
-        print(requested_qty)
         Request.objects.create(
             status=Request.Status.Approved.name,
             hospital=hospital,
@@ -292,6 +287,7 @@ class Requests(APIView):
             opened_by_user=request.user,
             approved_by_user=request.user
         )
+        messages.success(request, 'Successfully created a new request')
         return HttpResponseRedirect(reverse('requests', request=request))
 
 class OfferAllocationView(APIView):
@@ -315,6 +311,7 @@ class RequestAllocationView(APIView):
         return Response({
             'allocations': allocations
         })
+
 class ShipmentDetail(APIView):
     serializer_class = VentilatorSerializer
     permission_classes = [IsAuthenticated&HospitalPermission]
@@ -335,7 +332,10 @@ class ShipmentDetail(APIView):
         serializer = ShipmentSerializer(shipment, data=request.data)
         if serializer.is_valid():
             serializer.save()
-        return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(shipment.allocation.id))
+            messages.success(request, 'Successfully completed')
+        else:
+            messages.error(request, 'Request is NOT valid')
+        return HttpResponseRedirect(reverse('shipment-list', request=request, args=[shipment.allocation.id]))
 
 class ShipmentView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -361,19 +361,40 @@ class ShipmentView(APIView):
                 should_allow_status_change = not should_allow_status_change
             full_shipments.append((shipment, should_allow_status_change))
         serializer = ShipmentSerializer()
+        ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name)
+
         return Response({
             'show_reserve': show_reserve,
             'serializer': serializer,
             'shipments': full_shipments,
-            'allocation_id': allocation_id
+            'allocation_id': allocation_id,
+            'ventilators': ventilators
         })
+
     def post(self, request, allocation_id, format=None):
         last_role = UserRole.get_default_role(request.user)
         allocation = Allocation.objects.get(pk=allocation_id)
+
+        errors = []
+
+        if not request.data['num_requested']:
+            errors.append('Shipment quantity is a mandatory field')
+        if not request.data.getlist('ventilator_id'):
+            errors.append('You did not select any ventilator')
+
+        if len(errors) > 0:
+            for error in errors:
+                messages.add_message(request, messages.ERROR, error)
+            return HttpResponseRedirect(reverse('shipment-list', request=request, args=[allocation_id]))
+
         shipped_qty = int(request.data['num_requested'])
-        ventilator_serial_nums = request.data['ventilators'].split(',')
-        if allocation.allocated_qty - shipped_qty < shipped_qty:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        ventilator_ids = request.data.getlist('ventilator_id')
+
+        if allocation.allocated_qty - shipped_qty < allocation.shipped_qty:
+            messages.error(request, 'Shipment quantity should NOT be greater than allocated quantity')
+            return HttpResponseRedirect(reverse('shipment-list', request=request, args=[allocation_id]))
+
         shipment = Shipment.objects.create(
             status=Shipment.Status.Open.name,
             allocation=Allocation.objects.get(pk=allocation_id),
@@ -382,10 +403,12 @@ class ShipmentView(APIView):
             updated_by_user=request.user,
             opened_by_user=request.user
         )
-        for ventilator_serial_num in ventilator_serial_nums:
-            ventilator = Ventilator.objects.filter(is_valid=True).filter(current_hospital=last_role.hospital).filter(serial_number=ventilator_serial_num).first()
+        for ventilator_id in ventilator_ids:
+            ventilator = Ventilator.objects.get(id=ventilator_id)
             if ventilator == None or ventilator.status != Ventilator.Status.Available.name:
-                return Response(status=status.HTTP_400_BAD_REQUEST)
+                messages.error(request, 'You selected invalid ventilator')
+                return HttpResponseRedirect(reverse('shipment-list', request=request, args=[allocation_id]))
+
             ShipmentVentilator.objects.create(
                 ventilator=ventilator,
                 shipment=shipment,
@@ -398,14 +421,15 @@ class ShipmentView(APIView):
         alloc = Allocation.objects.get(pk=allocation_id)
         alloc.shipped_qty += shipment.shipped_qty
         offer = alloc.offer
-        request = alloc.request 
+        allocRequest = alloc.request
         offer.shipped_qty += shipment.shipped_qty
-        request.shipped_qty += shipment.shipped_qty
+        allocRequest.shipped_qty += shipment.shipped_qty
         alloc.save()
         offer.save()
-        request.save()
-        return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(allocation_id))
+        allocRequest.save()
 
+        messages.success(request, 'Successfully created a new shipment')
+        return HttpResponseRedirect(reverse('shipment-list', request=request, args=[allocation_id]))
 
 def update_offer(hospital, user):
     pending_offer_vent_ct = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
@@ -502,15 +526,28 @@ class VentilatorList(APIView):
                 ventilator.save()
         else:
             required_fields = ['quality', 'serial_number', 'ventilator_model.model']
+            errors = []
+            displayFields = {
+                'quality': 'Quality',
+                'serial_number': 'Serial Number',
+                'ventilator_model.model': 'Model'
+            }
             for field in required_fields:
                 if not request.data.get(field, None):
-                    return Response(status=status.HTTP_400_BAD_REQUEST)
+                    errors.append(displayFields[field] + ' is mandatory')
+
+            if len(errors) > 0:
+                for error in errors:
+                    messages.add_message(request, messages.ERROR, error)
+                return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
+
             vent_model = None
             if VentilatorModel.objects.filter(model=request.data['ventilator_model.model']):
                 vent_model = VentilatorModel.objects.filter(model=request.data['ventilator_model.model']).first()
             else:
                 if not request.data.get('ventilator_model.manufacturer', None):
-                    return Response(status=status.HTTP_400_BAD_REQUEST)
+                    messages.error(request, 'Request is NOT valid')
+                    return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
                 vent_model = VentilatorModel.objects.create(
                     model=request.data['ventilator_model.model'],
                     manufacturer=request.data['ventilator_model.manufacturer'],
@@ -543,6 +580,7 @@ class VentilatorList(APIView):
             )
             ventilator.save()
         update_offer(hospital, request.user)
+        messages.success(request, 'Successfully added ventilator(s)')
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
 # func to approve offer
@@ -580,7 +618,7 @@ def hospital_approve_offer(request, format=None):
     offer = Offer.objects.get(pk=offer_id)
 
     approve_offer(offer, request.user)
-
+    messages.success(request, 'Approved')
     return HttpResponseRedirect(reverse('offers', request=request, format=format))
 
 @api_view(['GET'])
@@ -628,7 +666,8 @@ def call_back_reserve(request, shipment_id, format=None):
         ventilator.save()
     shipment.status = Shipment.Status.Closed.name
     shipment.save()
-    return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(shipment.allocation.id))
+    messages.success(request, 'Successfully completed')
+    return HttpResponseRedirect(reverse('shipment-list', request=request, args=[shipment.allocation.id]))
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated&HospitalPermission])
@@ -641,7 +680,9 @@ def deploy_reserve(request, shipment_id, format=None):
         ventilator.save()
     shipment.status = Shipment.Status.Closed.name
     shipment.save()
-    return HttpResponseRedirect(redirect_to='/shipments/{0}/'.format(shipment.allocation.id))
+    messages.success(request, 'Successfully completed')
+    return HttpResponseRedirect(reverse('shipment-list', request=request, args=[shipment.allocation.id]))
+
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
 # @permission_classes([HospitalPermission|HospitalGroupPermission])
@@ -709,6 +750,9 @@ class VentilatorDetail(APIView):
         serializer = self.serializer_class(ventilator, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            messages.success(request, 'Successfully completed')
+        else:
+            messages.error(request, 'Request is NOT valid')
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
     # def delete(self, request, pk, format=None):
@@ -730,14 +774,14 @@ class Dashboard(APIView):
                 offers.append(offer.supplier.address)
 
         requests = []
-        for request in Request.objects.filter(status=Request.Status.Approved.name):
-            requests.append(request.hospital.address)
+        for req in Request.objects.filter(status=Request.Status.Approved.name):
+            requests.append(req.hospital.address)
 
         transits = []
         for shipment in Shipment.objects.filter(status=Shipment.Status.Shipped.name):
             transits.append(shipment.allocation.request.hospital.address)
 
-        num_requested = sum(request.requested_qty - request.shipped_qty for request in Request.objects.filter(is_valid=True).filter(status=Request.Status.Approved.name))
+        num_requested = sum(req.requested_qty - req.shipped_qty for req in Request.objects.filter(is_valid=True).filter(status=Request.Status.Approved.name))
         intermediate_vent_filter =  Ventilator.objects.filter(is_valid=True)
 
         num_offered = intermediate_vent_filter.filter(status=Ventilator.Status.Available.name).count() + intermediate_vent_filter.filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
@@ -814,6 +858,7 @@ class Dashboard(APIView):
             # order.save()
         # notifications.send_ventilator_notification(Hospital.objects.get(id=sender), Hospital.objects.get(id=receiver), amount)
 
+        messages.success(request, 'Successfully completed')
         return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
 @api_view(['POST'])
@@ -830,6 +875,8 @@ def deploy_all_strategic_reserve(request, format=None):
         ventilator.unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
         ventilator.save()
         update_offer(hospital, request.user)
+
+    messages.success(request, 'Successfully completed')
     return HttpResponseRedirect(reverse('sys-dashboard', request=request, format=format))
 
 class SystemSettings(APIView):
@@ -845,7 +892,10 @@ class SystemSettings(APIView):
         serializer = SystemParametersSerializer(SystemParameters.getInstance(), data=request.data)
         if serializer.is_valid():
             serializer.save()
-        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
+            messages.success(request, 'Successfully completed')
+        else:
+            messages.error(request, 'Request is NOT valid')
+        return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
 
 class SystemDemand(APIView):
     renderer_classes = [TemplateHTMLRenderer]
@@ -996,14 +1046,20 @@ def ceo_approve(request, type, pk, format=None):
             ventRequest.approved_by_user = request.user
             ventRequest.updated_by_user = request.user
             ventRequest.save()
+            messages.success(request, 'Approved')
+        else:
+            messages.error(request, 'You are not eligible for this request')
 
         return HttpResponseRedirect(reverse('ceo-requests', request=request))
     elif type == 'offer':
         offer = Offer.objects.get(id=pk)
         if offer.hospital in hospitals:
             approve_offer(offer, request.user)
+            messages.success(request, 'Approved')
+        else:
+            messages.error(request, 'You are not eligible for this request')
 
-    return HttpResponseRedirect(reverse('ceo-offers', request=request))
+        return HttpResponseRedirect(reverse('ceo-offers', request=request))
 
 # class HospitalCEOApprove(APIView):
 #     renderer_classes = [TemplateHTMLRenderer]
