@@ -10,21 +10,10 @@
   <h1 class="card-header bg-white">Allocation of Supply → Demand with Reserve</h1>
   <div class="card-body">
     {% csrf_token %}
-    {% if serializer.errors and serializer.errors.non_field_errors %}
-      {% for error in serializer.errors.non_field_errors %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endfor %}
-    {% endif %}
-
     {% regroup serializer|dictsort:"section" by section as sections %}
     {% for section in sections %}
       {% for field in section.list %}
         {% render_field field style=style %}
-        <!-- {% if field.errors %}
-          {% for error in field.errors %}
-            <p style='color:#8B0000;'>ERROR: {{ error }}</p>
-          {% endfor %}
-        {% endif %} -->
       {% endfor %}
       {% if section.grouper == '' %}
       <div class="alert alert-info" role="alert">

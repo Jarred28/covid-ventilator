@@ -42,7 +42,7 @@
   </div>
   {% if ventRequest.batchid %}
   <div class="card-footer bg-white">
-    <form action="{% url 'ventilator-approve' ventRequest.batchid %}" method="POST" class="mb-0 float-right">
+    <form action="{% url 'ventilator-approve' ventRequest.batchid %}" method="POST" class="float-right">
       {% csrf_token %}
       <button class="btn btn-dark" type="submit">Approve</button>
     </form>
