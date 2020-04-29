@@ -47,9 +47,6 @@
     {% url 'ceo-offers' as ceo_offers_url %}
     <a class="nav-link {% if request.get_full_path == ceo_offers_url %}active{% endif %}" href="{{ ceo_offers_url }}">Offers</a>
 
-<!--     <a class="nav-link {% if 'hospitals/approve/' in request.get_full_path %}active{% endif %}" href="#">Approve</a>
-    <a class="nav-link {% if 'hospitals/offer/' in request.get_full_path %}active{% endif %}" href="#">Shared Offer</a> -->
-
     {% endif %}
   </nav>
 </aside>

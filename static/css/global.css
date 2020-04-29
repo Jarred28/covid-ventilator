@@ -81,3 +81,7 @@ table.table-bordered thead th {
 .model-number {
   margin-bottom: 5px;
 }
+
+form {
+  margin-bottom: 0;
+}

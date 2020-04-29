@@ -1,0 +1,11 @@
+<script type="text/javascript">
+  var messages = [];
+  {% if messages %}
+    {% for msg in messages %}
+    messages.push({
+      type: '{{msg.level_tag}}',
+      content: '{{msg.message}}'
+    });
+    {% endfor %}
+  {% endif %}
+</script>
