@@ -349,7 +349,7 @@ class ShipmentView(APIView):
         show_reserve = False
         if allocation.offer.hospital.id == hospital.id:
             show_reserve = True
-        sending_statuses = [Shipment.Status.Open.name, Shipment.Status.Packed.name]
+        sending_statuses = [Shipment.Status.Open.name, Shipment.Status.Packed.name, Shipment.Status.RequestedReserve.name]
         receiving_statuses = [Shipment.Status.Shipped.name, Shipment.Status.Arrived.name, Shipment.Status.Accepted.name]
         shipments = Shipment.objects.filter(is_valid=True).filter(allocation=Allocation.objects.get(pk=allocation_id))
         full_shipments = []
