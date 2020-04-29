@@ -14,7 +14,7 @@
     <div id="map"></div>
   </div>
   <div class="card-footer card-footer d-flex justify-content-between bg-white">
-    <form class="mb-0" action="{% url 'reset-db' %}" method="POST">
+    <form action="{% url 'reset-db' %}" method="POST">
       {% csrf_token %}
       <button class="btn btn-dark" type="submit">
         <i class="fa fa-database mr-2" aria-hidden="true"></i>
@@ -24,7 +24,7 @@
     {% if show_deploy_reserve %}
       <a class="btn btn-dark btn-sm" href="{% url 'sys-deploy-reserve' %}">Deploy Source Reserve</a>
     {% endif %}
-    <form class="mb-0" action="{% url 'sys-dashboard' %}" method="POST">
+    <form action="{% url 'sys-dashboard' %}" method="POST">
       {% csrf_token %}
       <button class='btn btn-dark' type="submit">
         <i class="fa fa-gears mr-2" aria-hidden="true"></i>

@@ -132,6 +132,10 @@ class SystemParametersSerializer(serializers.ModelSerializer):
                 self.fields[field].section = ''
 
     def validate(self, data):
+        for field in self.fields:
+            if not field in data.keys():
+                raise serializers.ValidationError('All fields are mandatory.')
+
         sum = functools.reduce(
             lambda a, b: a + data[b],
             self.weight_params,

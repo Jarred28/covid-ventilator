@@ -3,15 +3,18 @@
 {% block head %}
 <title>Log In</title>
 <link rel="stylesheet" href="/static/css/login.css">
+{% if form.errors %}
+<script>
+  messages.push({
+    type: 'error',
+    content: 'Your username and password didn\'t match. Please try again.'
+  });
+</script>
+{% endif %}
 {% endblock %}
 
 {% block content %}
   {% include './shared.html' with title='The Smart Way to Share Ventilators & Save Lives' %}
-  {% if form.errors %}
-    <div class="alert alert-danger">
-      Your username and password didn't match. Please try again.
-    </div>
-  {% endif %}
   <form method="post" action="{% url 'login' %}" novalidate>
     {% csrf_token %}
     {% for field in form.visible_fields %}

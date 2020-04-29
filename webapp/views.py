@@ -334,7 +334,8 @@ class ShipmentDetail(APIView):
             serializer.save()
             messages.success(request, 'Successfully completed')
         else:
-            messages.error(request, 'Request is NOT valid')
+            for error in serializer.errors:
+                messages.add_message(request, messages.ERROR, error + ': ' + serializer.errors[error][0])
         return HttpResponseRedirect(reverse('shipment-list', request=request, args=[shipment.allocation.id]))
 
 class ShipmentView(APIView):
@@ -752,7 +753,8 @@ class VentilatorDetail(APIView):
             serializer.save()
             messages.success(request, 'Successfully completed')
         else:
-            messages.error(request, 'Request is NOT valid')
+            for error in serializer.errors:
+                messages.add_message(request, messages.ERROR, error + ': ' + serializer.errors[error][0])
         return HttpResponseRedirect(reverse('ventilator-list', request=request, format=format))
 
     # def delete(self, request, pk, format=None):
@@ -894,8 +896,9 @@ class SystemSettings(APIView):
             serializer.save()
             messages.success(request, 'Successfully completed')
         else:
-            messages.error(request, 'Request is NOT valid')
-        return HttpResponseRedirect(reverse('sys-settings', request=request, format=format))
+            for error in serializer.errors:
+                messages.add_message(request, messages.ERROR, serializer.errors[error][0])
+        return Response({'serializer': serializer, 'style': {'template_pack': 'rest_framework/vertical/'}})
 
 class SystemDemand(APIView):
     renderer_classes = [TemplateHTMLRenderer]

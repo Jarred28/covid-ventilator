@@ -9,18 +9,8 @@
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
   <link rel="stylesheet" href='{% static "css/global.css" %}'>
+  {% include 'shared/message.html' %}
   {% block head %}{% endblock %}
-  <script type="text/javascript">
-    var messages = [];
-    {% if messages %}
-      {% for msg in messages %}
-      messages.push({
-        type: '{{msg.level_tag}}',
-        content: '{{msg.message}}'
-      });
-      {% endfor %}
-    {% endif %}
-  </script>
 </head>
 <body>
   {% if user.is_authenticated and request.get_full_path != '/' and '/accounts/' not in request.get_full_path %}
