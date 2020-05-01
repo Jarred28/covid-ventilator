@@ -275,7 +275,7 @@ class Request(AbstractCommon):
 
 class Offer(AbstractCommon):
     class Status(Enum):
-        Open = 'Open'
+        PendingApproval = 'PendingApproval'
 #       has not been approved, so cannot be allocated to requests yet
         Approved = 'Approved'
 #       can now be allocated to requests
@@ -288,17 +288,17 @@ class Offer(AbstractCommon):
         Closed = 'Closed'
 #       has been reviewed and closed by offering hospital or supplier
 #
-#       Open -> Closed (lack of actions)
-#       Open -> Cancelled -> Closed
-#       Open -> Replaced -> Closed
-#       Open -> Approved -> Closed (most common flow)
-#       Open -> Approved -> Replaced -> Closed
-#       Open -> Approved -> Cancelled -> Closed
+#       PendingApproval -> Closed (lack of actions)
+#       PendingApproval -> Cancelled -> Closed
+#       PendingApproval -> Replaced -> Closed
+#       PendingApproval -> Approved -> Closed (most common flow)
+#       PendingApproval -> Approved -> Replaced -> Closed
+#       PendingApproval -> Approved -> Cancelled -> Closed
 
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open.name,
+        default=Status.PendingApproval.name,
     )
     hospital = models.ForeignKey(
         Hospital,

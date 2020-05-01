@@ -240,14 +240,15 @@ class Offers(APIView):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
         offers = list(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Closed.name))
-        open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+        open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name).first()
         approved_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Approved.name).first()
         if approved_offer:
             offers.append(approved_offer)
         if open_offer:
-            offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first())
+            offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name).first())
         return Response({
             'offers': offers,
+            'hospital': hospital
         })
 
 class Requests(APIView):
@@ -441,13 +442,13 @@ def update_offer(hospital, user):
     #     new_offer_qty = pending_offer_vent_ct + current_offer.offered_qty - current_offer.allocated_qty
     # else:
     #     new_offer_qty = pending_offer_vent_ct
-    current_open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+    current_open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name).first()
     if current_open_offer:
         current_open_offer.offered_qty = pending_offer_vent_ct
         current_open_offer.save()
     else:
         Offer.objects.create(
-            status=Offer.Status.Open.name,
+            status=Offer.Status.PendingApproval.name,
             hospital=hospital,
             offered_qty=pending_offer_vent_ct,
             allocated_qty=0,
@@ -1033,7 +1034,7 @@ class HospitalCEOOffers(APIView):
 
     def get(self, request, format=None):
         hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
-        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Offer.Status.Open.name))
+        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name))
 
         return Response({'offers': offers})
 

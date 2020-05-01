@@ -79,7 +79,7 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
                         offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.Approved.name).first()
                     else:
                         # Decrement from open offer.
-                        offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.Open.name).first()
+                        offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.PendingApproval.name).first()
                     offer.offered_qty -= 1
                     if offer.offered_qty == 0:
                         offer.status = Offer.Status.Closed.name

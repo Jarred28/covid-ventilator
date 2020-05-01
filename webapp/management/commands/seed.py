@@ -132,7 +132,7 @@ class Command(BaseCommand):
             h.save()
             if hospital_count < 5:
                 o = Offer(
-                    status=Offer.Status.Open.name,
+                    status=Offer.Status.PendingApproval.name,
                     hospital=h,
                     offered_qty=random.randint(5, 15),
                     opened_by_user=user,
