@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Requests</h1>
+  <h1 class="card-header bg-white">Requests for {{ hospital.name }}</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped mb-4">
       <thead class="thead-dark">
@@ -23,8 +23,8 @@
         {% for request in requests %}
         <tr>
           <td>
-          {% if request.status == 'Open' %}
-            <span class="badge badge-primary">Open</span>
+          {% if request.status == 'PendingApproval' %}
+            <span class="badge badge-primary">Pending Approval</span>
           {% elif request.status == 'Approved' %}
             <span class="badge badge-success">Approved</span>
           {% elif request.status == 'Cancelled' %}

@@ -40,6 +40,8 @@
           <td data-title='Status'>
             {% if ventilator.status == 'Unavailable' %}
             <span class="badge badge-danger">{{ ventilator.unavailable_status }}</span>
+            {% elif ventilator.status == 'Arrived' %}
+            <span class="badge badge-info">{{ ventilator.arrived_code }}</span>
             {% elif ventilator.status == 'Available' %}
             <span class="badge badge-success">Available</span>
             {% elif ventilator.status == 'InTransit' %}
