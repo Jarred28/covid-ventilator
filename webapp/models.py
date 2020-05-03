@@ -217,7 +217,7 @@ pre_init.connect(update_last_used_role, sender=UserRole)
 
 class Request(AbstractCommon):
     class Status(Enum):
-        Open = 'Open'
+        PendingApproval = 'PendingApproval'
 #       has not been approved, so cannot be allocated yet
         Approved = 'Approved'
 #       can now be allocated
@@ -235,7 +235,7 @@ class Request(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open.name,
+        default=Status.PendingApproval.name,
     )
     hospital = models.ForeignKey(Hospital, on_delete=models.CASCADE)
     requested_qty = models.IntegerField()
@@ -275,7 +275,7 @@ class Request(AbstractCommon):
 
 class Offer(AbstractCommon):
     class Status(Enum):
-        Open = 'Open'
+        PendingApproval = 'PendingApproval'
 #       has not been approved, so cannot be allocated to requests yet
         Approved = 'Approved'
 #       can now be allocated to requests
@@ -288,17 +288,17 @@ class Offer(AbstractCommon):
         Closed = 'Closed'
 #       has been reviewed and closed by offering hospital or supplier
 #
-#       Open -> Closed (lack of actions)
-#       Open -> Cancelled -> Closed
-#       Open -> Replaced -> Closed
-#       Open -> Approved -> Closed (most common flow)
-#       Open -> Approved -> Replaced -> Closed
-#       Open -> Approved -> Cancelled -> Closed
+#       PendingApproval -> Closed (lack of actions)
+#       PendingApproval -> Cancelled -> Closed
+#       PendingApproval -> Replaced -> Closed
+#       PendingApproval -> Approved -> Closed (most common flow)
+#       PendingApproval -> Approved -> Replaced -> Closed
+#       PendingApproval -> Approved -> Cancelled -> Closed
 
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open.name,
+        default=Status.PendingApproval.name,
     )
     hospital = models.ForeignKey(
         Hospital,
@@ -523,6 +523,7 @@ class Ventilator(AbstractCommon):
     class Status(Enum):
         Unavailable = 'Unavailable'
         Available = 'Available'
+        Arrived = 'Arrived'
         Packing = 'Packing'
         InTransit = 'In Transit'
         SourceReserve = 'Source Reserve'
@@ -536,6 +537,12 @@ class Ventilator(AbstractCommon):
         InTesting = 'In Testing'
         NotWorking = 'Not Working'
         InRepair = 'In Repair'
+
+    class ArrivedCode(Enum):
+        NeedsInspection = 'NeedsInspection'
+        PassInspection = 'PassInspection'
+        DestinationReserve = 'DestinationReserve'
+        AvailableForUse = 'AvailableForUse'
 
     class Quality(Enum):
         Poor = 'Poor'
@@ -551,6 +558,13 @@ class Ventilator(AbstractCommon):
         max_length=100,
         choices=[(tag.name, tag.value) for tag in UnavailableReason],
         default=UnavailableReason.InUse.name,
+        null=True,
+        blank=True
+    )
+    arrived_code = models.CharField(
+        max_length=100,
+        choices=[(tag.name, tag.value) for tag in ArrivedCode],
+        default=ArrivedCode.AvailableForUse.name,
         null=True,
         blank=True
     )

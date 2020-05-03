@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Offers</h1>
+  <h1 class="card-header bg-white">Offers for {{ hospital.name }}</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped mb-4">
       <thead class="thead-dark">
@@ -23,8 +23,8 @@
         {% for offer in offers %}
         <tr>
           <td>
-          {% if offer.status == 'Open' %}
-            <span class="badge badge-primary">Open</span>
+          {% if offer.status == 'PendingApproval' %}
+            <span class="badge badge-primary">PendingApproval</span>
           {% elif offer.status == 'Approved' %}
             <span class="badge badge-success">Approved</span>
           {% elif offer.status == 'Replaced' %}
@@ -38,7 +38,7 @@
           <td>{{ offer.offered_qty }}</td>
           <td>{{ offer.allocated_qty }}</td>
           <td>{{ offer.shipped_qty }}</td>
-        {% if offer.status == 'Open' %}
+        {% if offer.status == 'PendingApproval' %}
           <td>
             <form action="{% url 'offer-approval' %}" method="POST">
               {% csrf_token %}

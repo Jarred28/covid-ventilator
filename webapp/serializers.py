@@ -18,7 +18,7 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
     ventilator_model = VentilatorModelSerializer()
     class Meta:
         model = Ventilator
-        fields = ['id', 'quality', 'serial_number', 'ventilator_model', 'status', 'unavailable_status']
+        fields = ['id', 'quality', 'serial_number', 'ventilator_model', 'status', 'unavailable_status', 'arrived_code']
 
     def update(self, instance, validated_data):
         instance.quality = validated_data['quality']
@@ -26,31 +26,67 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
         instance.ventilator_model.manufacturer = validated_data['ventilator_model']['manufacturer']
         instance.ventilator_model.model = validated_data['ventilator_model']['model']
         instance.ventilator_model.monetary_value = validated_data['ventilator_model']['monetary_value']
-        allowed_statuses_for_edit = [Ventilator.Status.Available.name, Ventilator.Status.Unavailable.name]
+        allowed_statuses_for_edit = [Ventilator.Status.Available.name, Ventilator.Status.Unavailable.name, Ventilator.Status.Arrived.name]
 
         # The only allowed manual state transitions would be:
             # Available to Unavailable (inUse, Broken, needs repair, etc). In this case, we're going to want to decrement the amount 
                 # amount offered by the current approved request.
             # Unavailable (PendingOffer) to Unavailable (inUse, Broken, needs Repair). In this case we decrement from current open offer.
             # Unavailable (InUse, Broken, needs repair) to unavailable (pendingOffer): In this case, we update offer.
+            # Arrived: Needs Inspection -> Passes Inspection. Check all ventilators in the shipment. If they all pass inspection, update the shipment, make some ventilators dst reserve and the others availableForUse.
+            # Arrived,AvailableForUse to Unavailable, PendingOffer (update offer) or any other state. 
         new_status = validated_data['status']
         new_unavailable_status = validated_data['unavailable_status']
-        if instance.status in allowed_statuses_for_edit and new_status == Ventilator.Status.Unavailable.name:
-            if new_unavailable_status != Ventilator.UnavailableReason.PendingOffer.name:
-                offer = None
-                if instance.status == Ventilator.Status.Available.name:
-                    # Decrement from approved offer
-                    offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.Approved.name).first()
-                else:
-                    # Decrement from open offer.
-                    offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.Open.name).first()
-                offer.offered_qty -= 1
-                if offer.offered_qty == 0:
-                    offer.status = Offer.Status.Closed.name
-                offer.save()
+        new_arrived_code = validated_data['arrived_code']
+        if instance.status in allowed_statuses_for_edit and (new_status == Ventilator.Status.Unavailable.name or new_status == Ventilator.Status.Arrived.name):
+            if new_status == Ventilator.Status.Arrived.name:
+                if new_arrived_code == Ventilator.ArrivedCode.PassInspection.name:
+                    shipment_ventilators = instance.last_shipment.shipmentventilator_set.all()
+                    all_pass = True
+                    for shipment_ventilator in shipment_ventilators:
+                        actual_ventilator = shipment_ventilator.ventilator
+                        if actual_ventilator.arrived_code == Ventilator.ArrivedCode.NeedsInspection.name and actual_ventilator.id != instance.id:
+                            all_pass = False
+                            break
+                    if all_pass:
+                        shipment = instance.last_shipment
+                        shipment.status = Shipment.Status.Accepted.name
+                        shipment.save()
+                        shipment_ventilators = shipment.shipmentventilator_set.all()
+                        ventilator_count = len(shipment_ventilators)
+                        reserve_vent_needed = ventilator_count * (SystemParameters.getInstance().destination_reserve / 100)
+                        reserve_vent_allocated = 0
+                        if shipment_ventilators:
+                            for shipment_ventilator in shipment_ventilators:
+                                actual_ventilator = shipment_ventilator.ventilator
+                                if reserve_vent_allocated < reserve_vent_needed:
+                                    actual_ventilator.arrived_code = Ventilator.ArrivedCode.DestinationReserve.name
+                                    reserve_vent_allocated+=1
+                                else:
+                                    actual_ventilator.arrived_code = Ventilator.ArrivedCode.AvailableForUse.name
+                                actual_ventilator.save()
+                    else:
+                        instance.status = new_status
+                        instance.arrived_code = new_arrived_code
+                        instance.save()
+                    instance.ventilator_model.save()
+                    return instance
             else:
-                if instance.unavailable_status != Ventilator.Status.PendingOffer.name:
-                    views.update_offer(instance.current_hospital, instance.updated_by_user)
+                if new_unavailable_status != Ventilator.UnavailableReason.PendingOffer.name:
+                    offer = None
+                    if instance.status == Ventilator.Status.Available.name:
+                        # Decrement from approved offer
+                        offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.Approved.name).first()
+                    else:
+                        # Decrement from open offer.
+                        offer = Offer.objects.filter(is_valid=True).filter(hospital=instance.current_hospital).filter(status=Offer.Status.PendingApproval.name).first()
+                    offer.offered_qty -= 1
+                    if offer.offered_qty == 0:
+                        offer.status = Offer.Status.Closed.name
+                    offer.save()
+                else:
+                    if instance.unavailable_status != Ventilator.Status.PendingOffer.name:
+                        views.update_offer(instance.current_hospital, instance.updated_by_user)
             instance.status = new_status                
             instance.unavailable_status = new_unavailable_status
         instance.save()
@@ -78,6 +114,8 @@ class ShipmentSerializer(serializers.HyperlinkedModelSerializer):
         # appropriate_status_changes[Shipment.Status.Arrived.name] = [Shipment.Status.Accepted.name, Shipment.Status.Cancelled.name]
         # appropriate_status_changes[Shipment.Status.Accepted.name] = [Shipment.Status.RequestedReserve.name, Shipment.Status.Cancelled.name]
         status = validated_data['status']
+        if status == Shipment.Status.Accepted.name or status == Shipment.Status.Closed.name:
+            return instance
         instance.status = status
         if status == Shipment.Status.Cancelled.name:
             shipment_ventilators = instance.shipmentventilator_set.all()
@@ -94,23 +132,19 @@ class ShipmentSerializer(serializers.HyperlinkedModelSerializer):
             if shipment_ventilators:
                 for shipment_ventilator in shipment_ventilators:
                     actual_ventilator = shipment_ventilator.ventilator
-                    actual_ventilator.current_hospital = instance.allocation.request.hospital
+                    if actual_ventilator.current_hospital == instance.allocation.offer.hospital:
+                        actual_ventilator.current_hospital = instance.allocation.request.hospital
+                    else:
+                        actual_ventilator.current_hospital = instance.allocation.offer.hospital
                     actual_ventilator.status = Ventilator.Status.InTransit.name
                     actual_ventilator.save()
-        elif status == Shipment.Status.Accepted.name:
+        elif status == Shipment.Status.Arrived.name:
             shipment_ventilators = instance.shipmentventilator_set.all()
-            ventilator_count = len(shipment_ventilators)
-            reserve_vent_needed = ventilator_count * (SystemParameters.getInstance().destination_reserve / 100)
-            reserve_vent_allocated = 0
             if shipment_ventilators:
                 for shipment_ventilator in shipment_ventilators:
                     actual_ventilator = shipment_ventilator.ventilator
-                    if reserve_vent_allocated < reserve_vent_needed:
-                        actual_ventilator.status = Ventilator.Status.DestinationReserve.name
-                        reserve_vent_allocated+=1
-                    else:
-                        actual_ventilator.status = Ventilator.Status.Unavailable.name
-                        actual_ventilator.unavailable_status = Ventilator.UnavailableReason.InUse.name
+                    actual_ventilator.status = Ventilator.Status.Arrived.name
+                    actual_ventilator.arrived_code = Ventilator.ArrivedCode.NeedsInspection.name
                     actual_ventilator.save()
         instance.save()
         return instance

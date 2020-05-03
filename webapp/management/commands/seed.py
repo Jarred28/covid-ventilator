@@ -83,7 +83,7 @@ class Command(BaseCommand):
         for user_count in range(10):
             user = User(
                 email="test{0}@gmail.com".format(user_count),
-                username="user{0}".format(user_count)
+                username=hospital_addresses[user_count]['name']
             )
             user.set_password(default_pw)
             user.save()
@@ -132,7 +132,7 @@ class Command(BaseCommand):
             h.save()
             if hospital_count < 5:
                 o = Offer(
-                    status=Offer.Status.Open.name,
+                    status=Offer.Status.PendingApproval.name,
                     hospital=h,
                     offered_qty=random.randint(5, 15),
                     opened_by_user=user,
@@ -143,7 +143,7 @@ class Command(BaseCommand):
                 o.save()
             else:
                 r1 = Request(
-                    status=Request.Status.Open.name,
+                    status=Request.Status.PendingApproval.name,
                     hospital=h,
                     requested_qty=random.randint(5, 10),
                     opened_by_user=user,
@@ -153,7 +153,7 @@ class Command(BaseCommand):
                 )
                 r1.save()
                 r2 = Request(
-                    status=Request.Status.Approved.name,
+                    status=Request.Status.PendingApproval.name,
                     hospital=h,
                     requested_qty=random.randint(5, 10),
                     opened_by_user=user,

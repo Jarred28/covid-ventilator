@@ -240,14 +240,15 @@ class Offers(APIView):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
         offers = list(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Closed.name))
-        open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+        open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name).first()
         approved_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Approved.name).first()
         if approved_offer:
             offers.append(approved_offer)
         if open_offer:
-            offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first())
+            offers.append(Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name).first())
         return Response({
             'offers': offers,
+            'hospital': hospital
         })
 
 class Requests(APIView):
@@ -259,7 +260,7 @@ class Requests(APIView):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
         requests = list(Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Closed.name))
-        open_requests = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Open.name)
+        open_requests = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.PendingApproval.name)
         approved_requests = Request.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Request.Status.Approved.name)
         if approved_requests:
             requests += [request for request in approved_requests.all()]
@@ -267,6 +268,7 @@ class Requests(APIView):
             requests += [request for request in open_requests.all()]
         return Response({
             'requests': requests,
+            'hospital': hospital
         })
     def post(self, request, format=None):
         if not request.data['num_requested']:
@@ -440,13 +442,13 @@ def update_offer(hospital, user):
     #     new_offer_qty = pending_offer_vent_ct + current_offer.offered_qty - current_offer.allocated_qty
     # else:
     #     new_offer_qty = pending_offer_vent_ct
-    current_open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Open.name).first()
+    current_open_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name).first()
     if current_open_offer:
         current_open_offer.offered_qty = pending_offer_vent_ct
         current_open_offer.save()
     else:
         Offer.objects.create(
-            status=Offer.Status.Open.name,
+            status=Offer.Status.PendingApproval.name,
             hospital=hospital,
             offered_qty=pending_offer_vent_ct,
             allocated_qty=0,
@@ -645,7 +647,7 @@ def switch_entity(request, type, pk, format=None):
 def call_back_reserve(request, shipment_id, format=None):
 
     shipment = Shipment.objects.get(pk=shipment_id)
-    ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.DestinationReserve.name).filter(last_shipment=shipment)
+    ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.Arrived.name).filter(arrived_code=Ventilator.ArrivedCode.DestinationReserve.name).filter(last_shipment=shipment)
     new_shipment = Shipment.objects.create(
         status=Shipment.Status.Open.name,
         allocation=shipment.allocation,
@@ -674,7 +676,7 @@ def call_back_reserve(request, shipment_id, format=None):
 @permission_classes([IsAuthenticated&HospitalPermission])
 def deploy_reserve(request, shipment_id, format=None):
     shipment = Shipment.objects.get(pk=shipment_id)
-    ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.DestinationReserve.name).filter(last_shipment=shipment)
+    ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.Arrived.name).filter(arrived_code=Ventilator.ArrivedCode.DestinationReserve.name).filter(last_shipment=shipment)
     for ventilator in ventilators:
         ventilator.status = Ventilator.Status.Unavailable.name
         ventilator.unavailable_status = Ventilator.UnavailableReason.InUse.name
@@ -906,7 +908,7 @@ class SystemDemand(APIView):
     template_name = 'sysoperator/demand.html'
 
     def get(self, request):
-        all_requests = Request.objects.filter(Q(status=Request.Status.Open.name) | Q(status=Request.Status.Approved.name))
+        all_requests = Request.objects.filter(Q(status=Request.Status.PendingApproval.name) | Q(status=Request.Status.Approved.name))
         requests = {}
         for request_obj in all_requests:
             if requests.get(request_obj.hospital.name, ""):
@@ -1021,7 +1023,7 @@ class HospitalCEORequests(APIView):
 
     def get(self, request, format=None):
         hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
-        requests = list(Request.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Request.Status.Open.name))
+        requests = list(Request.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Request.Status.PendingApproval.name))
 
         return Response({'ventRequests': requests})
 
@@ -1032,7 +1034,7 @@ class HospitalCEOOffers(APIView):
 
     def get(self, request, format=None):
         hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
-        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Offer.Status.Open.name))
+        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name))
 
         return Response({'offers': offers})
 
