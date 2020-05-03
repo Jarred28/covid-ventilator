@@ -68,6 +68,7 @@ body {
 
 table {
   border-collapse: separate;
+  margin-bottom: 0 !important;
 }
 
 table.table-bordered thead th {

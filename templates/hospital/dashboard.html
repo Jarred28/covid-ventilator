@@ -57,7 +57,7 @@
           <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
           <td data-title='Edit' class="select">
             <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#singleVentilatorModal"
-              data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}" data-quality="{{ ventilator.quality }}" data-serial-number="{{ ventilator.serial_number }}" data-model-manufacturer="{{ ventilator.ventilator_model.manufacturer }}" data-model="{{ ventilator.ventilator_model.model }}" data-monetary-value="{{ ventilator.ventilator_model.monetary_value }}">
+              data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}" data-quality="{{ ventilator.quality }}" data-serial-number="{{ ventilator.serial_number }}" data-model-manufacturer="{{ ventilator.ventilator_model.manufacturer }}" data-model="{{ ventilator.ventilator_model.model }}" data-monetary-value="{{ ventilator.ventilator_model.monetary_value }}" data-status="{{ ventilator.status }}" data-arrived-code="{{ ventilator.arrived_code }}" data-unavailable-status="{{ ventilator.unavailable_status }}">
                 Edit
             </button>
           </td>
