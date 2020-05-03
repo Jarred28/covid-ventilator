@@ -466,7 +466,7 @@ class VentilatorList(APIView):
         userRole = UserRole.get_default_role(request.user)
         ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
 
-        serializer = VentilatorSerializer(Ventilator.objects.first(), context={'request': request})
+        serializer = VentilatorSerializer(None, context={'request': request})
         return Response({'ventilators': ventilators, 'serializer': serializer})
 
     def post(self, request, format=None):

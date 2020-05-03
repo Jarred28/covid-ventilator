@@ -25,6 +25,9 @@ $('#singleVentilatorModal').on("show.bs.modal", function (e) {
     $("input[name='ventilator_model.manufacturer']").val($(e.relatedTarget).data('model-manufacturer'));
     $("input[name='ventilator_model.model']").val($(e.relatedTarget).data('model'));
     $("input[name='ventilator_model.monetary_value']").val($(e.relatedTarget).data('monetary-value'));
+    $("select[name='status']").val($(e.relatedTarget).data('status'));
+    $("select[name='unavailable_status']").val($(e.relatedTarget).data('unavailable-status') === 'None' ? '' : $(e.relatedTarget).data('unavailable-status'));
+    $("select[name='arrived_code']").val($(e.relatedTarget).data('arrived-code'));
   } else {
     $("#input-method").val('');
     $("input[name='serial_number']").val('');
@@ -32,5 +35,8 @@ $('#singleVentilatorModal').on("show.bs.modal", function (e) {
     $("input[name='ventilator_model.manufacturer']").val('');
     $("input[name='ventilator_model.model']").val('');
     $("input[name='ventilator_model.monetary_value']").val('');
+    $("select[name='status']").val('');
+    $("select[name='unavailable_status']").val('');
+    $("select[name='arrived_code']").val('');
   }
 });
