@@ -3,15 +3,25 @@
     <a class="navbar-brand" href="/">
       <img src="/static/imgs/logo.png" height="40" alt="logo">
     </a>
-
     {% if user.is_authenticated %}
+    <span class="nav-link ml-auto">{{ user.get_current_role.get_entity.name }}</span>
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown">
         <span class="nav-link dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          {{ user.username }}
+            {% if user.get_current_role.hospital != None %}
+              Admin
+            {% elif user.get_current_role.hospital_group != None %}
+              Authority
+            {% elif user.get_current_role.system != None %}
+              System
+            {% else %}
+              Supplier
+            {% endif %}
         </span>
         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuButton">
-          <h6 class="dropdown-header">{{ user.email }}</h6>
+          <h6 class="dropdown-header">          
+          {{ user.email }}
+          </h6>
           {% if user.get_roles.hospital|length > 0 %}
           <div class="dropleft drop-submenu">
             <a class="dropdown-item dropdown-toggle{% if user.current_type == 'Hospital' %} active{% endif %}" data-toggle="dropdown" href="#">

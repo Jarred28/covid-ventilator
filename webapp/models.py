@@ -177,6 +177,16 @@ class UserRole(AbstractCommon):
         # Upon user creation, this is the last role created.
         # If a new role is made (by a new association), that is automatically made the last used role (make sure the last one is made false)
     _last_used_role = models.BooleanField(default=True)
+
+    def get_entity(self):
+        if self.hospital:
+            return self.hospital
+        elif self.hospital_group:
+            return self.hospital_group
+        elif self.supplier:
+            return self.supplier
+        else:
+            return self.system
     @staticmethod
     def clear_roles(user):
         role = UserRole.get_default_role(user)
