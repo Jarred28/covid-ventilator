@@ -592,7 +592,7 @@ def approve_offer(offer, user):
     if previous_offer != None:
         offer.offered_qty += previous_offer.offered_qty
         for allocation in previous_offer.allocation_set.all():
-            if allocation.status == Allocation.Status.Approved.name:
+            if allocation.status == Allocation.Status.Allocated.name:
                 allocation.offer = offer
                 allocation.save()
                 offer.shipped_qty += allocation.shipped_qty
@@ -835,7 +835,7 @@ class Dashboard(APIView):
                 Allocation.objects.create(
                     request=req,
                     offer=offer,
-                    status=Allocation.Status.Approved.name,
+                    status=Allocation.Status.Allocated.name,
                     allocated_qty=num_assigned,
                     opened_by_user=request.user,
                     inserted_by_user=request.user,

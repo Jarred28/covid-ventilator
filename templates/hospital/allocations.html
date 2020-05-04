@@ -23,10 +23,8 @@
         {% for allocation in allocations %}
         <tr>
           <td>
-            {% if allocation.status == 'Open' %}
-            <span class="badge badge-primary">Open</span>
-            {% elif allocation.status == 'Approved' %}
-            <span class="badge badge-success">Approved</span>
+            {% if allocation.status == 'Allocated' %}
+            <span class="badge badge-primary">Allocated</span>
             {% elif allocation.status == 'Cancelled' %}
             <span class="badge badge-danger">Cancelled</span>
             {% elif allocation.status == 'Closed' %}

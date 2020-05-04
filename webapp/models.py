@@ -368,9 +368,7 @@ class Offer(AbstractCommon):
 
 class Allocation(AbstractCommon):
     class Status(Enum):
-        Open = 'Open'
-#       has not been approved, so cannot be shipped yet
-        Approved = 'Approved'
+        Allocated = 'Allocated'
 #       can now be shipped
         Cancelled = 'Cancelled'
 #       any unshipped allocation is also cancelled
@@ -385,7 +383,7 @@ class Allocation(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Open.name,
+        default=Status.Allocated.name,
     )
     request = models.ForeignKey(Request, on_delete=models.CASCADE)
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE)
