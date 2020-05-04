@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Offers for {{ hospital.name }}</h1>
+  <h1 class="card-header bg-white">Offers Created</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
@@ -16,7 +16,7 @@
           <th>Offered Quantity</th>
           <th>Allocated Quantity</th>
           <th>Shipped Quantity</th>
-          <th>Allocations or Approve Offer</th>
+          <th>Allocations to Requests</th>
         </tr>
       </thead>
       <tbody>
@@ -40,15 +40,11 @@
           <td>{{ offer.shipped_qty }}</td>
         {% if offer.status == 'PendingApproval' %}
           <td>
-            <form action="{% url 'offer-approval' %}" method="POST">
-              {% csrf_token %}
-              <input type="hidden" name="offer_id" value="{{ offer.id }}">
-              <button type="submit" class="btn btn-dark btn-sm">Approve</button>
-            </form>
+            <p>No Allocations until Offer is Approved</p>
           </td>
         {% elif offer.status == 'Approved' %}
           <td>
-            <a class="btn btn-dark btn-sm" href="{% url 'offer-allocation-list' offer.id %}">Allocations</a>
+            <a class="btn btn-dark btn-sm" href="{% url 'offer-allocation-list' offer.id %}">Allocations to Requests</a>
           </td>
         </tr>
         {% endif %}
@@ -64,9 +60,6 @@
         {% endif %}
       </tbody>
     </table>
-  </div>
-  <div class="card-footer text-right bg-white">
-    <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#ventilatorRequestModal">Submit a Ventilator Request</button>
   </div>
 </div>
 

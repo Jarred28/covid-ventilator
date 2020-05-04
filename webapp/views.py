@@ -614,15 +614,15 @@ def approve_offer(offer, user):
         vent.unavailable_status = None
         vent.save()
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated&HospitalPermission])
-def hospital_approve_offer(request, format=None):
-    offer_id = int(request.data['offer_id'])
-    offer = Offer.objects.get(pk=offer_id)
-
-    approve_offer(offer, request.user)
-    messages.success(request, 'Approved')
-    return HttpResponseRedirect(reverse('offers', request=request, format=format))
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated&HospitalPermission])
+# def hospital_approve_offer(request, format=None):
+#     offer_id = int(request.data['offer_id'])
+#     offer = Offer.objects.get(pk=offer_id)
+#
+#     approve_offer(offer, request.user)
+#     messages.success(request, 'Approved')
+#     return HttpResponseRedirect(reverse('offers', request=request, format=format))
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
