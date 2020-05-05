@@ -2,7 +2,7 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Allocations - Hospital Administrator</title>
+<title>Allocations - {% if user.get_current_role.hospital != None %}Hospital Administrator{% else %}HospitalGroup CEO{% endif %}</title>
 {% endblock %}
 
 {% block content %}

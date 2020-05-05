@@ -560,7 +560,7 @@ class Ventilator(AbstractCommon):
     status = models.CharField(
         max_length=100,
         choices=[(tag.name, tag.value) for tag in Status],
-        default=Status.Unavailable.name,
+        default=Status.Unavailable.name
     )
     unavailable_status = models.CharField(
         max_length=100,

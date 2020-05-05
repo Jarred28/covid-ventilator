@@ -35,7 +35,7 @@ $('#singleVentilatorModal').on("show.bs.modal", function (e) {
     $("input[name='ventilator_model.manufacturer']").val('');
     $("input[name='ventilator_model.model']").val('');
     $("input[name='ventilator_model.monetary_value']").val('');
-    $("select[name='status']").val('');
+    $("select[name='status']").val('Unavailable');
     $("select[name='unavailable_status']").val('');
     $("select[name='arrived_code']").val('');
   }

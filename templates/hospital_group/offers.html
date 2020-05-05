@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="card fixed fill">
-  <h1 class="card-header bg-white">Offers</h1>
+  <h1 class="card-header bg-white">Offers at Hospital Group Level</h1>
   <div class="card-body">
     <table class="table table-bordered table-striped">
       <thead class="thead-dark">
@@ -15,30 +15,38 @@
           <th>Offering Hospital</th>
           <th>Offer Status</th>
           <th>Offered Quantity</th>
-          <th>Allocated Quantity</th>
-          <th>Shipped Quantity</th>
+          <th>Monetary Value</th>
           <th>Approve</th>
         </tr>
       </thead>
       <tbody>
         {% for offer in offers %}
         <tr>
-          <td>{{offer.hospital.name}}</td>
-          <td><span class="badge badge-primary">{{offer.status}}</span></td>
-          <td>{{ offer.offered_qty }}</td>
-          <td>{{ offer.allocated_qty }}</td>
-          <td>{{ offer.shipped_qty }}</td>
+          <td>{{offer.hospital_name}}</td>
           <td>
+            {% if offer.status == 'PendingApproval' %}
+            <span class="badge badge-primary">{{offer.status}}</span>
+            {% else %}
+            <span class="badge badge-success">{{offer.status}}</span>
+            {% endif %}
+          </td>
+          <td>{{ offer.offered_qty }}</td>
+          <td>{{ offer.monetary_value }}</td>
+          <td>
+            {% if offer.status == 'PendingApproval' %}
             <form novalidate method="POST" action="{% url 'ceo-approval' 'offer' offer.id %}">
               {% csrf_token %}
               <button class="btn btn-dark btn-sm" type="submit">Approve</button>
             </form>
+            {% else %}
+            <a class="btn btn-dark btn-sm" href="{% url 'offer-allocation-list' offer.id %}">Allocations to Requests</a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
         {% if offers|length == 0 %}
         <tr>
-          <td colspan="6">
+          <td colspan="5">
             <div class="alert alert-info mb-0 text-center">
               No offers to display
             </div>

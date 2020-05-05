@@ -294,8 +294,8 @@ class Requests(APIView):
 
 class OfferAllocationView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    permission_classes = [IsAuthenticated&HospitalPermission]
-    template_name = 'hospital/allocations.html'
+    permission_classes = [IsAuthenticated&HospitalPermission&HospitalGroupPermission]
+    template_name = 'shared/allocations.html'
 
     def get(self, request, offer_id, format=None):
         allocations = Allocation.objects.filter(is_valid=True).filter(offer=Offer.objects.get(pk=offer_id))
@@ -376,15 +376,15 @@ def create_shipment(allocation_id, shipped_qty, ventilator_id_list, user):
 
 class ShipmentView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    permission_classes = [IsAuthenticated&HospitalPermission]
-    template_name = 'hospital/shipments.html'
+    permission_classes = [IsAuthenticated&HospitalPermission&HospitalGroupPermission]
+    template_name = 'shared/shipments.html'
 
     def get(self, request, allocation_id, format=None):
         last_role = UserRole.get_default_role(request.user)
         hospital = last_role.hospital
         allocation = Allocation.objects.get(pk=allocation_id)
         show_reserve = False
-        if allocation.offer.hospital.id == hospital.id:
+        if hospital and allocation.offer.hospital.id == hospital.id:
             show_reserve = True
         sending_statuses = [Shipment.Status.Open.name, Shipment.Status.Packed.name, Shipment.Status.RequestedReserve.name]
         receiving_statuses = [Shipment.Status.Shipped.name, Shipment.Status.Arrived.name, Shipment.Status.Accepted.name]
@@ -392,13 +392,16 @@ class ShipmentView(APIView):
         full_shipments = []
         for shipment in shipments:
             should_allow_status_change = False
-            if (hospital.id == allocation.request.hospital.id and shipment.status in receiving_statuses) or (hospital.id == allocation.offer.hospital.id and shipment.status in sending_statuses):
+            if (hospital and hospital.id == allocation.request.hospital.id and shipment.status in receiving_statuses) or (hospital and hospital.id == allocation.offer.hospital.id and shipment.status in sending_statuses):
                 should_allow_status_change = True
             if shipment.is_requisition:
-                should_allow_status_change = not should_allow_status_change
+                should_allow_status_change = False
             full_shipments.append((shipment, should_allow_status_change))
         serializer = ShipmentSerializer()
-        ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name)
+        if hospital:
+            ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name)
+        else:
+            ventilators = []
 
         return Response({
             'show_reserve': show_reserve,
@@ -470,7 +473,7 @@ class VentilatorList(APIView):
         userRole = UserRole.get_default_role(request.user)
         ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
 
-        serializer = VentilatorSerializer(None, context={'request': request})
+        serializer = VentilatorSerializer()
         return Response({'ventilators': ventilators, 'serializer': serializer})
 
     def post(self, request, format=None):
@@ -1023,9 +1026,26 @@ class HospitalCEOOffers(APIView):
 
     def get(self, request, format=None):
         hospitals = Hospital.objects.filter(hospital_group=HospitalGroup.objects.get(users=request.user)).all()
-        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status=Offer.Status.PendingApproval.name))
+        offers = list(Offer.objects.filter(hospital__in=hospitals).filter(is_valid=True).filter(status__in=[Offer.Status.PendingApproval.name, Offer.Status.Approved.name]))
 
-        return Response({'offers': offers})
+        offerList = []
+        for offer in offers:
+            offerObj = type('test', (object,), {})()
+            offerObj.id = offer.id
+            offerObj.status = offer.status
+            offerObj.offered_qty = offer.offered_qty
+            offerObj.hospital_name = offer.hospital.name
+            
+            monetary_value = 0
+            for allocation in offer.allocation_set.all():
+                for shipment in allocation.shipment_set.all():
+                    for shipment_ventilator in shipment.shipmentventilator_set.all():
+                        monetary_value += shipment_ventilator.ventilator.monetary_value
+
+            offerObj.monetary_value = monetary_value
+            offerList.append(offerObj)
+
+        return Response({'offers': offerList})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated&HospitalGroupPermission])
