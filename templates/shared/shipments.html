@@ -51,7 +51,7 @@
           </td>
           {% if show_edit %}
           <td>
-              <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#changeShipmentStatusModal" data-title="Change Shipment Status" data-method="PUT" data-action="{% url 'shipment-detail' shipment.id %}" data-status="{{ shipment.status }}">Change Shipment Step</button> 
+              <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#changeShipmentStatusModal" data-title="Change Shipment Step" data-method="PUT" data-action="{% url 'shipment-detail' shipment.id %}" data-status="{{ shipment.status }}">Change Shipment Step</button> 
           </td>
           {% else %}
           <td>Unable to Change Shipment Step</td>
@@ -85,64 +85,7 @@
 </div>
 
 {% if user.get_current_role.hospital != None %}
-<div class="modal fade" id="shipmentCreationModal" tabindex="-1" role="dialog" aria-labelledby="shipmentCreationModal" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <form method="POST" class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel"> Create a new Shipment</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        {% csrf_token %}
-        <label for="num_requested">How large is your shipment</label>
-        <input type="text" id="num_requested" class="form-control" name="num_requested">
-        <br>
-        <label for="ventilators">Select Ventilators</label>
-        <select id="ventilators" class="form-control">
-          <option value>------</option>
-          {% for ventilator in ventilators %}
-          <option value="{{ ventilator.id }}_{{ ventilator.serial_number }}_{{ ventilator.ventilator_model.model }}">{{ ventilator.serial_number }} ({{ ventilator.ventilator_model.model }})</option>
-          {% endfor %}
-        </select>
-
-         <table id="tblVentilator" class="table table-bordered table-striped mt-3">
-            <thead class="thead-dark">
-              <tr>
-                <th>Serial Number</th>
-                <th>Model</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="d-none ventilator-row-template">
-                <td class="serial-number"></td>
-                <td class="model"></td>
-                <td class="actions">
-                  <button class="btn btn-dark btn-sm btn-cancel" type="button">
-                    <i class="fa fa-times mr-1"></i>
-                    Cancel
-                  </button>
-                </td>
-              </tr>
-              <tr class="no-ventilator">
-                <td colspan="3">
-                  <div class="alert alert-info mb-0 text-center">
-                    No ventilators being selected
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
-        <button type="submit" class="btn btn-dark">Save</button>
-      </div>
-    </form>
-  </div>
-</div>
+{% include './_shipment_modal.html' %}
 
 <div class="modal fade" id="changeShipmentStatusModal" tabindex="-1" role="dialog" aria-labelledby="changeShipmentStatusModal" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -166,7 +109,6 @@
   </div>
 </div>
 {% endif %}
-
 {% endblock %}
 
 {% block script %}

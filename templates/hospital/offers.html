@@ -38,16 +38,14 @@
           <td>{{ offer.offered_qty }}</td>
           <td>{{ offer.allocated_qty }}</td>
           <td>{{ offer.shipped_qty }}</td>
-        {% if offer.status == 'PendingApproval' %}
           <td>
+            {% if offer.status == 'PendingApproval' %}
             <p>No Allocations until Offer is Approved</p>
-          </td>
-        {% elif offer.status == 'Approved' %}
-          <td>
+            {% elif offer.status == 'Approved' %}
             <a class="btn btn-dark btn-sm" href="{% url 'offer-allocation-list' offer.id %}">Allocations to Requests</a>
+            {% endif %}
           </td>
         </tr>
-        {% endif %}
         {% endfor %}
         {% if offers|length == 0 %}
         <tr>

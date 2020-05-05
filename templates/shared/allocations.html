@@ -35,7 +35,13 @@
           <td>{{ allocation.shipped_qty }}</td>
           <td>{{ allocation.request.hospital.name }}</td>
           <td>
+            {% if user.get_current_role.hospital and allocation.shipment_set.all|length == 0 %}
+            <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#shipmentCreationModal" data-id="{{ allocation.id }}">Ship</button>
+            {% elif user.get_current_role.hospital_group and allocation.shipment_set.all|length == 0 %}
+            No Shipments
+            {% else %}
             <a class="btn btn-dark btn-sm" href="{% url 'shipment-list' allocation.id %}">Shipments</a>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -53,5 +59,13 @@
   </div>
 </div>
 
+{% if user.get_current_role.hospital != None %}
+{% include './_shipment_modal.html' %}
+{% endif %}
+{% endblock %}
 
+{% block script %}
+{% if user.get_current_role.hospital != None and ventilators %}
+<script src="/static/js/hospital-admin/allocation.js"></script>
+{% endif %}
 {% endblock %}

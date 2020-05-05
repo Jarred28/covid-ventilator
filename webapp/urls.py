@@ -19,6 +19,7 @@ urlpatterns = [
     # path('offer/approve/', views.hospital_approve_offer, name='offer-approval'), #hospital cannot approve offer
     path('offers/<int:offer_id>/allocations', views.OfferAllocationView.as_view(), name='offer-allocation-list'),
     path('requests/<int:request_id>/allocations', views.RequestAllocationView.as_view(), name='request-allocation-list'),
+    path('requests/<int:request_id>/allocations/<int:allocation_id>', views.create_request_shipment, name='create-request-shipment'),
     path('allocations/<int:allocation_id>/shipments', views.ShipmentView.as_view(), name='shipment-list'),
     path('shipment/<int:shipment_id>/', views.ShipmentDetail.as_view(), name='shipment-detail'),
     path('call_back_reserve/<int:shipment_id>/', views.call_back_reserve, name='call-back-reserve'),

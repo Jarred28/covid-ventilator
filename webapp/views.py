@@ -24,7 +24,7 @@ from rest_framework import status
 from . import notifications
 from webapp.algorithm import algorithm
 from webapp.models import Allocation, Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, Shipment, System, SystemParameters, Supplier, ShipmentVentilator
-from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
+from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission, HospitalSharedPermission
 from webapp.serializers import SystemParametersSerializer, VentilatorCreateSerializer, VentilatorUpdateSerializer, ShipmentSerializer
 
 @api_view(['GET'])
@@ -294,11 +294,12 @@ class Requests(APIView):
 
 class OfferAllocationView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    permission_classes = [IsAuthenticated&HospitalPermission&HospitalGroupPermission]
+    permission_classes = [IsAuthenticated&HospitalSharedPermission]
     template_name = 'shared/allocations.html'
 
     def get(self, request, offer_id, format=None):
         allocations = Allocation.objects.filter(is_valid=True).filter(offer=Offer.objects.get(pk=offer_id))
+
         return Response({
             'allocations': allocations
         })
@@ -309,9 +310,17 @@ class RequestAllocationView(APIView):
     template_name = 'shared/allocations.html'
 
     def get(self, request, request_id, format=None):
+        last_role = UserRole.get_default_role(request.user)
+        hospital = last_role.hospital
         allocations = Allocation.objects.filter(is_valid=True).filter(request=Request.objects.get(pk=request_id))
+        if hospital:
+            ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name)
+        else:
+            ventilators = []
+
         return Response({
-            'allocations': allocations
+            'allocations': allocations,
+            'ventilators': ventilators
         })
 
 class ShipmentDetail(APIView):
@@ -340,6 +349,44 @@ class ShipmentDetail(APIView):
                 messages.add_message(request, messages.ERROR, error + ': ' + serializer.errors[error][0])
         return HttpResponseRedirect(reverse('shipment-list', request=request, args=[shipment.allocation.id]))
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated&HospitalPermission])
+def create_request_shipment(request, request_id, allocation_id, format=None):
+    req = Request.objects.get(id=request_id)
+    allocation = Allocation.objects.get(id=allocation_id)
+    last_role = UserRole.get_default_role(request.user)
+    hospital = last_role.hospital
+
+    if allocation == None or req == None or allocation.request.id != request_id or allocation.request.hospital.id != hospital.id:
+        messages.error('Request is NOT valid')
+        return HttpResponseRedirect(reverse('request-allocation-list', request=request, format=format, args=[request_id]))
+
+    errors = []
+
+    if not request.data['num_requested']:
+        errors.append('Shipment quantity is a mandatory field')
+    if not request.data.getlist('ventilator_id'):
+        errors.append('You did not select any ventilator')
+
+    if len(errors) > 0:
+        for error in errors:
+            messages.add_message(request, messages.ERROR, error)
+        return HttpResponseRedirect(reverse('request-allocation-list', request=request, format=format, args=[request_id]))
+
+    shipped_qty = int(request.data['num_requested'])
+    ventilator_ids = request.data.getlist('ventilator_id')
+
+    if allocation.allocated_qty - shipped_qty < allocation.shipped_qty:
+        messages.error(request, 'Shipment quantity should NOT be greater than allocated quantity')
+        return HttpResponseRedirect(reverse('request-allocation-list', request=request, format=format, args=[request_id]))
+
+    if not create_shipment(allocation_id, shipped_qty, ventilator_ids, request.user):
+        messages.error(request, 'You selected invalid ventilator')
+        return HttpResponseRedirect(reverse('request-allocation-list', request=request, format=format, args=[request_id]))
+
+    messages.success(request, 'Successfully created a new shipment')
+    return HttpResponseRedirect(reverse('request-allocation-list', request=request, format=format, args=[request_id]))
+
 def create_shipment(allocation_id, shipped_qty, ventilator_id_list, user):
     shipment = Shipment.objects.create(
         status=Shipment.Status.Open.name,
@@ -363,6 +410,7 @@ def create_shipment(allocation_id, shipped_qty, ventilator_id_list, user):
         ventilator.last_shipment = shipment
         ventilator.status = Ventilator.Status.Packing.name
         ventilator.save()
+
     alloc = Allocation.objects.get(pk=allocation_id)
     alloc.shipped_qty += shipment.shipped_qty
     offer = alloc.offer
@@ -376,7 +424,7 @@ def create_shipment(allocation_id, shipped_qty, ventilator_id_list, user):
 
 class ShipmentView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
-    permission_classes = [IsAuthenticated&HospitalPermission&HospitalGroupPermission]
+    permission_classes = [IsAuthenticated&HospitalSharedPermission]
     template_name = 'shared/shipments.html'
 
     def get(self, request, allocation_id, format=None):
