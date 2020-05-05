@@ -39,7 +39,7 @@
           </td>
           <td data-title='Status'>
             {% if ventilator.status == 'Unavailable' %}
-            <span class="badge badge-danger">{{ ventilator.unavailable_status }}</span>
+            <span class="badge badge-danger">{{ ventilator.unavailable_code }}</span>
             {% elif ventilator.status == 'Arrived' %}
             <span class="badge badge-info">{{ ventilator.arrived_code }}</span>
             {% elif ventilator.status == 'Available' %}
@@ -57,7 +57,7 @@
           <td data-title='Original Hospital'>{{ ventilator.owning_hospital.name }}</td>
           <td data-title='Edit' class="select">
             <button class="btn btn-dark btn-sm" data-toggle="modal" data-target="#singleVentilatorModal"
-              data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}" data-quality="{{ ventilator.quality }}" data-serial-number="{{ ventilator.serial_number }}" data-model-manufacturer="{{ ventilator.ventilator_model.manufacturer }}" data-model="{{ ventilator.ventilator_model.model }}" data-monetary-value="{{ ventilator.ventilator_model.monetary_value }}" data-status="{{ ventilator.status }}" data-arrived-code="{{ ventilator.arrived_code }}" data-unavailable-status="{{ ventilator.unavailable_status }}">
+              data-title="Edit Ventilator Details" data-method="PUT" data-action="{% url 'ventilator-detail' ventilator.id %}" data-quality="{{ ventilator.quality }}" data-serial-number="{{ ventilator.serial_number }}" data-model-manufacturer="{{ ventilator.ventilator_model.manufacturer }}" data-model="{{ ventilator.ventilator_model.model }}" data-monetary-value="{{ ventilator.ventilator_model.monetary_value }}" data-status="{{ ventilator.status }}" data-arrived-code="{{ ventilator.arrived_code }}" data-unavailable-code="{{ ventilator.unavailable_code }}">
                 Edit
             </button>
           </td>
@@ -100,7 +100,12 @@
       </div>
       <div class="modal-body">
         {% csrf_token %}
-        {% render_form serializer %}
+        <div id="createSerializer">
+          {% render_form createSerializer %}
+        </div>
+        <div id="updateSerializer">
+          {% render_form updateSerializer %}
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>
@@ -114,7 +119,7 @@
   <div class="modal-dialog" role="document">
     <form action="{% url 'ventilator-list' %}" method="POST" enctype="multipart/form-data" class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Add Batch Ventilator</h5>
+        <h5 class="modal-title" id=" ">Add Batch Ventilator</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>

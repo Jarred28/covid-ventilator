@@ -14,11 +14,17 @@ class VentilatorModelSerializer(serializers.HyperlinkedModelSerializer):
         model = VentilatorModel
         fields = ['id', 'manufacturer', 'model', 'monetary_value']
 
-class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
+class VentilatorCreateSerializer(serializers.HyperlinkedModelSerializer):
     ventilator_model = VentilatorModelSerializer()
     class Meta:
         model = Ventilator
-        fields = ['id', 'quality', 'serial_number', 'ventilator_model', 'status', 'unavailable_status', 'arrived_code']
+        fields = ['id', 'quality', 'serial_number', 'ventilator_model']
+
+class VentilatorUpdateSerializer(serializers.HyperlinkedModelSerializer):
+    ventilator_model = VentilatorModelSerializer()
+    class Meta:
+        model = Ventilator
+        fields = ['id', 'quality', 'serial_number', 'ventilator_model', 'status', 'unavailable_code', 'arrived_code']
 
     def update(self, instance, validated_data):
         instance.quality = validated_data['quality']
@@ -36,7 +42,7 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
             # Arrived: Needs Inspection -> Passes Inspection. Check all ventilators in the shipment. If they all pass inspection, update the shipment, make some ventilators dst reserve and the others availableForUse.
             # Arrived,AvailableForUse to Unavailable, PendingOffer (update offer) or any other state. 
         new_status = validated_data['status']
-        new_unavailable_status = validated_data['unavailable_status']
+        new_unavailable_code = validated_data['unavailable_code']
         new_arrived_code = validated_data['arrived_code']
         if instance.status in allowed_statuses_for_edit and (new_status == Ventilator.Status.Unavailable.name or new_status == Ventilator.Status.Arrived.name):
             if new_status == Ventilator.Status.Arrived.name:
@@ -72,7 +78,7 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
                     instance.ventilator_model.save()
                     return instance
             else:
-                if new_unavailable_status != Ventilator.UnavailableReason.PendingOffer.name:
+                if new_unavailable_code != Ventilator.UnavailableCode.PendingOffer.name:
                     offer = None
                     if instance.status == Ventilator.Status.Available.name:
                         # Decrement from approved offer
@@ -85,10 +91,10 @@ class VentilatorSerializer(serializers.HyperlinkedModelSerializer):
                         offer.status = Offer.Status.Closed.name
                     offer.save()
                 else:
-                    if instance.unavailable_status != Ventilator.Status.PendingOffer.name:
+                    if instance.unavailable_code != Ventilator.Status.PendingOffer.name:
                         views.update_offer(instance.current_hospital, instance.updated_by_user)
             instance.status = new_status                
-            instance.unavailable_status = new_unavailable_status
+            instance.unavailable_code = new_unavailable_code
         instance.save()
         instance.ventilator_model.save()
 

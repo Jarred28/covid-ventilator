@@ -4,7 +4,7 @@ from datetime import date, datetime
 from django.core.management.base import BaseCommand, CommandError
 from webapp.models import Allocation, Request, Offer, ShipmentVentilator, Shipment, Ventilator, VentilatorModel, SystemParameters, System, HospitalGroup, Hospital, Supplier, User, UserRole
 from webapp.views import create_shipment, run_algorithm
-from webapp.serializers import VentilatorSerializer, ShipmentSerializer
+from webapp.serializers import VentilatorUpdateSerializer, ShipmentSerializer
 
 import random
 class Command(BaseCommand):
@@ -160,7 +160,7 @@ class Command(BaseCommand):
 
         for vent_count in range(total_vent_count):
             status = Ventilator.Status.Unavailable.name
-            unknown_status = Ventilator.UnavailableReason.PendingOffer.name
+            unavailable_code = Ventilator.UnavailableCode.PendingOffer.name
             if vent_count % 10 == 0:
                 status = Ventilator.Status.SourceReserve.name
                 unknown_status = None
@@ -169,7 +169,7 @@ class Command(BaseCommand):
             vent = Ventilator(
                 ventilator_model=VentilatorModel.objects.get(pk=first_vent_model_pk + (vent_count % len(model_nums))),
                 status=status,
-                unavailable_status=unknown_status,
+                unavailable_code=unavailable_code,
                 serial_number=str(vent_count),
                 owning_hospital=hosp,
                 current_hospital=hosp,
@@ -184,7 +184,7 @@ class Command(BaseCommand):
                 o = Offer(
                     status=Offer.Status.PendingApproval.name,
                     hospital=h,
-                    offered_qty=Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).filter(current_hospital=h).count(),
+                    offered_qty=Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name).filter(current_hospital=h).count(),
                     opened_by_user=user,
                     opened_at=datetime.now(),
                     inserted_by_user=User.objects.first(),
@@ -192,10 +192,10 @@ class Command(BaseCommand):
                 )
                 if h.name == "Elmhurst Hospital Center":
                     o.status = Offer.Status.Approved.name
-                    ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=h).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name)
+                    ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=h).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name)
                     for vent in ventilators:
                         vent.status = Ventilator.Status.Available.name
-                        vent.unavailable_status = None
+                        vent.unavailable_code = None
                         vent.save()
                 o.save()
             else:
@@ -303,9 +303,9 @@ class Command(BaseCommand):
             data['ventilator_model']['model'] = vent.ventilator_model.model
             data['ventilator_model']['monetary_value'] = vent.ventilator_model.monetary_value
             data['arrived_code'] = Ventilator.ArrivedCode.PassInspection.name
-            data['unavailable_status'] = None
+            data['unavailable_code'] = None
             data['status'] = Ventilator.Status.Arrived.name
-            serializer = VentilatorSerializer(vent, data=data)
+            serializer = VentilatorUpdateSerializer(vent, data=data)
             if serializer.is_valid():
                 serializer.save()
             else:

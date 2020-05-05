@@ -537,7 +537,7 @@ class Ventilator(AbstractCommon):
         SourceReserve = 'Source Reserve'
         DestinationReserve = 'Destination Reserve'
 
-    class UnavailableReason(Enum):
+    class UnavailableCode(Enum):
         Unknown = 'Unknown'
         InUse = 'In Use'
         PendingOffer = 'Pending Offer'
@@ -562,10 +562,10 @@ class Ventilator(AbstractCommon):
         choices=[(tag.name, tag.value) for tag in Status],
         default=Status.Unavailable.name
     )
-    unavailable_status = models.CharField(
+    unavailable_code = models.CharField(
         max_length=100,
-        choices=[(tag.name, tag.value) for tag in UnavailableReason],
-        default=UnavailableReason.InUse.name,
+        choices=[(tag.name, tag.value) for tag in UnavailableCode],
+        default=UnavailableCode.InUse.name,
         null=True,
         blank=True
     )
