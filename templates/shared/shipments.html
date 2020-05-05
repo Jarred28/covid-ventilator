@@ -2,7 +2,7 @@
 {% load rest_framework %}
 
 {% block head %}
-<title>Shipments - Hospital Administrator</title>
+<title>Shipments - {% if user.get_current_role.hospital != None %}Hospital Administrator{% else %}HospitalGroup CEO{% endif %}</title>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
           <th>Shipment Status</th>
           <th>Shipped Quantity</th>
           <th>Ventilators</th>
-          <th>Transition to Next State</th>
+          <th>Move to Next Step</th>
           <th>Call Back Reserve</th>
           <th>Deploy Reserve</th>
         </tr>
@@ -51,10 +51,10 @@
           </td>
           {% if show_edit %}
           <td>
-              <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#changeShipmentStatusModal" data-title="Change Shipment Status" data-method="PUT" data-action="{% url 'shipment-detail' shipment.id %}" data-status="{{ shipment.status }}">Change Shipment Status</button> 
+              <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#changeShipmentStatusModal" data-title="Change Shipment Status" data-method="PUT" data-action="{% url 'shipment-detail' shipment.id %}" data-status="{{ shipment.status }}">Change Shipment Step</button> 
           </td>
           {% else %}
-          <td>Unable to Change Status</td>
+          <td>Unable to Change Shipment Step</td>
           {% endif %}
           {% if show_reserve and shipment.status == 'Accepted' and shipment.is_requisition == False %}
             <td><a href="{% url 'call-back-reserve' shipment.id %}" class="btn btn-dark btn-sm">Call Back Reserve</a></td>
@@ -77,11 +77,14 @@
       </tbody>
     </table>
   </div>
+  {% if user.get_current_role.hospital != None %}
   <div class="card-footer text-right bg-white">
     <button class="btn btn-dark mb-0" data-toggle="modal" data-target="#shipmentCreationModal">Create a New Shipment</button>
-  </div>  
+  </div>
+  {% endif %}  
 </div>
 
+{% if user.get_current_role.hospital != None %}
 <div class="modal fade" id="shipmentCreationModal" tabindex="-1" role="dialog" aria-labelledby="shipmentCreationModal" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <form method="POST" class="modal-content">
@@ -162,9 +165,12 @@
     </form>
   </div>
 </div>
+{% endif %}
 
 {% endblock %}
 
 {% block script %}
+{% if user.get_current_role.hospital != None %}
 <script src="/static/js/hospital-admin/shipment.js"></script>
+{% endif %}
 {% endblock %}

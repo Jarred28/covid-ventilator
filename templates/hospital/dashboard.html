@@ -88,6 +88,14 @@
   </div>
 </div>
 
+<div class="create-template d-none">
+  {% render_form createSerializer %}
+</div>
+
+<div class="update-template d-none">
+  {% render_form updateSerializer %}
+</div>
+
 <div class="modal fade" id="singleVentilatorModal" tabindex="-1" role="dialog" aria-labelledby="singleVentilatorModal" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <form id="single-modal-form" action="" method="POST" class="modal-content">
@@ -100,12 +108,6 @@
       </div>
       <div class="modal-body">
         {% csrf_token %}
-        <div id="createSerializer">
-          {% render_form createSerializer %}
-        </div>
-        <div id="updateSerializer">
-          {% render_form updateSerializer %}
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-dark" data-dismiss="modal">Close</button>

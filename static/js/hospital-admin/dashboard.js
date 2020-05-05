@@ -17,61 +17,53 @@ $('body').on('click', '#closeBtn', function() {
 
 
 function onStatusChangeLabelModifications(value) {
-    var unavailable_label = ""
-    var arrived_label = ""
-    $("label").each(function(index) {
-        if ($(this)[0].innerHTML.indexOf("Unavailable") !== -1) {
-            unavailable_label = $(this)
-        }
-        if ($(this)[0].innerHTML.indexOf("Arrived") !== -1) {
-            arrived_label = $(this)
-        }
-    })
-    if (value == "Arrived") {
-      unavailable_label.hide()
-      arrived_label.show()
-      $("select[name='arrived_code']").show()
-      $("select[name='unavailable_code']").hide()
-    } else if (value == "Unavailable") {
-      unavailable_label.show()
-      arrived_label.hide()
-      $("select[name='unavailable_code']").show()
-      $("select[name='arrived_code']").hide()
-    } else {
-      arrived_label.hide()
-      unavailable_label.hide()
-      $("select[name='arrived_code']").hide()
-      $("select[name='unavailable_code']").hide()
-    }
+  if (value == "Arrived") {
+    $("#single-modal-form select[name='arrived_code']").closest('.form-group').removeClass('d-none');
+    $("#single-modal-form select[name='unavailable_code']").closest('.form-group').addClass('d-none');
+  } else if (value == "Unavailable") {
+    $("#single-modal-form select[name='unavailable_code']").closest('.form-group').removeClass('d-none');
+    $("#single-modal-form select[name='arrived_code']").closest('.form-group').addClass('d-none');
+  } else {
+    $("#single-modal-form select[name='arrived_code']").closest('.form-group').addClass('d-none');
+    $("#single-modal-form select[name='unavailable_code']").closest('.form-group').addClass('d-none');
+  }
 }
 
 $("select[name='status']").on('change', function() { onStatusChangeLabelModifications(this.value) });
 
 $('#singleVentilatorModal').on("show.bs.modal", function (e) {
-  $(".modal-title").html($(e.relatedTarget).data('title'));
+  $("#single-modal-form .modal-title").html($(e.relatedTarget).data('title'));
   $("#single-modal-form").attr('action', '' + $(e.relatedTarget).data('action'));
   if ($(e.relatedTarget).data('method') === 'PUT') {
     $("#input-method").val($(e.relatedTarget).data('method'));
-    $("#createSerializer").hide();
-    $("#updateSerializer").show();
-    $("input[name='serial_number']").val($(e.relatedTarget).data('serial-number'));
-    $('select[name="quality"]').val($(e.relatedTarget).data('quality'));
-    $("input[name='ventilator_model.manufacturer']").val($(e.relatedTarget).data('model-manufacturer'));
-    $("input[name='ventilator_model.model']").val($(e.relatedTarget).data('model'));
-    $("input[name='ventilator_model.monetary_value']").val($(e.relatedTarget).data('monetary-value'));
-    $("select[name='status']").val($(e.relatedTarget).data('status'));
-    $("select[name='unavailable_code']").val($(e.relatedTarget).data('unavailable-code') === 'None' ? '' : $(e.relatedTarget).data('unavailable-code'));
-    $("select[name='arrived_code']").val($(e.relatedTarget).data('arrived-code'));
-    onStatusChangeLabelModifications($("select[name='status']")[0].value);
+    $('#single-modal-form .modal-body .create-template').remove();
+    if ($('#single-modal-form .modal-body .update-template').length === 0) {
+      var $updateForm = $('.update-template').clone();
+      $('#single-modal-form .modal-body').append($updateForm);
+      $updateForm.removeClass('d-none');
+    }
+    $("#single-modal-form input[name='serial_number']").val($(e.relatedTarget).data('serial-number'));
+    $('#single-modal-form select[name="quality"]').val($(e.relatedTarget).data('quality'));
+    $("#single-modal-form input[name='ventilator_model.manufacturer']").val($(e.relatedTarget).data('model-manufacturer'));
+    $("#single-modal-form input[name='ventilator_model.model']").val($(e.relatedTarget).data('model'));
+    $("#single-modal-form input[name='ventilator_model.monetary_value']").val($(e.relatedTarget).data('monetary-value'));
+    $("#single-modal-form select[name='status']").val($(e.relatedTarget).data('status'));
+    $("#single-modal-form select[name='unavailable_code']").val($(e.relatedTarget).data('unavailable-code') === 'None' ? '' : $(e.relatedTarget).data('unavailable-code'));
+    $("#single-modal-form select[name='arrived_code']").val($(e.relatedTarget).data('arrived-code'));
+    onStatusChangeLabelModifications($("#single-modal-form select[name='status']")[0].value);
   } else {
     $("#input-method").val('');
-    $("#updateSerializer").hide();
-    $("#createSerializer").show();
-    $("input[name='serial_number']").val('');
-    $('select[name="quality"]').val('');
-    $("input[name='ventilator_model.manufacturer']").val('');
-    $("input[name='ventilator_model.model']").val('');
-    $("input[name='ventilator_model.monetary_value']").val('');
+    $('#single-modal-form .modal-body .update-template').remove();
+    if ($('#single-modal-form .modal-body .create-template').length === 0) {
+      var $createForm = $('.create-template').clone();
+      $('#single-modal-form .modal-body').append($createForm);
+      $createForm.removeClass('d-none');
+    }
+    $("#single-modal-form input[name='serial_number']").val('');
+    $('#single-modal-form select[name="quality"]').val('');
+    $("#single-modal-form input[name='ventilator_model.manufacturer']").val('');
+    $("#single-modal-form input[name='ventilator_model.model']").val('');
+    $("#single-modal-form input[name='ventilator_model.monetary_value']").val('');
   }
 });
 
