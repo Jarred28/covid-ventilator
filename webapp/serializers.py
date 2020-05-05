@@ -91,7 +91,7 @@ class VentilatorUpdateSerializer(serializers.HyperlinkedModelSerializer):
                         offer.status = Offer.Status.Closed.name
                     offer.save()
                 else:
-                    if instance.unavailable_code != Ventilator.Status.PendingOffer.name:
+                    if instance.unavailable_code != Ventilator.UnavailableCode.PendingOffer.name:
                         views.update_offer(instance.current_hospital, instance.updated_by_user)
             instance.status = new_status                
             instance.unavailable_code = new_unavailable_code
