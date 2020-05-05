@@ -306,7 +306,7 @@ class OfferAllocationView(APIView):
 class RequestAllocationView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     permission_classes = [IsAuthenticated&HospitalPermission]
-    template_name = 'hospital/allocations.html'
+    template_name = 'shared/allocations.html'
 
     def get(self, request, request_id, format=None):
         allocations = Allocation.objects.filter(is_valid=True).filter(request=Request.objects.get(pk=request_id))
