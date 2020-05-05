@@ -25,7 +25,7 @@ from . import notifications
 from webapp.algorithm import algorithm
 from webapp.models import Allocation, Hospital, HospitalGroup, Request, Offer, User, UserRole, Ventilator, VentilatorModel, Shipment, System, SystemParameters, Supplier, ShipmentVentilator
 from webapp.permissions import HospitalPermission, HospitalGroupPermission, SystemPermission
-from webapp.serializers import SystemParametersSerializer, VentilatorSerializer, ShipmentSerializer
+from webapp.serializers import SystemParametersSerializer, VentilatorCreateSerializer, VentilatorUpdateSerializer, ShipmentSerializer
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -315,7 +315,7 @@ class RequestAllocationView(APIView):
         })
 
 class ShipmentDetail(APIView):
-    serializer_class = VentilatorSerializer
+    serializer_class = ShipmentSerializer
     permission_classes = [IsAuthenticated&HospitalPermission]
 
     def get_object(self, pk):
@@ -439,7 +439,7 @@ class ShipmentView(APIView):
         return HttpResponseRedirect(reverse('shipment-list', request=request, args=[allocation_id]))
 
 def update_offer(hospital, user):
-    pending_offer_vent_ct = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
+    pending_offer_vent_ct = Ventilator.objects.filter(is_valid=True).filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name).count()
     # current_offer = Offer.objects.filter(hospital=hospital).filter(is_valid=True).filter(status=Offer.Status.Approved.name).first()
     # new_offer_qty = 0
     # if current_offer: 
@@ -470,8 +470,9 @@ class VentilatorList(APIView):
         userRole = UserRole.get_default_role(request.user)
         ventilators = Ventilator.objects.filter(current_hospital=userRole.hospital)
 
-        serializer = VentilatorSerializer(None, context={'request': request})
-        return Response({'ventilators': ventilators, 'serializer': serializer})
+        updateSerializer = VentilatorUpdateSerializer(None, context={'request': request})
+        createSerializer = VentilatorCreateSerializer(None, context={'request': request})
+        return Response({'ventilators': ventilators, 'updateSerializer': updateSerializer, 'createSerializer': createSerializer})
 
     def post(self, request, format=None):
         # Either batch upload through CSV  or add single ventilator entry
@@ -483,7 +484,7 @@ class VentilatorList(APIView):
             io_string = io.StringIO(data_set)
             next(io_string)
             available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(Ventilator.Status.Available.name).count()
-            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
+            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name).count()
             src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name).count()
             vent_ct = available_vent_ct + src_reserve_ct
             for column in csv.reader(io_string, delimiter=',', quotechar="|"):
@@ -500,7 +501,7 @@ class VentilatorList(APIView):
                 model_mfg = column[4]
                 monetary_value = column[5]
                 status = Ventilator.Status.Unavailable.name
-                unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
+                unavailable_code = Ventilator.UnavailableCode.PendingOffer.name
                 # We shouldn't be adding another ventilator to the supply unless the ratio is alright.
                 if (src_reserve_ct / (vent_count + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
                     status = Ventilator.State.SourceReserve.name
@@ -524,7 +525,7 @@ class VentilatorList(APIView):
                     quality=quality_level,
                     monetary_value=monetary_value,
                     status=status,
-                    unavailable_status=unavailable_status,
+                    unavailable_code=unavailable_code,
                     owning_hospital=hospital,
                     current_hospital=hospital,
                     inserted_by_user=User.objects.get(pk=request.user.id),
@@ -564,22 +565,22 @@ class VentilatorList(APIView):
                 )
             # We'll choose the optimistic outcome and assume all unassigned ventilators will eventually become Available.
             status = Ventilator.Status.Unavailable.name
-            unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
+            unavailable_code = Ventilator.UnavailableCode.PendingOffer.name
             available_vent_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Available.name).count()
-            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
+            available_vent_ct += Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name).count()
             src_reserve_ct = Ventilator.objects.filter(current_hospital=hospital).filter(status=Ventilator.Status.SourceReserve.name).count()
             vent_ct = available_vent_ct + src_reserve_ct
             # If adding this ventilator messes up the strategic reserve ratio, modify it to be held in reserve
             if (src_reserve_ct / (vent_ct + 1)) < (SystemParameters.getInstance().strategic_reserve / 100):
                 status = Ventilator.Status.SourceReserve.name
-                unavailable_status = None
+                unavailable_code = None
             ventilator = Ventilator(
                 ventilator_model=vent_model,
                 serial_number=request.data['serial_number'],
                 quality=request.data['quality'],
                 monetary_value=vent_model.monetary_value,
                 status=status,
-                unavailable_status=unavailable_status,
+                unavailable_code=unavailable_code,
                 owning_hospital=hospital,
                 current_hospital=hospital,
                 inserted_by_user=User.objects.get(pk=request.user.id),
@@ -612,10 +613,10 @@ def approve_offer(offer, user):
     offer.approved_by_user = user
     offer.updated_by_user = user
     offer.save()
-    ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=offer.hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name)[:offer.offered_qty]
+    ventilators = Ventilator.objects.filter(is_valid=True).filter(current_hospital=offer.hospital).filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name)[:offer.offered_qty]
     for vent in ventilators:
         vent.status = Ventilator.Status.Available.name
-        vent.unavailable_status = None
+        vent.unavailable_code = None
         vent.save()
 
 # @api_view(['POST'])
@@ -683,7 +684,7 @@ def deploy_reserve(request, shipment_id, format=None):
     ventilators = Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.Arrived.name).filter(arrived_code=Ventilator.ArrivedCode.DestinationReserve.name).filter(last_shipment=shipment)
     for ventilator in ventilators:
         ventilator.status = Ventilator.Status.Unavailable.name
-        ventilator.unavailable_status = Ventilator.UnavailableReason.InUse.name
+        ventilator.unavailable_code = Ventilator.UnavailableCode.InUse.name
         ventilator.save()
     shipment.status = Shipment.Status.Closed.name
     shipment.save()
@@ -738,7 +739,7 @@ def deploy_reserve(request, shipment_id, format=None):
 
 
 class VentilatorDetail(APIView):
-    serializer_class = VentilatorSerializer
+    serializer_class = VentilatorUpdateSerializer
     permission_classes = [IsAuthenticated&HospitalPermission]
 
     def get_object(self, pk):
@@ -783,10 +784,8 @@ def run_algorithm(user):
             for req in reqs:
                 num_req += (req.requested_qty - req.allocated_qty)
             requests.append((num_req, hospital))
-    print(requests)
     sys_params = SystemParameters.getInstance()
     allocations = algorithm.allocate(requests, htov, sys_params)  # type: list[tuple[int, int, int]]
-    print(allocations)
     for allocation in allocations:
         sender, amount, receiver = allocation[0], allocation[1], allocation[2]
         receiver_reqs = Request.objects.filter(hospital=receiver).filter(is_valid=True).filter(status=Request.Status.Approved.name)
@@ -837,7 +836,7 @@ class Dashboard(APIView):
         num_requested = sum(req.requested_qty - req.shipped_qty for req in Request.objects.filter(is_valid=True).filter(status=Request.Status.Approved.name))
         intermediate_vent_filter =  Ventilator.objects.filter(is_valid=True)
 
-        num_offered = intermediate_vent_filter.filter(status=Ventilator.Status.Available.name).count() + intermediate_vent_filter.filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_status=Ventilator.UnavailableReason.PendingOffer.name).count()
+        num_offered = intermediate_vent_filter.filter(status=Ventilator.Status.Available.name).count() + intermediate_vent_filter.filter(status=Ventilator.Status.Unavailable.name).filter(unavailable_code=Ventilator.UnavailableCode.PendingOffer.name).count()
         show_deploy_reserve = True
         if num_offered >= num_requested:
             show_deploy_reserve = False
@@ -865,7 +864,7 @@ def deploy_all_strategic_reserve(request, format=None):
     for ventilator in Ventilator.objects.filter(is_valid=True).filter(status=Ventilator.Status.SourceReserve.name):
         hospital = ventilator.current_hospital
         ventilator.status = Ventilator.Status.Unavailable.name
-        ventilator.unavailable_status = Ventilator.UnavailableReason.PendingOffer.name
+        ventilator.unavailable_code = Ventilator.UnavailableCode.PendingOffer.name
         ventilator.save()
         update_offer(hospital, request.user)
 
